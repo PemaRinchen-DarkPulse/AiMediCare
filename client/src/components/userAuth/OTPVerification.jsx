@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const OTPVerification = () => {
   const [otp, setOtp] = useState(new Array(6).fill(""));
   const [timeLeft, setTimeLeft] = useState(120); // 2 minutes in seconds
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (timeLeft > 0) {
       const timer = setInterval(() => {
-        setTimeLeft((prevTime) => prevTime - 1);
+        setTimeLeft(prevTime => prevTime - 1);
       }, 1000);
       return () => clearInterval(timer); // Cleanup on component unmount or timeLeft change
     }
@@ -37,13 +39,23 @@ const OTPVerification = () => {
     }
   };
 
+  const handleSubmit = async () => {
+    const otpCode = otp.join(""); // Convert OTP array to a string
+
+    try {
+      const response = await axios.post("http://localhost:5000/api/otp/verify", {
+        email: 'userEmail', // Ensure you pass the email dynamically
+        otp: otpCode,
+      });
+      alert(response.data.message);
+    } catch (error) {
+      setError(error.response?.data?.error || "Error verifying OTP");
+    }
+  };
+
   const handleResend = () => {
     setTimeLeft(120); // Reset the timer
     alert("OTP has been resent!");
-  };
-
-  const handleSubmit = () => {
-    alert(`Entered OTP: ${otp.join("")}`);
   };
 
   return (
@@ -80,15 +92,9 @@ const OTPVerification = () => {
           )}
         </div>
         <div>
-        <div class="d-grid gap-2">
-  <button class="btn btn-primary" type="button">Button</button>
-  <button class="btn btn-primary" type="button">Button</button>
-</div>
-        </div>
-        <div>
-          <button style={styles.button} onClick={() => alert("Cancelled!")}>
-            Cancel
-          </button>
+          <div className="d-grid gap-2 m-1">
+            <button className="btn btn-primary" type="button" onClick={handleSubmit}>Verify & proceed</button>
+          </div>
         </div>
       </div>
     </div>
@@ -105,40 +111,28 @@ const styles = {
   },
   instruction: {
     fontSize: "14px",
-    color: "#6b6b6b",
     marginBottom: "20px",
   },
   otpContainer: {
     display: "flex",
-    justifyContent: "space-between",
+    justifyContent: "center",
+    gap: "10px",
     marginBottom: "20px",
   },
   inputBox: {
-    width: "50px",
-    height: "50px",
+    width: "30px",
+    height: "40px",
     textAlign: "center",
-    fontSize: "18px",
-    borderRadius: "5px",
-    border: "1px solid #dcdcdc",
+    fontSize: "20px",
   },
   resendText: {
     fontSize: "14px",
-    color: "#6b6b6b",
+    color: "gray",
   },
   resendLink: {
     color: "#007BFF",
     cursor: "pointer",
-  },
-  button: {
-    marginTop: "20px",
-    padding: "10px 20px",
-    backgroundColor: "#007BFF",
-    color: "white",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-    fontSize: "16px",
-  },
+  }
 };
 
 export default OTPVerification;
