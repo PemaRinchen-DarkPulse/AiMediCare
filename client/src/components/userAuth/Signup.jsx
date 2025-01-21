@@ -1,6 +1,10 @@
 import React from "react";
 import BasicInfo from "./BasicInfo";
 import OTPVerification from "./OTPVerification";
+import AdditionalDetails from "./AdditionalDetails";
+import PatientFields from "./PatientFields";
+import DoctorFields from "./DoctorFields";
+import PharmacistFields from "./PharmacistFields";
 
 const Signup = () => {
   return (

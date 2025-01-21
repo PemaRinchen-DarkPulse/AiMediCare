@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import OTPVerification from './OTPVerification';
+import AdditionalDetails from './AdditionalDetails';
 
 const BasicInfo = () => {
   const [formData, setFormData] = useState({
@@ -11,22 +12,21 @@ const BasicInfo = () => {
     confirmPassword: '',
     dob: '',
   });
-
-  const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
   const [error, setError] = useState('');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError('');
+    setError('');  // Reset error when the user starts typing
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation
-    const { name, surname, email, password, confirmPassword } = formData;
+    const { name, surname, email, password, confirmPassword, dob } = formData;
 
+    // Validation
     if (!name || !surname) {
       setError('First name and surname are required.');
       return;
@@ -42,33 +42,22 @@ const BasicInfo = () => {
         name: `${name} ${surname}`,
         email,
         password,
-        dob: formData.dob,
+        dob,
       });
       alert(response.data.message);
-      setOtpSent(true);
+      setOtpSent(true); // OTP is sent, show OTP verification form
     } catch (error) {
       setError(error.response?.data?.message || 'Error signing up');
     }
   };
 
-  const handleVerifyOtp = async (e) => {
-    e.preventDefault();
-
-    try {
-      const response = await axios.post('http://localhost:5000/api/otp/verify', {
-        email: formData.email,
-        otp,
-      });
-      alert(response.data.message);
-    } catch (error) {
-      setError(error.response?.data?.message || 'Error verifying OTP');
-    }
+  const handleOtpVerified = () => {
+    setOtpVerified(true);  // OTP is successfully verified, show the next form
   };
-
   return (
-    <form className="shadow m-5 p-3 rounded-3">
-      {!otpSent ? (
-        <>
+    <div className='shadow m-5 p-3 rounded-3'>
+      {!otpSent && !otpVerified ? (
+        <form className="">
           {error && <div className="alert alert-danger">{error}</div>}
           <div className="row">
             <div className="col mb-3">
@@ -79,10 +68,6 @@ const BasicInfo = () => {
               <label htmlFor="surname" className="form-label">Surname</label>
               <input type="text" className="form-control" name="surname" placeholder="Doe" value={formData.surname} onChange={handleChange} />
             </div>
-          </div>
-          <div className="mb-3">
-            <label htmlFor="dob" className="form-label">Date of Birth</label>
-            <input type="date" className="form-control" name="dob" value={formData.dob} onChange={handleChange} />
           </div>
           <div className="mb-3">
             <label htmlFor="email" className="form-label">Email address</label>
@@ -99,11 +84,13 @@ const BasicInfo = () => {
           <div className="d-grid gap-2 m-1">
             <button className="btn btn-primary" type="button" onClick={handleSubmit}>Sign Up</button>
           </div>
-        </>
+        </form>
+      ) : otpSent && !otpVerified ? (
+        <OTPVerification email={formData.email} onOtpVerified={handleOtpVerified} />
       ) : (
-        <OTPVerification />
+        <AdditionalDetails previousData={formData} />
       )}
-    </form>
+    </div>
   );
 };
 

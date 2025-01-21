@@ -10,9 +10,7 @@ const transporter = nodemailer.createTransport({
   },
   tls: {
     rejectUnauthorized: false // Ignore self-signed certificates
-  },
-  debug: true,
-  logger: true
+  }
 });
 
 // Export the transporter so it can be used elsewhere

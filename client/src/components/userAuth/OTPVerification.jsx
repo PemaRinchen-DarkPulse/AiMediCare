@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const OTPVerification = () => {
-  const [otp, setOtp] = useState(new Array(6).fill(""));
+const OTPVerification = ({ email, onOtpVerified }) => {
+  const [otp, setOtp] = useState(new Array(6).fill("")); // Initialize OTP array
   const [timeLeft, setTimeLeft] = useState(120); // 2 minutes in seconds
-  const [error, setError] = useState('');
+  const [error, setError] = useState(''); // Error state
 
   useEffect(() => {
     if (timeLeft > 0) {
@@ -43,27 +43,33 @@ const OTPVerification = () => {
     const otpCode = otp.join(""); // Convert OTP array to a string
 
     try {
-      const response = await axios.post("http://localhost:5000/api/otp/verify", {
-        email: 'userEmail', // Ensure you pass the email dynamically
+      const response = await axios.post("http://localhost:5000/api/otp/verifyOtp", {
+        email: email, // Use the email prop passed from BasicInfo
         otp: otpCode,
       });
       alert(response.data.message);
+      onOtpVerified(); // Notify the parent component that OTP is verified
     } catch (error) {
-      setError(error.response?.data?.error || "Error verifying OTP");
+      if (error.response?.data?.error === "Invalid OTP") {
+        setError("OTP doesn't match. Please try again.");
+      } else {
+        setError(error.response?.data?.error || "Error verifying OTP");
+      }
     }
   };
 
   const handleResend = () => {
-    setTimeLeft(120); // Reset the timer
+    setTimeLeft(120); 
+    setError(''); 
     alert("OTP has been resent!");
   };
 
   return (
-    <div className="p-4">
+    <div>
       <div style={styles.card}>
         <h2 style={styles.heading}>OTP Verification</h2>
         <p style={styles.instruction}>
-          Enter OTP code sent to your email <strong>example@gmail.com</strong>
+          Enter OTP code sent to your email <strong>{email}</strong>
         </p>
         <div style={styles.otpContainer}>
           {otp.map((_, index) => (
@@ -78,6 +84,7 @@ const OTPVerification = () => {
             />
           ))}
         </div>
+        {error && <p style={styles.errorMessage}>{error}</p>}
         <div className="d-flex">
           <p className="me-5" style={styles.resendText}>
             OTP Expires In: <span style={styles.resendLink}>{formatTime()}</span>
@@ -123,16 +130,23 @@ const styles = {
     width: "30px",
     height: "40px",
     textAlign: "center",
-    fontSize: "20px",
+    fontSize: "18px",
+    border: "1px solid #ccc",
+    borderRadius: "5px",
   },
   resendText: {
     fontSize: "14px",
-    color: "gray",
+    color: "#444",
   },
   resendLink: {
-    color: "#007BFF",
+    color: "#007bff",
     cursor: "pointer",
-  }
+  },
+  errorMessage: {
+    color: "red",
+    fontSize: "14px",
+    marginTop: "10px",
+  },
 };
 
 export default OTPVerification;
