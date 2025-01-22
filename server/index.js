@@ -6,9 +6,7 @@ const authRoutes = require('./routes/authRoutes.js'); // Import the routes
 const otpRoutes = require('./routes/otpRoutes.js');
 
 dotenv.config();
-
 const app = express();
-
 // Middleware
 app.use(express.json());
 app.use(cors());
@@ -22,7 +20,7 @@ mongoose.connect(process.env.MONGO_URL, {
     .catch((err) => console.error("MongoDB connection error:", err));
 
 app.get('/', (req, res) => {
-    res.send("Hello World")
+    res.send("Hello World from me")
 });
 
 // Use the routes

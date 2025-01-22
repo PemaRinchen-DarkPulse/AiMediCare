@@ -78,5 +78,4 @@ const PatientFields = () => {
     </form>
   );
 };
-
 export default PatientFields;
