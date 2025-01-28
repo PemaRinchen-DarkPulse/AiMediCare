@@ -4,6 +4,7 @@ import OTPVerification from "./OTPVerification";
 import AdditionalDetails from "./AdditionalDetails";
 import InputWithLabel from "../input/InputWithLabel";
 import Button from "../button/AuthButton";
+import GoogleAuthBtn from "../button/GoogleAuthBtn";
 
 const BasicInfo = () => {
   const [otpSent, setOtpSent] = useState(false);
@@ -55,66 +56,77 @@ const BasicInfo = () => {
     setOtpVerified(true);
   };
 
+  // Add Google Login Handler
+  const handleGoogleLogin = () => {
+    window.location.href = "http://localhost:5000/api/auth/google";
+  };
+
   return (
     <div className="shadow m-5 p-3 rounded-3">
       {!otpSent && !otpVerified ? (
-        <form onSubmit={handleSubmit}>
-          {error && <div className="alert alert-danger">{error}</div>}
-          <div className="row">
+        <>
+          <form onSubmit={handleSubmit}>
+            {error && <div className="alert alert-danger">{error}</div>}
+            <div className="row">
+              <InputWithLabel
+                htmlFor="name"
+                labelText="First Name"
+                type="text"
+                name="name"
+                placeholder="John"
+                value={formData.name}
+                onChange={handleChange}
+              />
+              <InputWithLabel
+                htmlFor="surname"
+                labelText="Surname"
+                type="text"
+                name="surname"
+                placeholder="Doe"
+                value={formData.surname}
+                onChange={handleChange}
+              />
+            </div>
             <InputWithLabel
-              htmlFor="name"
-              labelText="First Name"
-              type="text"
-              name="name"
-              placeholder="John"
-              value={formData.name}
+              htmlFor="email"
+              labelText="Email Address"
+              type="email"
+              name="email"
+              placeholder="johndoe@example.com"
+              value={formData.email}
               onChange={handleChange}
             />
             <InputWithLabel
-              htmlFor="surname"
-              labelText="Surname"
-              type="text"
-              name="surname"
-              placeholder="Doe"
-              value={formData.surname}
+              htmlFor="password"
+              labelText="Password"
+              type="password"
+              name="password"
+              placeholder="password"
+              value={formData.password}
               onChange={handleChange}
             />
-          </div>
-          <InputWithLabel
-            htmlFor="email"
-            labelText="Email Address"
-            type="email"
-            name="email"
-            placeholder="johndoe@example.com"
-            value={formData.email}
-            onChange={handleChange}
-          />
-          <InputWithLabel
-            htmlFor="password"
-            labelText="Password"
-            type="password"
-            name="password"
-            placeholder="password"
-            value={formData.password}
-            onChange={handleChange}
-          />
-          <InputWithLabel
-            htmlFor="confirmPassword"
-            labelText="Confirm Password"
-            type="password"
-            name="confirmPassword"
-            placeholder="password"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-          />
-          <div className="d-grid gap-2 m-1">
-            <Button
-              text="Sign Up"
-              className="btn btn-primary"
-              type="submit"
+            <InputWithLabel
+              htmlFor="confirmPassword"
+              labelText="Confirm Password"
+              type="password"
+              name="confirmPassword"
+              placeholder="password"
+              value={formData.confirmPassword}
+              onChange={handleChange}
             />
+            <div className="d-grid gap-2">
+              <Button
+                text="Sign Up"
+                className="btn btn-primary"
+                type="submit"
+              />
+            </div>
+          </form>
+          <div className="text-center mt-3">
+            <p className="text-muted">OR</p>
+            <GoogleAuthBtn/>
           </div>
-        </form>
+        </>
       ) : otpSent && !otpVerified ? (
         <OTPVerification email={formData.email} onOtpVerified={handleOtpVerified} />
       ) : (
