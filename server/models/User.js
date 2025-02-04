@@ -14,7 +14,7 @@ const userSchema = new Schema({
     },
     password: {
         type: String,
-        required: true,
+        required: false,
     },
     dob: {
         type: Date,
@@ -29,7 +29,6 @@ const userSchema = new Schema({
     }
 }, { timestamps: true });
 
-// Pre-save hook to capitalize the first letter of each word in the name
 userSchema.pre('save', function (next) {
     if (this.name) {
         this.name = this.name

@@ -6,7 +6,7 @@ import InputWithLabel from "../input/InputWithLabel";
 import Button from "../button/AuthButton";
 import GoogleAuthBtn from "../button/GoogleAuthBtn";
 
-const BasicInfo = () => {
+const BasicLogin = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
   const [isGoogleSignup, setIsGoogleSignup] = useState(false); // Track Google Signup
@@ -28,37 +28,40 @@ const BasicInfo = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const { name, surname, email, password, confirmPassword, dob } = formData;
-  
+
     if (!name || !surname) {
       setError("First name and surname are required.");
       return;
     }
-  
+
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
-  
+
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/signup", {
-        name: `${name} ${surname}`,
-        email,
-        password,
-        dob,
-      });
-  
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/signup",
+        {
+          name: `${name} ${surname}`,
+          email,
+          password,
+          dob,
+        }
+      );
+
       if (response.data.existingUser) {
-        setError("Email already exists. Please log in or use a different email.");
+        setError(
+          "Email already exists. Please log in or use a different email."
+        );
       } else {
         alert(response.data.message);
         setOtpSent(true);
       }
-      
     } catch (error) {
       setError(error.response?.data?.message || "Error signing up");
     }
   };
-  
 
   const handleOtpVerified = () => {
     setOtpVerified(true);
@@ -69,35 +72,16 @@ const BasicInfo = () => {
       {isGoogleSignup || (otpSent && otpVerified) ? (
         <AdditionalDetails previousData={formData} />
       ) : otpSent ? (
-        <OTPVerification email={formData.email} onOtpVerified={handleOtpVerified} />
+        <OTPVerification
+          email={formData.email}
+          onOtpVerified={handleOtpVerified}
+        />
       ) : (
         <>
           <form onSubmit={handleSubmit}>
             {error && <div className="alert alert-danger">{error}</div>}
-            <div className="row">
-              <InputWithLabel
-              className="col mb-3"
-                htmlFor="name"
-                labelText="First Name"
-                type="text"
-                name="name"
-                placeholder="John"
-                value={formData.name}
-                onChange={handleChange}
-              />
-              <InputWithLabel
-              className="col mb-3"
-                htmlFor="surname"
-                labelText="Surname"
-                type="text"
-                name="surname"
-                placeholder="Doe"
-                value={formData.surname}
-                onChange={handleChange}
-              />
-            </div>
             <InputWithLabel
-            className="mb-3"
+              className="mb-3"
               htmlFor="email"
               labelText="Email Address"
               type="email"
@@ -107,7 +91,6 @@ const BasicInfo = () => {
               onChange={handleChange}
             />
             <InputWithLabel
-            className="mb-3"
               htmlFor="password"
               labelText="Password"
               type="password"
@@ -116,29 +99,30 @@ const BasicInfo = () => {
               value={formData.password}
               onChange={handleChange}
             />
-            <InputWithLabel
-            className="mb-3"
-              htmlFor="confirmPassword"
-              labelText="Confirm Password"
-              type="password"
-              name="confirmPassword"
-              placeholder="password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-            />
+            <div className="text-end mb-3">
+              <a href="#">Forgot Password?</a>
+            </div>
             <div className="d-grid gap-2">
-              <Button text="Sign Up" className="btn btn-primary" type="submit" />
+              <Button
+                text="Sign In"
+                className="btn btn-primary"
+                type="submit"
+              />
             </div>
           </form>
           <div className="text-center mt-3">
             <p className="text-muted">OR</p>
             <GoogleAuthBtn setIsGoogleSignup={setIsGoogleSignup}/>
           </div>
-          <div><p>Already Have an Account<a href="/login">Log In</a></p></div>
+          <div>
+            <p>
+              Don't Have an Account<a href="/signup">Sign Up</a>
+            </p>
+          </div>
         </>
       )}
     </div>
   );
 };
 
-export default BasicInfo;
+export default BasicLogin;

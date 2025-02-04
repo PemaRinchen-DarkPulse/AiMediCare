@@ -108,6 +108,7 @@ app.get("/auth/google/callback",
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 app.post("/auth/google/token", async (req, res) => {
   const { token } = req.body;
+
   try {
     const ticket = await client.verifyIdToken({
       idToken: token,
@@ -117,31 +118,37 @@ app.post("/auth/google/token", async (req, res) => {
     const payload = ticket.getPayload();
 
     // Check if the user exists
-    let user = await User.findOne({ googleId: payload.sub });
+    let user = await User.findOne({ email: payload.email });
 
-    if (!user) {
-      // Create a new user
-      user = new User({
-        googleId: payload.sub,
-        email: payload.email,
-        name: payload.name,
-        picture: payload.picture,
+    if (user) {
+      // If user exists, respond accordingly
+      return res.status(200).json({
+        existingUser: true,
+        message: "User already exists",
       });
-      await user.save();
     }
 
-    // Log the user in via session
+    // Create a new user if not exists
+    user = new User({
+      googleId: payload.sub,
+      email: payload.email,
+      name: payload.name,
+      picture: payload.picture,
+    });
+    await user.save();
+
     req.login(user, (err) => {
       if (err) {
         return res.status(500).send("Error logging in");
       }
-      res.status(200).send("Login successful");
+      res.status(200).json({ message: "Signup successful" });
     });
   } catch (err) {
     console.error(err);
-    res.status(401).send("Invalid Google token");
+    res.status(401).json({ message: "Invalid Google token" });
   }
 });
+
 
 // Logout Route
 app.get("/logout", (req, res) => {

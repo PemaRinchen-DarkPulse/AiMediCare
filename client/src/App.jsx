@@ -2,7 +2,7 @@ import React from 'react'
 import { BrowserRouter as Router,Routes,Route } from 'react-router-dom'
 import './App.css'
 import LandingPage from './pages/LandingPage'
-import Login from './components/userAuth/Login'
+import Login from './pages/Login'
 import Signup from './pages/SignUp'
 import Dashboard from './pages/Dashboard'
 import { GoogleOAuthProvider } from "@react-oauth/google";

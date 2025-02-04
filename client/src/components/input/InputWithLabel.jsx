@@ -2,7 +2,7 @@ import React from "react";
 
 const InputWithLabel = (props) => {
   return (
-    <div className="col mb-3">
+    <div className={props.className}>
       <label htmlFor={props.htmlFor} className="form-label">
         {props.labelText}
       </label>
@@ -12,7 +12,7 @@ const InputWithLabel = (props) => {
         name={props.name}
         placeholder={props.placeholder}
         value={props.value}
-        onChange={props.onChange} // Use the handler passed from parent
+        onChange={props.onChange} 
       />
     </div>
   );
