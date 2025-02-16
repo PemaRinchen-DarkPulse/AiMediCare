@@ -1,51 +1,45 @@
-import React from 'react';
-import { FaTachometerAlt, FaCalendarCheck, FaUserInjured, FaFileInvoiceDollar, FaCog } from 'react-icons/fa';
+import React from "react";
+import { 
+  FaTachometerAlt, FaCalendarCheck, FaFileMedical, FaPills, 
+  FaNotesMedical, FaEnvelope, FaFileInvoiceDollar, FaCog 
+} from "react-icons/fa";
 
 const SideBarList = ({ isOpen }) => {
-  return (
-    <div>
-      <ul style={styles.list}>
-        <li style={{ ...styles.listItem, ...(isOpen ? {} : styles.centerItem) }}>
-          <FaTachometerAlt style={styles.icon} /> {isOpen && 'Dashboard'}
-        </li>
-        <li style={{ ...styles.listItem, ...(isOpen ? {} : styles.centerItem) }}>
-          <FaCalendarCheck style={styles.icon} /> {isOpen && 'Appointments'}
-        </li>
-        <li style={{ ...styles.listItem, ...(isOpen ? {} : styles.centerItem) }}>
-          <FaUserInjured style={styles.icon} /> {isOpen && 'Patient Records'}
-        </li>
-        <li style={{ ...styles.listItem, ...(isOpen ? {} : styles.centerItem) }}>
-          <FaFileInvoiceDollar style={styles.icon} /> {isOpen && 'Billing'}
-        </li>
-        <li style={{ ...styles.listItem, ...(isOpen ? {} : styles.centerItem) }}>
-          <FaCog style={styles.icon} /> {isOpen && 'Settings'}
-        </li>
-      </ul>
-    </div>
-  );
-};
+  const menuItems = [
+    { icon: <FaTachometerAlt />, label: "Dashboard" },
+    { icon: <FaCalendarCheck />, label: "Appointments" },
+    { icon: <FaFileMedical />, label: "Health Records" },
+    { icon: <FaPills />, label: "Medications" },
+    { icon: <FaNotesMedical />, label: "Pre-Visit Triage" },
+    { icon: <FaEnvelope />, label: "Messages" },
+    { icon: <FaFileInvoiceDollar />, label: "Billing & Insurance" },
+    { icon: <FaCog />, label: "Settings" }
+  ];
 
-const styles = {
-  list: {
-    listStyleType: 'none',
-    padding: 0,
-    margin: 0,
-  },
-  listItem: {
-    padding: '15px',
-    display: 'flex',
-    alignItems: 'center',
-    cursor: 'pointer',
-    textAlign: 'left', // Default text alignment for open sidebar
-  },
-  centerItem: {
-    justifyContent: 'center', // Center icon and text when sidebar is collapsed
-    textAlign: 'center',      // Center the text when sidebar is collapsed
-  },
-  icon: {
-    marginRight: '10px',
-    fontSize: '18px', // Adjust icon size if needed
-  }
+  return (
+    <ul style={{ padding: 0, margin: 0, listStyleType: "none" }}>
+      {menuItems.map((item, index) => (
+        <li
+          key={index}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            padding: "12px",
+            cursor: "pointer",
+            transition: "0.3s",
+            color: "#fff",
+            background: "#2C3E50",
+            margin: "5px 0",
+            borderRadius: "8px",
+            justifyContent: isOpen ? "flex-start" : "center", // Align items properly
+          }}
+        >
+          <span style={{ fontSize: "18px" }}>{item.icon}</span>
+          {isOpen && <span style={{ marginLeft: "10px" }}>{item.label}</span>}
+        </li>
+      ))}
+    </ul>
+  );
 };
 
 export default SideBarList;
