@@ -8,6 +8,12 @@ import Signup from "./pages/SignUp";
 import Aimedicare from "./pages/Aimedicare";
 import Dashboard from "./pages/Dashboard";
 import Appointments from "./pages/Appointments";
+import HealthRecords from "./pages/HealthRecords";
+import Medications from "./Medications";
+import PrevisitTriage from "./pages/PrevisitTriage";
+import Messages from "./pages/Messages";
+import BillingInsurance from "./pages/BillingInsurance";
+import Settings from "./Settings";
 
 function App() {
   return (
@@ -21,6 +27,12 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="appointments" element={<Appointments />} />
+            <Route path="health-records" element={<HealthRecords/>} />
+            <Route path="medications" element={<Medications/>} />
+            <Route path="triage" element={<PrevisitTriage/>} />
+            <Route path="messages" element={<Messages/>} />
+            <Route path="billing" element={<BillingInsurance/>} />
+            <Route path="settings" element={<Settings/>} />
           </Route>
         </Routes>
       </Router>
