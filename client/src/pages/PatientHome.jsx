@@ -5,7 +5,7 @@ import ProfileDropdown from "../components/profileManagemnt/ProfileDropdown";
 import Navigation from "../components/Navigation";
 import ChatBotBubble from "../components/chatbot/ChatBotBubble";
 
-const Aimedicare = () => {
+const PatientHome = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -63,4 +63,4 @@ const Aimedicare = () => {
   );
 };
 
-export default Aimedicare;
+export default PatientHome;

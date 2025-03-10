@@ -1,5 +1,5 @@
 import React from "react";
-import { FaSearch, FaBell, FaPhone, FaBars } from "react-icons/fa";
+import { FaSearch, FaBell, FaPhone, FaBars, FaCog } from "react-icons/fa";
 
 const Navigation = ({ toggleSidebar, toggleDropdown }) => {
   return (
@@ -31,9 +31,10 @@ const Navigation = ({ toggleSidebar, toggleDropdown }) => {
         </button>
       </div>
 
-      {/* Right Section - Contact Us, Notifications, Profile */}
+      
       <div className="d-flex align-items-center gap-4">
-       
+        {/* Settings Icon */}
+        <FaCog size={22} className="cursor-pointer text-muted" />
 
         {/* Notification Bell */}
         <div className="position-relative cursor-pointer text-muted">

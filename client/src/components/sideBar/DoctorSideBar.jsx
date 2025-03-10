@@ -5,15 +5,16 @@ import {
   FaNotesMedical, FaEnvelope, FaFileInvoiceDollar, FaCog 
 } from "react-icons/fa";
 
-const SideBarList = ({ isOpen }) => {
+const DoctorSideBar = ({ isOpen }) => {
   const menuItems = [
     { icon: <FaTachometerAlt />, label: "Dashboard", path: "/patient/dashboard" },
     { icon: <FaCalendarCheck />, label: "Appointments", path: "/patient/appointments" },
     { icon: <FaFileMedical />, label: "Health Records", path: "/patient/health-records" },
     { icon: <FaPills />, label: "Medications", path: "/patient/medications" },
     { icon: <FaNotesMedical />, label: "Pre-Visit Triage", path: "/patient/triage" },
-    { icon: <FaEnvelope />, label: "Messages", path: "/patient/messages" },
-    { icon: <FaFileInvoiceDollar />, label: "Billing & Insurance", path: "/patient/billing" },
+    { icon: <FaEnvelope />, label: "Messages", path: "/aimedicare/messages" },
+    { icon: <FaFileInvoiceDollar />, label: "Billing & Insurance", path: "/aimedicare/billing" },
+    { icon: <FaCog />, label: "Settings", path: "/aimedicare/settings" }
   ];
 
   return (
@@ -42,4 +43,4 @@ const SideBarList = ({ isOpen }) => {
   );
 };
 
-export default SideBarList;
+export default DoctorSideBar;
