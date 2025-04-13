@@ -1,0 +1,192 @@
+/* Main Auth Container */
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fa;
+}
+
+/* Auth Card Styling */
+.auth-card {
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  max-height: 750px; /* Increased height from 700px to 750px */
+  min-height: 720px; /* Increased min-height from 680px to 720px */
+  width: 100%; /* Ensure full width of container */
+  margin: 0 auto;
+}
+
+/* Form Panel 55/45 Split */
+.form-panel {
+  width: 55%;
+  flex: 0 0 55%;
+}
+
+.promo-panel {
+  width: 45%;
+  flex: 0 0 45%;
+}
+
+/* Logo Styling */
+.logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  background-color: #0052CC;
+  border-radius: 4px;
+}
+
+/* Right Panel Styling */
+.auth-right-panel {
+  background-color: #0052CC;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2.5rem !important; /* Adjusted padding */
+}
+
+.auth-illustration {
+  max-width: 80%;
+  height: auto;
+  max-height: 250px; /* Control illustration height */
+}
+
+/* Pagination Dots */
+.pagination-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.4);
+  transition: all 0.3s ease;
+}
+
+.dot.active {
+  background-color: white;
+  width: 12px;
+  height: 12px;
+}
+
+/* Divider Line */
+.divider {
+  position: relative;
+  text-align: center;
+}
+
+.divider:before, .divider:after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: calc(50% - 70px);
+  height: 1px;
+  background-color: #dee2e6;
+}
+
+.divider:before {
+  left: 0;
+}
+
+.divider:after {
+  right: 0;
+}
+
+.divider-text {
+  display: inline-block;
+  padding: 0 15px;
+  background-color: #fff;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Social Login Buttons */
+.social-login-buttons .btn {
+  border-radius: 4px;
+  padding: 10px 15px;
+}
+
+/* Form Controls */
+.form-control {
+  padding: 10px 15px; /* Slightly smaller padding */
+  border-radius: 4px;
+}
+
+.input-group-text {
+  background-color: transparent;
+}
+
+/* Remember Me Checkbox */
+.auth-checkbox .form-check-input:checked {
+  background-color: #0052CC;
+  border-color: #0052CC;
+}
+
+/* Forgot Password Link */
+.forgot-password {
+  color: #0052CC;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+}
+
+/* Custom Button */
+.btn-primary {
+  background-color: #0052CC;
+  border-color: #0052CC;
+}
+
+.btn-primary:hover {
+  background-color: #0043a7;
+  border-color: #0043a7;
+}
+
+/* Responsive Styles */
+@media (max-width: 991.98px) {
+  .auth-card {
+    margin: 1rem auto;
+    max-height: none; /* Remove height restriction on mobile */
+  }
+  
+  .form-panel {
+    width: 100%;
+    flex: 0 0 100%;
+  }
+}
+
+@media (min-width: 992px) {
+  .auth-container .col-lg-9, .auth-container .col-lg-10 {
+    max-width: 90%; /* Slightly reduced width on larger screens */
+  }
+}
+
+@media (min-width: 1200px) {
+  .auth-container .col-lg-9, .auth-container .col-lg-10 {
+    max-width: 1000px; /* Slightly reduced fixed width on extra-large screens */
+  }
+}
+
+@media (max-width: 575.98px) {
+  .social-login-buttons {
+    flex-direction: column;
+  }
+  
+  .social-login-buttons .btn {
+    width: 100% !important;
+    margin-bottom: 10px;
+  }
+}

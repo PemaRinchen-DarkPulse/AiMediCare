@@ -1,44 +1,37 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Container } from 'react-bootstrap';
+import '../styles/LandingPage.css';
+
+// Import landing page components
+import NavBar from '../components/landing/NavBar';
 import HeroSection from '../components/landing/HeroSection';
 import FeaturesSection from '../components/landing/FeaturesSection';
 import BenefitsSection from '../components/landing/BenefitsSection';
 import HowItWorksSection from '../components/landing/HowItWorksSection';
+import TestimonialsSection from '../components/landing/TestimonialsSection';
 import FAQSection from '../components/landing/FAQSection';
-import NavBar from '../components/landing/NavBar';
-import '../styles/LandingPage.css';
-import LoginSection from '../components/landing/LoginSection';
+import CTASection from '../components/landing/CTASection';
+import { Footer } from '../components/Footer';
 
 const LandingPage = () => {
   const [activeSection, setActiveSection] = useState('hero');
-  const heroRef = useRef(null);
-  const featuresRef = useRef(null);
-  const benefitsRef = useRef(null);
-  const howItWorksRef = useRef(null);
-  const faqRef = useRef(null);
-  const loginRef = useRef(null);
 
+  // Track active section based on scroll position
   useEffect(() => {
     const handleScroll = () => {
-      const sections = [
-        { ref: heroRef, id: 'hero' },
-        { ref: featuresRef, id: 'features' },
-        { ref: benefitsRef, id: 'benefits' },
-        { ref: howItWorksRef, id: 'how-it-works' },
-        { ref: faqRef, id: 'faq' },
-        { ref: loginRef, id: 'login' },
-      ];
+      const sections = ['hero', 'features', 'benefits', 'how-it-works', 'testimonials', 'faq'];
+      const scrollPosition = window.scrollY + 100;
 
-      const currentSection = sections.find(section => {
-        if (section.ref.current) {
-          const top = section.ref.current.offsetTop;
-          const height = section.ref.current.offsetHeight;
-          return window.scrollY >= (top - height / 3) && window.scrollY < (top + height - height / 3);
+      // Find the current active section based on scroll position
+      for (const section of sections) {
+        const element = document.getElementById(section);
+        if (element) {
+          const { offsetTop, offsetHeight } = element;
+          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+            setActiveSection(section);
+            break;
+          }
         }
-        return false;
-      });
-
-      if (currentSection) {
-        setActiveSection(currentSection.id);
       }
     };
 
@@ -48,13 +41,63 @@ const LandingPage = () => {
 
   return (
     <div className="landing-page">
+      {/* Navigation */}
       <NavBar activeSection={activeSection} />
-      <section ref={heroRef}><HeroSection /></section>
-      <section ref={featuresRef}><FeaturesSection /></section>
-      <section ref={benefitsRef}><BenefitsSection /></section>
-      <section ref={howItWorksRef}><HowItWorksSection /></section>
-      <section ref={faqRef}><FAQSection /></section>
-    
+
+      {/* Main Content */}
+      <main>
+        {/* Hero Section */}
+        <section id="hero">
+          <HeroSection />
+        </section>
+
+        {/* Features Section */}
+        <section id="features" className="py-5">
+          <Container>
+            <FeaturesSection />
+          </Container>
+        </section>
+
+        {/* Benefits Section */}
+        <section id="benefits" className="py-5 bg-light">
+          <Container>
+            <BenefitsSection />
+          </Container>
+        </section>
+
+        {/* How It Works Section */}
+        <section id="how-it-works" className="py-5">
+          <Container>
+            <HowItWorksSection />
+          </Container>
+        </section>
+        
+        {/* Testimonials Section */}
+        <section id="testimonials" className="py-5">
+          <TestimonialsSection />
+        </section>
+
+        {/* FAQ Section */}
+        <section id="faq" className="py-5">
+          <Container>
+            <FAQSection />
+          </Container>
+        </section>
+
+        {/* CTA Section */}
+        <section id="cta" className="py-5 bg-primary text-white">
+          <Container>
+            <CTASection />
+          </Container>
+        </section>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-dark text-light py-5">
+        <Container>
+          <Footer />
+        </Container>
+      </footer>
     </div>
   );
 };

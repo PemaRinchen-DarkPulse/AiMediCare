@@ -1,12 +1,13 @@
 const transporter = require('../services/emailServices.js'); // Import the transporter service
 
 // Send email function
-const sendEmail = async (to, subject, text) => {
+const sendEmail = async (to, subject, text, html) => {
   const mailOptions = {
     from: "blazepknight@gmail.com", // Sender's email
     to,
     subject,
-    text
+    text,
+    html // Add HTML support
   };
 
   try {
@@ -17,4 +18,4 @@ const sendEmail = async (to, subject, text) => {
   }
 };
 
-module.exports = sendEmail;
+module.exports = { sendEmail };

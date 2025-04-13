@@ -1,72 +1,204 @@
 import React, { useState } from 'react';
-import { FaVideo, FaCommentMedical, FaPhoneAlt, FaMedkit, FaChartLine } from 'react-icons/fa';
+import { Row, Col, Card, Nav, Tab } from 'react-bootstrap';
 import { motion } from 'framer-motion';
+import { 
+  FaUserAlt, FaStethoscope, FaPrescriptionBottleAlt,
+  FaVideo, FaRobot, FaCalendarAlt, FaClipboardList,
+  FaChartLine, FaDatabase, FaNotesMedical, FaBrain, FaHeartbeat,
+  FaPills, FaPhoneAlt, FaBell
+} from 'react-icons/fa';
+
+const FeatureCard = ({ icon, title, description, delay }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay }}
+      viewport={{ once: true }}
+    >
+      <Card className="h-100 border-0 shadow-sm">
+        <Card.Body className="p-4">
+          <div className="d-flex justify-content-center">
+            <div className="feature-icon bg-primary bg-opacity-10 text-primary rounded-circle mb-4 d-flex align-items-center justify-content-center" style={{ width: '70px', height: '70px', minWidth: '70px' }}>
+              {icon}
+            </div>
+          </div>
+          <Card.Title className="mb-3 text-center">{title}</Card.Title>
+          <Card.Text className="text-muted text-center">{description}</Card.Text>
+        </Card.Body>
+      </Card>
+    </motion.div>
+  );
+};
 
 const FeaturesSection = () => {
-  const [activeTab, setActiveTab] = useState('video');
+  const [key, setKey] = useState('patients');
 
-  const featuresData = {
-    video: {
-      icon: <FaVideo />,
-      title: 'Virtual Consultation via Video',
-      description: 'Connect with doctors face-to-face from the comfort of your home. Get real-time diagnosis and personalized advice.',
-      image: 'https://source.unsplash.com/600x400/?telemedicine'
+  const patientFeatures = [
+    {
+      icon: <FaVideo size={24} />,
+      title: "Virtual Consultations",
+      description: "Connect with healthcare providers via secure HD video from the comfort of your home.",
+      delay: 0.1
     },
-    chat: {
-      icon: <FaCommentMedical />,
-      title: 'Instant Chat with Specialists',
-      description: 'Get quick answers and medical advice through secure chat. Perfect for follow-up questions and minor concerns.',
-      image: 'https://source.unsplash.com/600x400/?online,chat'
+    {
+      icon: <FaRobot size={24} />,
+      title: "AI Symptom Checker",
+      description: "Advanced AI analyzes your symptoms to provide preliminary insights before consultation.",
+      delay: 0.2
     },
-    phone: {
-      icon: <FaPhoneAlt />,
-      title: 'Talk to a Doctor Over the Phone',
-      description: 'Speak directly with healthcare professionals for immediate assistance and support.',
-      image: 'https://source.unsplash.com/600x400/?phone,medical'
+    {
+      icon: <FaCalendarAlt size={24} />,
+      title: "Smart Appointment Scheduling",
+      description: "AI-powered scheduling that finds the perfect time slot for patients and doctors.",
+      delay: 0.3
     },
-    symptomChecker: {
-      icon: <FaMedkit />,
-      title: 'AI Symptom Checker',
-      description: 'Use our intelligent symptom checker to understand your symptoms and find the right care.',
-      image: 'https://source.unsplash.com/600x400/?ai,diagnosis'
+    {
+      icon: <FaClipboardList size={24} />,
+      title: "Pre-visit Triaging",
+      description: "Complete preliminary assessments prior to appointments to maximize consultation time.",
+      delay: 0.4
     },
-    analytics: {
-      icon: <FaChartLine />,
-      title: 'Health Analytics Dashboard',
-      description: 'Track your health data and gain insights into your well-being with our comprehensive analytics dashboard.',
-      image: 'https://source.unsplash.com/600x400/?health,analytics'
+    {
+      icon: <FaChartLine size={24} />,
+      title: "Health Analytics",
+      description: "Personalized health insights and trends based on your medical history and current condition.",
+      delay: 0.5
     }
-  };
+  ];
+
+  const doctorFeatures = [
+    {
+      icon: <FaBrain size={24} />,
+      title: "AI-Assisted Diagnostics",
+      description: "Leverage AI to enhance diagnostic accuracy with evidence-based suggestions.",
+      delay: 0.1
+    },
+    {
+      icon: <FaDatabase size={24} />,
+      title: "EHR Integration",
+      description: "Seamlessly access and update electronic health records during consultations.",
+      delay: 0.2
+    },
+    {
+      icon: <FaNotesMedical size={24} />,
+      title: "Clinical Decision Support",
+      description: "Get real-time clinical insights and treatment recommendations based on patient data.",
+      delay: 0.3
+    },
+    {
+      icon: <FaHeartbeat size={24} />,
+      title: "Chronic Disease Management",
+      description: "AI-powered tools to monitor and manage patients with chronic conditions.",
+      delay: 0.4
+    }
+  ];
+
+  const pharmacistFeatures = [
+    {
+      icon: <FaPrescriptionBottleAlt size={24} />,
+      title: "AI-Powered Prescription Management",
+      description: "Intelligent prescription validation and medication interaction checks.",
+      delay: 0.1
+    },
+    {
+      icon: <FaPhoneAlt size={24} />,
+      title: "Telepharmacy Services",
+      description: "Provide medication consultations remotely through secure video channels.",
+      delay: 0.2
+    },
+    {
+      icon: <FaBell size={24} />,
+      title: "Medication Adherence Monitoring",
+      description: "Track patient medication adherence and send personalized reminders.",
+      delay: 0.3
+    },
+    {
+      icon: <FaPills size={24} />,
+      title: "Inventory Optimization",
+      description: "AI-driven inventory management that predicts medication demand.",
+      delay: 0.4
+    }
+  ];
 
   return (
-    <section id="features" className="features-section">
-      <h2>Key Features</h2>
-      <div className="features-tabs">
-        {Object.keys(featuresData).map(key => (
-          <button
-            key={key}
-            className={`feature-tab ${activeTab === key ? 'active' : ''}`}
-            onClick={() => setActiveTab(key)}
-          >
-            {featuresData[key].icon} {featuresData[key].title}
-          </button>
-        ))}
-      </div>
-      <div className="feature-content">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="feature-details"
-        >
-          <h3>{featuresData[activeTab].title}</h3>
-          <p>{featuresData[activeTab].description}</p>
-          <img src={featuresData[activeTab].image} alt={featuresData[activeTab].title} loading="lazy" />
-        </motion.div>
-      </div>
-    </section>
+    <div className="features-section py-5">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        viewport={{ once: true }}
+        className="text-center mb-5"
+      >
+        <h6 className="text-primary fw-bold mb-3">OUR FEATURES</h6>
+        <h2 className="display-5 fw-bold mb-4">AI-Powered Healthcare Solutions</h2>
+        <p className="lead text-muted mx-auto" style={{ maxWidth: '700px' }}>
+          Our platform offers specialized features for patients, healthcare providers, 
+          and pharmacists to create a seamless healthcare ecosystem.
+        </p>
+      </motion.div>
+
+      <Tab.Container id="features-tabs" activeKey={key} onSelect={(k) => setKey(k)}>
+        <Nav variant="pills" className="flex-column flex-md-row justify-content-center mb-5">
+          <Nav.Item>
+            <Nav.Link 
+              eventKey="patients" 
+              className="mx-2 mb-2 mb-md-0 text-center px-4"
+            >
+              <FaUserAlt className="me-2" /> For Patients
+            </Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link 
+              eventKey="doctors" 
+              className="mx-2 mb-2 mb-md-0 text-center px-4"
+            >
+              <FaStethoscope className="me-2" /> For Doctors
+            </Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link 
+              eventKey="pharmacists" 
+              className="mx-2 mb-2 mb-md-0 text-center px-4"
+            >
+              <FaPrescriptionBottleAlt className="me-2" /> For Pharmacists
+            </Nav.Link>
+          </Nav.Item>
+        </Nav>
+        
+        <Tab.Content>
+          <Tab.Pane eventKey="patients">
+            <Row xs={1} md={2} lg={3} className="g-4">
+              {patientFeatures.map((feature, index) => (
+                <Col key={index}>
+                  <FeatureCard {...feature} />
+                </Col>
+              ))}
+            </Row>
+          </Tab.Pane>
+          
+          <Tab.Pane eventKey="doctors">
+            <Row xs={1} md={2} lg={4} className="g-4">
+              {doctorFeatures.map((feature, index) => (
+                <Col key={index}>
+                  <FeatureCard {...feature} />
+                </Col>
+              ))}
+            </Row>
+          </Tab.Pane>
+          
+          <Tab.Pane eventKey="pharmacists">
+            <Row xs={1} md={2} lg={4} className="g-4">
+              {pharmacistFeatures.map((feature, index) => (
+                <Col key={index}>
+                  <FeatureCard {...feature} />
+                </Col>
+              ))}
+            </Row>
+          </Tab.Pane>
+        </Tab.Content>
+      </Tab.Container>
+    </div>
   );
 };
 
