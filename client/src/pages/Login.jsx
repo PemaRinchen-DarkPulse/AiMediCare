@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Container, Row, Col, Form, Button, 
-  Card, InputGroup, FormCheck, Alert
+  Card, InputGroup, FormCheck
 } from 'react-bootstrap';
 import { 
   FaEnvelope, FaLock, FaEye, FaEyeSlash, 
-  FaGoogle, FaFacebook, FaCheckCircle, FaExclamationTriangle
+  FaGoogle, FaFacebook
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import GoogleAuthBtn from '../components/button/GoogleAuthBtn';
@@ -24,16 +24,19 @@ const Login = () => {
   const { login } = useAuth();
   
   // State management
-  const [validated, setValidated] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     rememberMe: false
   });
+  const [formErrors, setFormErrors] = useState({
+    email: '',
+    password: ''
+  });
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [isGoogleSignup, setIsGoogleSignup] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [verificationStatus, setVerificationStatus] = useState(null);
 
   // Check for verification status in URL parameters
   useEffect(() => {
@@ -42,45 +45,86 @@ const Login = () => {
     const message = params.get('message');
     
     if (verification === 'success') {
-      setVerificationStatus({
-        type: 'success',
-        message: 'Your email has been successfully verified! You can now log in.'
+      toast.success('Your email has been successfully verified! You can now log in.', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
       });
-      toast.success('Email verification successful!');
     } else if (verification === 'failed') {
       let errorMsg = 'Email verification failed.';
       if (message === 'invalid') {
         errorMsg = 'The verification link has expired or is invalid. Please request a new one.';
       }
-      setVerificationStatus({
-        type: 'danger',
-        message: errorMsg
+      toast.error(errorMsg, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
       });
-      toast.error(errorMsg);
     }
   }, [location]);
+
+  // Validate form fields
+  const validateField = (name, value) => {
+    switch (name) {
+      case 'email':
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return value.trim() === '' 
+          ? 'Email is required' 
+          : !emailRegex.test(value) 
+            ? 'Please enter a valid email address' 
+            : '';
+      case 'password':
+        return value.trim() === '' ? 'Password is required' : '';
+      default:
+        return '';
+    }
+  };
 
   // Handle input changes
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    const newValue = type === 'checkbox' ? checked : value;
+    
     setFormData({
       ...formData,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: newValue
     });
+    
+    // Clear error when user types
+    if (isSubmitted) {
+      setFormErrors({
+        ...formErrors,
+        [name]: validateField(name, newValue)
+      });
+    }
   };
 
   // Handle form submission
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const form = event.currentTarget;
     
-    if (form.checkValidity() === false) {
-      event.stopPropagation();
-      setValidated(true);
+    // Validate all fields
+    const errors = {
+      email: validateField('email', formData.email),
+      password: validateField('password', formData.password)
+    };
+    
+    setFormErrors(errors);
+    setIsSubmitted(true);
+    
+    // Check if there are any errors
+    if (Object.values(errors).some(error => error !== '')) {
       return;
     }
     
-    setValidated(true);
     setIsLoading(true);
     
     try {
@@ -131,12 +175,6 @@ const Login = () => {
                   <h2 className="fw-bold mb-2">Log in to your Account</h2>
                   <p className="text-muted mb-4 text-center">Welcome back!</p>
                   
-                  {verificationStatus && (
-                    <Alert variant={verificationStatus.type} className="text-center">
-                      {verificationStatus.message}
-                    </Alert>
-                  )}
-
                   <div className="social-login-buttons mb-3 d-flex justify-content-center">
                     <GoogleAuthBtn setIsGoogleSignup={setIsGoogleSignup} />
                   </div>
@@ -145,11 +183,11 @@ const Login = () => {
                     <span className="divider-text">or continue with email</span>
                   </div>
                   
-                  <Form noValidate validated={validated} onSubmit={handleSubmit} className="login-form">
+                  <Form noValidate onSubmit={handleSubmit} className="login-form">
                     <div className="form-content">
                       <Form.Group className="mb-3" controlId="email">
                         <Form.Label>Email Address</Form.Label>
-                        <InputGroup hasValidation>
+                        <InputGroup>
                           <InputGroup.Text>
                             <FaEnvelope />
                           </InputGroup.Text>
@@ -159,18 +197,20 @@ const Login = () => {
                             name="email"
                             value={formData.email}
                             onChange={handleChange}
-                            required
-                            pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                            isInvalid={!!formErrors.email}
+                            className="no-validation-icon"
                           />
-                          <Form.Control.Feedback type="invalid">
-                            Please provide a valid email address.
-                          </Form.Control.Feedback>
                         </InputGroup>
+                        {formErrors.email && (
+                          <div className="text-danger small mt-1">
+                            {formErrors.email}
+                          </div>
+                        )}
                       </Form.Group>
 
                       <Form.Group className="mb-4" controlId="password">
                         <Form.Label>Password</Form.Label>
-                        <InputGroup hasValidation>
+                        <InputGroup>
                           <InputGroup.Text>
                             <FaLock />
                           </InputGroup.Text>
@@ -180,7 +220,8 @@ const Login = () => {
                             name="password"
                             value={formData.password}
                             onChange={handleChange}
-                            required
+                            isInvalid={!!formErrors.password}
+                            className="no-validation-icon"
                           />
                           <Button 
                             variant="outline-secondary"
@@ -188,10 +229,12 @@ const Login = () => {
                           >
                             {passwordVisible ? <FaEyeSlash /> : <FaEye />}
                           </Button>
-                          <Form.Control.Feedback type="invalid">
-                            Please enter your password.
-                          </Form.Control.Feedback>
                         </InputGroup>
+                        {formErrors.password && (
+                          <div className="text-danger small mt-1">
+                            {formErrors.password}
+                          </div>
+                        )}
                       </Form.Group>
 
                       <div className="d-flex justify-content-between align-items-center mb-4">

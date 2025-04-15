@@ -9,7 +9,7 @@ const InitialRegistrationForm = ({ formData, handleChange, validated }) => {
       
       <Form.Group className="mb-3" controlId="fullName">
         <Form.Label>Full Name</Form.Label>
-        <InputGroup hasValidation>
+        <InputGroup>
           <InputGroup.Text>
             <FaUserAlt />
           </InputGroup.Text>
@@ -20,18 +20,22 @@ const InitialRegistrationForm = ({ formData, handleChange, validated }) => {
             value={formData.fullName || ''}
             onChange={handleChange}
             required
+            isInvalid={validated && !formData.fullName}
+            className="no-validation-icon"
           />
-          <Form.Control.Feedback type="invalid">
-            Please provide your full name.
-          </Form.Control.Feedback>
         </InputGroup>
+        {validated && !formData.fullName && (
+          <div className="text-danger small mt-1">
+            Please provide your full name.
+          </div>
+        )}
       </Form.Group>
 
       <Row className="mb-3">
         <Col md={6}>
           <Form.Group controlId="dateOfBirth">
             <Form.Label>Date of Birth</Form.Label>
-            <InputGroup hasValidation>
+            <InputGroup>
               <InputGroup.Text>
                 <FaCalendar />
               </InputGroup.Text>
@@ -41,17 +45,21 @@ const InitialRegistrationForm = ({ formData, handleChange, validated }) => {
                 value={formData.dateOfBirth || ''}
                 onChange={handleChange}
                 required
+                isInvalid={validated && !formData.dateOfBirth}
+                className="no-validation-icon"
               />
-              <Form.Control.Feedback type="invalid">
-                Please provide your date of birth.
-              </Form.Control.Feedback>
             </InputGroup>
+            {validated && !formData.dateOfBirth && (
+              <div className="text-danger small mt-1">
+                Please provide your date of birth.
+              </div>
+            )}
           </Form.Group>
         </Col>
         <Col md={6}>
           <Form.Group controlId="gender">
             <Form.Label>Gender</Form.Label>
-            <InputGroup hasValidation>
+            <InputGroup>
               <InputGroup.Text>
                 <FaVenusMars />
               </InputGroup.Text>
@@ -61,6 +69,7 @@ const InitialRegistrationForm = ({ formData, handleChange, validated }) => {
                 onChange={handleChange}
                 required
                 isInvalid={validated && !formData.gender}
+                className="no-validation-icon"
               >
                 <option value="">Select Gender</option>
                 <option value="Male">Male</option>
@@ -68,17 +77,19 @@ const InitialRegistrationForm = ({ formData, handleChange, validated }) => {
                 <option value="Other">Other</option>
                 <option value="Prefer not to say">Prefer not to say</option>
               </Form.Select>
-              <Form.Control.Feedback type="invalid">
-                Please select your gender.
-              </Form.Control.Feedback>
             </InputGroup>
+            {validated && !formData.gender && (
+              <div className="text-danger small mt-1">
+                Please select your gender.
+              </div>
+            )}
           </Form.Group>
         </Col>
       </Row>
 
       <Form.Group className="mb-3" controlId="role">
         <Form.Label>Registering as</Form.Label>
-        <InputGroup hasValidation>
+        <InputGroup>
           <InputGroup.Text>
             <FaUserMd />
           </InputGroup.Text>
@@ -88,21 +99,24 @@ const InitialRegistrationForm = ({ formData, handleChange, validated }) => {
             onChange={handleChange}
             required
             isInvalid={validated && !formData.role}
+            className="no-validation-icon"
           >
             <option value="">Select Role</option>
             <option value="Patient">Patient</option>
             <option value="Doctor">Doctor</option>
             <option value="Pharmacist">Pharmacist</option>
           </Form.Select>
-          <Form.Control.Feedback type="invalid">
-            Please select your role.
-          </Form.Control.Feedback>
         </InputGroup>
+        {validated && !formData.role && (
+          <div className="text-danger small mt-1">
+            Please select your role.
+          </div>
+        )}
       </Form.Group>
 
       <Form.Group className="mb-3" controlId="streetAddress">
         <Form.Label>Street Address <span className="text-danger">*</span></Form.Label>
-        <InputGroup hasValidation>
+        <InputGroup>
           <InputGroup.Text>
             <FaMapMarkerAlt />
           </InputGroup.Text>
@@ -113,11 +127,15 @@ const InitialRegistrationForm = ({ formData, handleChange, validated }) => {
             value={formData.streetAddress || ''}
             onChange={handleChange}
             required
+            isInvalid={validated && !formData.streetAddress}
+            className="no-validation-icon"
           />
-          <Form.Control.Feedback type="invalid">
-            Please provide your street address.
-          </Form.Control.Feedback>
         </InputGroup>
+        {validated && !formData.streetAddress && (
+          <div className="text-danger small mt-1">
+            Please provide your street address.
+          </div>
+        )}
       </Form.Group>
     </div>
   );

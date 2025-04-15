@@ -34,16 +34,58 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+// Email Verification Handler Component
+const EmailVerificationHandler = () => {
+  const { search, pathname } = window.location;
+  const token = pathname.split('/').pop();
+  
+  React.useEffect(() => {
+    // The backend already handles the redirect, so we shouldn't need to do anything here
+    // This component now serves as a loading screen while the backend processes the verification
+    
+    // For better UX, we can directly redirect to the backend verification endpoint
+    window.location.href = `http://localhost:5000/api/auth/verify/${token}`;
+    
+    // The backend will redirect to /login?verification=success or /login?verification=failed
+  }, [token]);
+  
+  return (
+    <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
+      <div className="text-center">
+        <h2>Verifying your email...</h2>
+        <p>Please wait while we verify your account.</p>
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function App() {
   return (
     <GoogleOAuthProvider clientId="296371817530-c47k7552mctmfmrn1m3vtssu4tu7e5vh.apps.googleusercontent.com">
       <AuthProvider>
         <Router>
-          <ToastContainer position="top-right" autoClose={5000} />
+          <ToastContainer 
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop={true}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+          />
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            
+            {/* Add route for email verification */}
+            <Route path="/api/auth/verify/:token" element={<EmailVerificationHandler />} />
+            
             <Route path="/patient/*" element={
               <ProtectedRoute>
                 <PatientHome />

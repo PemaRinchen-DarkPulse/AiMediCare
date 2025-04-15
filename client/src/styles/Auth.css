@@ -126,6 +126,24 @@
   background-color: transparent;
 }
 
+/* Remove validation check marks */
+.form-control.is-valid,
+.was-validated .form-control:valid {
+  background-image: none !important;
+  border-color: #ced4da !important;
+  padding-right: 0.75rem !important;
+}
+
+.no-validation-icon:valid {
+  background-image: none !important;
+  border-color: #ced4da !important;
+}
+
+/* Hide default validation feedback */
+.valid-feedback {
+  display: none !important;
+}
+
 /* Remember Me Checkbox */
 .auth-checkbox .form-check-input:checked {
   background-color: #0052CC;
