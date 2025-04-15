@@ -68,16 +68,28 @@ export const AuthProvider = ({ children }) => {
         
         // Update user state
         setUser(data.user);
-        toast.success('Login successful!');
-        return { success: true, user: data.user };
+        
+        // Return success but don't show toast here
+        return { 
+          success: true, 
+          user: data.user,
+          toast: data.toast || { type: 'success', message: `Welcome back, ${data.user?.name || 'User'}!` }
+        };
       } else {
-        toast.error(data.message || 'Invalid credentials');
-        return { success: false, message: data.message };
+        // Return error but don't show toast here
+        return { 
+          success: false, 
+          message: data.message || 'Login failed',
+          toast: data.toast || { type: 'error', message: data.message || 'Invalid credentials' }
+        };
       }
     } catch (error) {
       console.error('Login failed:', error);
-      toast.error('Login failed. Please try again.');
-      return { success: false, message: 'Server error' };
+      return { 
+        success: false, 
+        message: 'Server error',
+        toast: { type: 'error', message: 'Login failed. Please try again.' }
+      };
     }
   };
 
@@ -96,12 +108,22 @@ export const AuthProvider = ({ children }) => {
       // Clear local storage and state
       localStorage.removeItem('token');
       setUser(null);
-      toast.info('You have been logged out.');
+      
+      // Return success for redirection handling in component
+      return { 
+        success: true, 
+        toast: { type: 'info', message: 'You have been logged out.' }
+      };
     } catch (error) {
       console.error('Logout error:', error);
       // Even if backend logout fails, clear local data
       localStorage.removeItem('token');
       setUser(null);
+      
+      return { 
+        success: true, 
+        toast: { type: 'info', message: 'You have been logged out.' }
+      };
     }
   };
 

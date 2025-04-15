@@ -190,7 +190,7 @@ exports.login = async (req, res) => {
         message: 'User does not exist. Please register first.',
         toast: {
           type: 'error',
-          message: 'Account does not exist. Please register first.'
+          message: 'User doesn\'t exist. Please register.'
         }
       });
     }
@@ -202,7 +202,7 @@ exports.login = async (req, res) => {
         message: 'Please verify your email before logging in',
         toast: {
           type: 'warning',
-          message: 'Please verify your email before logging in. Check your inbox for the verification link.'
+          message: 'Please verify your account.'
         }
       });
     }
@@ -227,6 +227,22 @@ exports.login = async (req, res) => {
     // Remove password from output
     user.password = undefined;
     
+    // Include role-specific redirect info in response
+    let redirectPath;
+    switch (user.role) {
+      case 'doctor':
+        redirectPath = '/doctor/dashboard';
+        break;
+      case 'patient':
+        redirectPath = '/patient/dashboard';
+        break;
+      case 'pharmacist':
+        redirectPath = '/pharmacist/dashboard';
+        break;
+      default:
+        redirectPath = '/patient/dashboard';
+    }
+    
     res.status(200).json({
       status: 'success',
       token,
@@ -234,7 +250,8 @@ exports.login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        redirectPath
       },
       toast: {
         type: 'success',
@@ -249,6 +266,33 @@ exports.login = async (req, res) => {
       toast: {
         type: 'error',
         message: 'Login failed. Please try again later.'
+      }
+    });
+  }
+};
+
+// Logout user
+exports.logout = async (req, res) => {
+  try {
+    // JWT is stateless, so we don't need to do anything on the server
+    // The client should remove the token from localStorage
+    
+    res.status(200).json({
+      status: 'success',
+      message: 'Logged out successfully',
+      toast: {
+        type: 'success',
+        message: 'You have been logged out successfully.'
+      }
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'An error occurred during logout.',
+      toast: {
+        type: 'error',
+        message: 'Logout failed. Please try again.'
       }
     });
   }

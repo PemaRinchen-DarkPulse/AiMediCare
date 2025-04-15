@@ -7,8 +7,14 @@ const authRoutes = require('./routes/authRoutes');
 // Create Express app
 const app = express();
 
-// Middleware
-app.use(cors());
+// Configure CORS to allow credentials and specific origins
+app.use(cors({
+  origin: 'http://localhost:5173', // Your frontend origin
+  credentials: true,               // Allow credentials (cookies, auth headers)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

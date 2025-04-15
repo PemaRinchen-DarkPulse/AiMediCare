@@ -131,6 +131,11 @@ const Login = () => {
       const result = await login(formData.email, formData.password);
       
       if (result.success) {
+        // Show success toast only once
+        if (result.toast?.type === 'success') {
+          toast.success(result.toast.message);
+        }
+        
         // Redirect based on user role
         if (result.user && result.user.role) {
           switch (result.user.role) {
@@ -144,14 +149,28 @@ const Login = () => {
               navigate('/pharmacist/dashboard');
               break;
             default:
-              navigate('/patient/dashboard');
+              navigate('/patient/dashboard'); // Default redirect
           }
         } else {
           navigate('/patient/dashboard'); // Default redirect
         }
+      } else {
+        // Show error toast only once
+        if (result.toast) {
+          switch (result.toast.type) {
+            case 'warning':
+              toast.warning(result.toast.message);
+              break;
+            case 'error':
+            default:
+              toast.error(result.toast.message);
+              break;
+          }
+        }
       }
     } catch (error) {
       console.error('Login error:', error);
+      toast.error('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }

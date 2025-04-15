@@ -17,6 +17,8 @@ import Messages from "./pages/patient/Messages";
 import BillingInsurance from "./pages/patient/BillingInsurance";
 import Settings from "./Settings";
 import PatientHome from "./pages/PatientHome";
+import DoctorHome from "./pages/DoctorHome";
+import PharmacistHome from "./pages/PharmacistHome";
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {
@@ -28,7 +30,7 @@ const ProtectedRoute = ({ children }) => {
   }
   
   if (!isAuthenticated()) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/" />; // Redirect to landing page instead of login
   }
   
   return children;
@@ -86,6 +88,7 @@ function App() {
             {/* Add route for email verification */}
             <Route path="/api/auth/verify/:token" element={<EmailVerificationHandler />} />
             
+            {/* Patient Routes */}
             <Route path="/patient/*" element={
               <ProtectedRoute>
                 <PatientHome />
@@ -99,6 +102,36 @@ function App() {
               <Route path="triage" element={<PrevisitTriage/>} />
               <Route path="messages" element={<Messages/>} />
               <Route path="billing" element={<BillingInsurance/>} />
+              <Route path="settings" element={<Settings/>} />
+            </Route>
+            
+            {/* Doctor Routes */}
+            <Route path="/doctor/*" element={
+              <ProtectedRoute>
+                <DoctorHome />
+              </ProtectedRoute>
+            }>
+              <Route index element={<Navigate to="dashboard" />} />
+              <Route path="dashboard" element={<div>Doctor poo</div>} />
+              <Route path="appointments" element={<div>Doctor Appointments</div>} />
+              <Route path="patients" element={<div>Patient Management</div>} />
+              <Route path="prescriptions" element={<div>Prescriptions</div>} />
+              <Route path="messages" element={<div>Doctor Messages</div>} />
+              <Route path="settings" element={<Settings/>} />
+            </Route>
+            
+            {/* Pharmacist Routes */}
+            <Route path="/pharmacist/*" element={
+              <ProtectedRoute>
+                <PharmacistHome />
+              </ProtectedRoute>
+            }>
+              <Route index element={<Navigate to="dashboard" />} />
+              <Route path="dashboard" element={<div>Pharmacist Dashboard</div>} />
+              <Route path="prescriptions" element={<div>Prescription Management</div>} />
+              <Route path="inventory" element={<div>Medication Inventory</div>} />
+              <Route path="patients" element={<div>Patient Records</div>} />
+              <Route path="messages" element={<div>Pharmacist Messages</div>} />
               <Route path="settings" element={<Settings/>} />
             </Route>
           </Routes>

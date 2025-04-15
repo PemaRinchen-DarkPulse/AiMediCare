@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FaSearch, FaBell, FaBars, FaCog, FaSignOutAlt } from "react-icons/fa";
 import { Dropdown } from "react-bootstrap";
 import { useAuth } from "../context/AuthContext";
+import { toast } from 'react-toastify';
 
 const Navigation = ({ toggleSidebar }) => {
   const navigate = useNavigate();
@@ -10,8 +11,11 @@ const Navigation = ({ toggleSidebar }) => {
 
   // Handle user logout
   const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+    const result = await logout();
+    if (result.toast) {
+      toast.info(result.toast.message);
+    }
+    navigate('/'); // Redirect to landing page
   };
 
   // Get user initials for avatar
