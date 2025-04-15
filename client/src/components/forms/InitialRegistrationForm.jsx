@@ -100,23 +100,22 @@ const InitialRegistrationForm = ({ formData, handleChange, validated }) => {
         </InputGroup>
       </Form.Group>
 
-      <Form.Group className="mb-4" controlId="address">
-        <Form.Label>Address</Form.Label>
+      <Form.Group className="mb-3" controlId="streetAddress">
+        <Form.Label>Street Address <span className="text-danger">*</span></Form.Label>
         <InputGroup hasValidation>
           <InputGroup.Text>
             <FaMapMarkerAlt />
           </InputGroup.Text>
           <Form.Control
-            as="textarea"
-            rows={2}
-            placeholder="Your address"
-            name="address"
-            value={formData.address || ''}
+            type="text"
+            placeholder="123 Main Street,Downtown District,California, 90015, United States"
+            name="streetAddress"
+            value={formData.streetAddress || ''}
             onChange={handleChange}
             required
           />
           <Form.Control.Feedback type="invalid">
-            Please provide your address.
+            Please provide your street address.
           </Form.Control.Feedback>
         </InputGroup>
       </Form.Group>

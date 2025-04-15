@@ -5,8 +5,6 @@ import { FaPrescriptionBottleAlt, FaStore, FaClock } from 'react-icons/fa';
 const PharmacistDetailsForm = ({ formData, handleChange }) => {
   return (
     <div className="registration-step">
-      <h4 className="mb-3">Pharmacy Professional Details</h4>
-      
       <Form.Group className="mb-3" controlId="pharmacyLicenseId">
         <Form.Label>Pharmacy License ID</Form.Label>
         <InputGroup hasValidation>

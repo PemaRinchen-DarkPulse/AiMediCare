@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Container, Row, Col, Form, Button, 
   Card, InputGroup
@@ -7,8 +7,10 @@ import {
 import { 
   FaFacebook, FaEye, FaEyeSlash, FaArrowLeft, FaArrowRight
 } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 import GoogleAuthBtn from '../components/button/GoogleAuthBtn';
 import AuthButton from '../components/button/AuthButton';
+import { useAuth } from '../context/AuthContext';
 import '../styles/Auth.css';
 import '../styles/MultiStepForm.css';
 
@@ -20,23 +22,31 @@ import PharmacistDetailsForm from '../components/forms/PharmacistDetailsForm';
 import VerificationForm from '../components/forms/VerificationForm';
 
 const SignUp = () => {
+  // For navigation after successful registration
+  const navigate = useNavigate();
+  
+  // Auth context
+  const { register } = useAuth();
+  
   // Step management
   const [currentStep, setCurrentStep] = useState(0);
   const [validated, setValidated] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(false);
+  const [emailVerificationSent, setEmailVerificationSent] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Form data state
   const [formData, setFormData] = useState({
     fullName: '',
     dateOfBirth: '',
     gender: '',
-    address: '',
+    streetAddress: '',
+    city: '',
+    stateProvince: '',
+    zipCode: '',
+    country: '',
     role: '',
     email: '',
     phoneNumber: '',
-    verificationMethod: '',
-    otpCode: '',
     password: '',
   });
   
@@ -61,18 +71,37 @@ const SignUp = () => {
     setPasswordVisible(!passwordVisible);
   };
 
-  // Handle OTP sending (simulated)
-  const handleResendOTP = () => {
-    // In real implementation, this would call an API to send OTP
-    console.log('Sending OTP to:', formData.verificationMethod === 'email' ? formData.email : formData.phoneNumber);
-    setOtpSent(true);
-  };
-
-  // Handle OTP verification (simulated)
-  const handleVerifyOTP = () => {
-    // In real implementation, this would call an API to verify OTP
-    console.log('Verifying OTP:', formData.otpCode);
-    setOtpVerified(true);
+  // Handle email verification link sending
+  const handleSendVerificationLink = async () => {
+    // Check if email is provided
+    if (formData.email) {
+      const userData = {
+        name: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role.toLowerCase(),
+        // Add other fields as needed by your backend
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
+        address: {
+          street: formData.streetAddress,
+          city: formData.city,
+          state: formData.stateProvince,
+          zipCode: formData.zipCode,
+          country: formData.country,
+        },
+        phoneNumber: formData.phoneNumber,
+      };
+      
+      const result = await register(userData);
+      
+      if (result.success) {
+        setEmailVerificationSent(true);
+        return true;
+      }
+      
+      return false;
+    }
   };
 
   // Navigate to previous step
@@ -96,15 +125,28 @@ const SignUp = () => {
   };
 
   // Handle final form submission
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
     
     setValidated(true);
     
-    if (form.checkValidity() && otpVerified) {
-      // In real implementation, this would call an API to register the user
-      console.log('Registration complete:', formData);
+    if (form.checkValidity()) {
+      setIsLoading(true);
+      
+      try {
+        const success = await handleSendVerificationLink();
+        if (success) {
+          // Redirect user to login page after a short delay to show the success message
+          setTimeout(() => {
+            navigate('/login');
+          }, 2000);
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -134,12 +176,10 @@ const SignUp = () => {
           <VerificationForm 
             formData={formData} 
             handleChange={handleChange} 
-            handleResendOTP={handleResendOTP}
-            handleVerifyOTP={handleVerifyOTP}
+            handleResendOTP={handleSendVerificationLink}
             passwordVisible={passwordVisible}
             togglePasswordVisibility={togglePasswordVisibility}
-            otpSent={otpSent}
-            otpVerified={otpVerified}
+            emailVerificationSent={emailVerificationSent}
           />
         );
       default:
@@ -157,7 +197,7 @@ const SignUp = () => {
               <Col className="form-panel pe-0">
                 <Card.Body className="p-4 p-lg-4">
                   
-                  <h2 className="fw-bold mb-2">Create an Account</h2>
+                  <h2 className="fw-bold">Create an Account</h2>
                   
                   {/* Social Login Options - Only shown on first step */}
                   {currentStep === 0 && !isGoogleSignup && (
@@ -182,49 +222,49 @@ const SignUp = () => {
                     {renderStepForm()}
                     
                     {/* Form Navigation */}
-                    <div className="form-navigation">
-                      {currentStep > 0 ? (
-                        <Button 
-                          variant="outline-secondary" 
-                          onClick={handlePrevStep}
-                          className="d-flex align-items-center gap-2"
-                        >
-                          <FaArrowLeft /> Back
-                        </Button>
-                      ) : (
-                        <div></div>
-                      )}
+                    <div className="form-navigation d-flex justify-content-between align-items-center mt-4">
+                      <div className="d-flex align-items-center">
+                        {currentStep > 0 ? (
+                          <Button 
+                            variant="outline-secondary" 
+                            onClick={handlePrevStep}
+                            className="d-flex align-items-center gap-2"
+                          >
+                            <FaArrowLeft /> Back
+                          </Button>
+                        ) : (
+                          <div className="text-center">
+                            Already have an account?{" "}
+                            <Link to="/login" className="text-primary fw-medium">Login</Link>
+                          </div>
+                        )}
+                      </div>
                       
-                      {currentStep < stepTitles.length - 1 ? (
-                        <Button 
-                          variant="primary" 
-                          type="submit"
-                          className="d-flex align-items-center gap-2"
-                          disabled={
-                            currentStep === 1 && 
-                            !formData.role
-                          }
-                        >
-                          Next <FaArrowRight />
-                        </Button>
-                      ) : (
-                        <Button 
-                          variant="primary" 
-                          type="submit"
-                          disabled={!otpVerified || !formData.password}
-                        >
-                          Complete Registration
-                        </Button>
-                      )}
+                      <div>
+                        {currentStep < stepTitles.length - 1 ? (
+                          <Button 
+                            variant="primary" 
+                            type="submit"
+                            className="d-flex align-items-center gap-2"
+                            disabled={
+                              currentStep === 1 && 
+                              !formData.role
+                            }
+                          >
+                            Next <FaArrowRight />
+                          </Button>
+                        ) : (
+                          <Button 
+                            variant="primary" 
+                            type="submit"
+                            disabled={!formData.password || isLoading}
+                          >
+                            {isLoading ? 'Registering...' : 'Register Now'}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </Form>
-
-                  <div className="text-center mt-4">
-                    <p className="mb-0">
-                      Already have an account?{" "}
-                      <Link to="/login" className="text-primary fw-medium">Login</Link>
-                    </p>
-                  </div>
                 </Card.Body>
               </Col>
 
@@ -242,7 +282,7 @@ const SignUp = () => {
                       alt="Healthcare connectivity" 
                       className="img-fluid auth-illustration"
                       onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/400x300?text=Healthcare+Illustration";
+                        e.target.src = "https://placehold.co/400x300?text=Healthcare+Illustration";
                       }}
                     />
                   </div>
@@ -263,12 +303,3 @@ const SignUp = () => {
 };
 
 export default SignUp;
-
-
-// change the adress to
-
-// Street Address field with placeholder "123 Main St" and a required asterisk (*)
-// City field with placeholder "City" and a required asterisk (*)
-// State/Province field with placeholder "State/Province" and a required asterisk (*)
-// Zip/Postal Code field with placeholder "Zip/Postal Code" and a required asterisk (*)
-// Country field with placeholder "Country" and a required asterisk (*)

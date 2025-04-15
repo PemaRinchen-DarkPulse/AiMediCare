@@ -10,19 +10,19 @@ const AuthSlider = () => {
       title: "Connect with every application.",
       description: "Everything you need in an easily customizable dashboard.",
       image: "/images/healthcare-illustration.svg",
-      fallbackImage: "https://via.placeholder.com/400x300?text=Healthcare+Connectivity"
+      fallbackImage: "https://placehold.co/400x300?text=Healthcare+Connectivity"
     },
     {
       title: "Secure Telehealth Consultations",
       description: "Connect with healthcare professionals from the comfort of your home.",
       image: "/images/telehealth-illustration.svg",
-      fallbackImage: "https://via.placeholder.com/400x300?text=Telehealth+Services"
+      fallbackImage: "https://placehold.co/400x300?text=Telehealth+Services"
     },
     {
       title: "AI-Powered Health Insights",
       description: "Get personalized health recommendations based on your medical history.",
       image: "/images/ai-health-illustration.svg",
-      fallbackImage: "https://via.placeholder.com/400x300?text=AI+Health+Insights"
+      fallbackImage: "https://placehold.co/400x300?text=AI+Health+Insights"
     }
   ];
 

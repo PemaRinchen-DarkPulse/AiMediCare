@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form, InputGroup } from 'react-bootstrap';
+import { Form, InputGroup, Row, Col } from 'react-bootstrap';
 import { FaUserFriends, FaIdCard } from 'react-icons/fa';
 
 const PatientDetailsForm = ({ formData, handleChange }) => {
@@ -30,45 +30,50 @@ const PatientDetailsForm = ({ formData, handleChange }) => {
           </InputGroup>
         </Form.Group>
         
-        <Form.Group className="mb-3" controlId="emergencyContactPhone">
-          <Form.Label>Contact Phone</Form.Label>
-          <InputGroup hasValidation>
-            <InputGroup.Text>+</InputGroup.Text>
-            <Form.Control
-              type="tel"
-              placeholder="Emergency contact phone"
-              name="emergencyContactPhone"
-              value={formData.emergencyContactPhone || ''}
-              onChange={handleChange}
-              required
-            />
-            <Form.Control.Feedback type="invalid">
-              Please provide a valid emergency contact phone number.
-            </Form.Control.Feedback>
-          </InputGroup>
-        </Form.Group>
-        
-        <Form.Group className="mb-3" controlId="emergencyContactRelationship">
-          <Form.Label>Relationship</Form.Label>
-          <Form.Control
-            as="select"
-            name="emergencyContactRelationship"
-            value={formData.emergencyContactRelationship || ''}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Select relationship</option>
-            <option value="Spouse">Spouse</option>
-            <option value="Parent">Parent</option>
-            <option value="Child">Child</option>
-            <option value="Sibling">Sibling</option>
-            <option value="Friend">Friend</option>
-            <option value="Other">Other</option>
-          </Form.Control>
-          <Form.Control.Feedback type="invalid">
-            Please select the relationship.
-          </Form.Control.Feedback>
-        </Form.Group>
+        <Row className="mb-3">
+          <Col md={6}>
+            <Form.Group controlId="emergencyContactPhone">
+              <Form.Label>Contact Phone</Form.Label>
+              <InputGroup hasValidation>
+                <InputGroup.Text>+</InputGroup.Text>
+                <Form.Control
+                  type="tel"
+                  placeholder="Emergency contact phone"
+                  name="emergencyContactPhone"
+                  value={formData.emergencyContactPhone || ''}
+                  onChange={handleChange}
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  Please provide a valid emergency contact phone number.
+                </Form.Control.Feedback>
+              </InputGroup>
+            </Form.Group>
+          </Col>
+          
+          <Col md={6}>
+            <Form.Group controlId="emergencyContactRelationship">
+              <Form.Label>Relationship</Form.Label>
+              <Form.Select
+                name="emergencyContactRelationship"
+                value={formData.emergencyContactRelationship || ''}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select relationship</option>
+                <option value="Spouse">Spouse</option>
+                <option value="Parent">Parent</option>
+                <option value="Child">Child</option>
+                <option value="Sibling">Sibling</option>
+                <option value="Friend">Friend</option>
+                <option value="Other">Other</option>
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">
+                Please select the relationship.
+              </Form.Control.Feedback>
+            </Form.Group>
+          </Col>
+        </Row>
       </Form.Group>
       
       <Form.Group className="mb-4" controlId="healthInsurance">

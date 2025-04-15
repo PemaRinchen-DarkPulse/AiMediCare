@@ -85,7 +85,7 @@ const BillingInsurance = () => {
               <CardMedia
                 component="img"
                 height="250"
-                image="https://via.placeholder.com/600x350?text=Insurance+Verification+Screen"
+                image="https://placehold.co/600x350?text=Insurance+Verification+Screen"
                 alt="Insurance verification example screen"
               />
               <CardContent>
@@ -114,7 +114,7 @@ const BillingInsurance = () => {
               <CardMedia
                 component="img"
                 height="250"
-                image="https://via.placeholder.com/600x350?text=Payment+Options+Screen"
+                image="https://placehold.co/600x350?text=Payment+Options+Screen"
                 alt="Payment options screen"
               />
               <CardContent>
@@ -216,7 +216,7 @@ const BillingInsurance = () => {
               <CardMedia
                 component="img"
                 height="250"
-                image="https://via.placeholder.com/600x350?text=Claims+Dashboard"
+                image="https://placehold.co/600x350?text=Claims+Dashboard"
                 alt="Claims dashboard example"
               />
               <CardContent>
@@ -245,7 +245,7 @@ const BillingInsurance = () => {
               <CardMedia
                 component="img"
                 height="250"
-                image="https://via.placeholder.com/600x350?text=Cost+Comparison+Tool"
+                image="https://placehold.co/600x350?text=Cost+Comparison+Tool"
                 alt="Cost comparison tool example"
               />
               <CardContent>

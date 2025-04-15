@@ -1,7 +1,0 @@
-{
-  "dependencies": {
-    "bootstrap": "^5.3.5",
-    "react-datepicker": "^8.3.0",
-    "reactstrap": "^9.2.3"
-  }
-}

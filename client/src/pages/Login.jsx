@@ -1,19 +1,28 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Container, Row, Col, Form, Button, 
-  Card, InputGroup, FormCheck 
+  Card, InputGroup, FormCheck, Alert
 } from 'react-bootstrap';
 import { 
   FaEnvelope, FaLock, FaEye, FaEyeSlash, 
-  FaGoogle, FaFacebook 
+  FaGoogle, FaFacebook, FaCheckCircle, FaExclamationTriangle
 } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 import GoogleAuthBtn from '../components/button/GoogleAuthBtn';
 import AuthButton from '../components/button/AuthButton';
+import { useAuth } from '../context/AuthContext';
 import '../styles/Auth.css';
 import '../styles/MultiStepForm.css';
 
 const Login = () => {
+  // Navigation and location hooks
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Authentication context
+  const { login } = useAuth();
+  
   // State management
   const [validated, setValidated] = useState(false);
   const [formData, setFormData] = useState({
@@ -23,6 +32,33 @@ const Login = () => {
   });
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [isGoogleSignup, setIsGoogleSignup] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState(null);
+
+  // Check for verification status in URL parameters
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const verification = params.get('verification');
+    const message = params.get('message');
+    
+    if (verification === 'success') {
+      setVerificationStatus({
+        type: 'success',
+        message: 'Your email has been successfully verified! You can now log in.'
+      });
+      toast.success('Email verification successful!');
+    } else if (verification === 'failed') {
+      let errorMsg = 'Email verification failed.';
+      if (message === 'invalid') {
+        errorMsg = 'The verification link has expired or is invalid. Please request a new one.';
+      }
+      setVerificationStatus({
+        type: 'danger',
+        message: errorMsg
+      });
+      toast.error(errorMsg);
+    }
+  }, [location]);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -34,18 +70,47 @@ const Login = () => {
   };
 
   // Handle form submission
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
     
     if (form.checkValidity() === false) {
       event.stopPropagation();
-    } else {
-      // Form submission logic would go here
-      console.log('Login form submitted:', formData);
+      setValidated(true);
+      return;
     }
     
     setValidated(true);
+    setIsLoading(true);
+    
+    try {
+      const result = await login(formData.email, formData.password);
+      
+      if (result.success) {
+        // Redirect based on user role
+        if (result.user && result.user.role) {
+          switch (result.user.role) {
+            case 'patient':
+              navigate('/patient/dashboard');
+              break;
+            case 'doctor':
+              navigate('/doctor/dashboard');
+              break;
+            case 'pharmacist':
+              navigate('/pharmacist/dashboard');
+              break;
+            default:
+              navigate('/patient/dashboard');
+          }
+        } else {
+          navigate('/patient/dashboard'); // Default redirect
+        }
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Toggle password visibility
@@ -66,6 +131,12 @@ const Login = () => {
                   <h2 className="fw-bold mb-2">Log in to your Account</h2>
                   <p className="text-muted mb-4 text-center">Welcome back!</p>
                   
+                  {verificationStatus && (
+                    <Alert variant={verificationStatus.type} className="text-center">
+                      {verificationStatus.message}
+                    </Alert>
+                  )}
+
                   <div className="social-login-buttons mb-3 d-flex justify-content-center">
                     <GoogleAuthBtn setIsGoogleSignup={setIsGoogleSignup} />
                   </div>
@@ -142,9 +213,10 @@ const Login = () => {
                     <div className="mt-4">
                       <div className="d-grid">
                         <AuthButton 
-                          text="Log In"
+                          text={isLoading ? "Logging in..." : "Log In"}
                           className="btn btn-primary py-2"
                           type="submit"
+                          disabled={isLoading}
                         />
                       </div>
                     </div>
@@ -173,7 +245,7 @@ const Login = () => {
                       alt="Healthcare connectivity" 
                       className="img-fluid auth-illustration"
                       onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/400x300?text=Healthcare+Illustration";
+                        e.target.src = "https://placehold.co/400x300?text=Healthcare+Illustration";
                       }}
                     />
                   </div>
