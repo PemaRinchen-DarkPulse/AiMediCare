@@ -1,0 +1,751 @@
+/* PatientAppointments.css */
+
+/* General Styles */
+.patient-appointments-page {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* Card Styles */
+.card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: none;
+  transition: all 0.25s ease;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Provider Card Styles */
+.provider-card {
+  border-radius: 12px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  height: 100%;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+.provider-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.provider-card.selected {
+  border-color: #4dabf7;
+  box-shadow: 0 0 0 2px rgba(77, 171, 247, 0.5);
+}
+
+.provider-image {
+  width: 92px;  /* Changed to medium size between 80px and 110px */
+  height: 92px; /* Changed to medium size between 80px and 110px */
+  object-fit: cover;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  margin: 0 auto 1rem;
+}
+
+.provider-image-small {
+  width: 85px;
+  height: 85px;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.provider-info {
+  font-size: 0.9rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+/* Appointment Type Card Styles */
+.appointment-type-card {
+  border-radius: 12px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  height: 100%;
+}
+
+.appointment-type-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.appointment-type-card.selected {
+  border-color: #4dabf7;
+  box-shadow: 0 0 0 2px rgba(77, 171, 247, 0.5);
+}
+
+.appointment-type-icon {
+  font-size: 2rem;
+  color: #4285f4;
+  background-color: rgba(66, 133, 244, 0.1);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.appointment-type-cost {
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #4285f4;
+}
+
+/* Time Slot Styles */
+.time-slots {
+  display: flex;
+  flex-wrap: wrap;
+  margin: -4px;
+}
+
+.time-slot-btn {
+  margin: 4px;
+  width: calc(33.333% - 8px);
+  cursor: pointer;
+}
+
+/* Booking Progress Styles */
+.booking-progress {
+  position: relative;
+  padding-bottom: 30px;
+}
+
+.booking-steps {
+  display: flex;
+  justify-content: space-between;
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+  left: 0;
+}
+
+.booking-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 20%;
+  position: relative;
+  z-index: 1;
+}
+
+.booking-steps:before {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #e9ecef;
+  z-index: 0;
+}
+
+.step-number {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #e9ecef;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  margin-bottom: 5px;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.booking-step.active .step-number {
+  background-color: #4dabf7;
+  color: white;
+}
+
+.step-name {
+  font-size: 12px;
+  color: #6c757d;
+  transition: all 0.3s ease;
+}
+
+.booking-step.active .step-name {
+  color: #4dabf7;
+  font-weight: 600;
+}
+
+/* Appointment Card Styles */
+.appointment-card {
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  height: 100%;
+}
+
+.appointment-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.appointment-date-box {
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  padding: 5px;
+  text-align: center;
+  width: 60px;
+  height: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.appointment-month {
+  font-size: 12px;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #6c757d;
+}
+
+.appointment-day {
+  font-size: 22px;
+  font-weight: 700;
+  color: #212529;
+}
+
+.appointment-time {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #4285f4;
+}
+
+.appointment-details {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.appointment-card:hover .appointment-details {
+  background-color: #f1f3f5;
+}
+
+.appointment-actions {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.appointment-actions .btn {
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.appointment-actions .btn:hover {
+  transform: translateY(-2px);
+}
+
+/* Badge Styles */
+.badge {
+  font-weight: 500;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+}
+
+/* Confirmation Screen Styles */
+.confirmation-screen {
+  padding: 20px;
+}
+
+.confirmation-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background-color: #e6f7e9;
+  margin-bottom: 10px;
+  font-size: 3rem;
+  color: #28a745;
+}
+
+/* Datepicker customization */
+.datepicker-container .react-datepicker {
+  font-family: inherit;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.datepicker-container .react-datepicker__header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.datepicker-container .react-datepicker__day--selected {
+  background-color: #4285f4;
+}
+
+.datepicker-container .react-datepicker__day:hover {
+  background-color: #e9ecef;
+}
+
+.datepicker-container .react-datepicker__day--disabled {
+  color: #ced4da;
+}
+
+/* Make the calendar component larger */
+.date-selector .react-datepicker {
+  font-size: 1.3em !important;
+  width: 450px !important; /* Increased width further from 400px to 450px */
+  margin: 10px 0;
+  box-sizing: border-box;
+}
+
+.date-selector .react-datepicker__month-container {
+  width: 100% !important;
+}
+
+.date-selector .react-datepicker__header {
+  padding-top: 15px;
+  padding-bottom: 15px;
+  width: 100% !important;
+}
+
+.date-selector .react-datepicker__month {
+  margin: 0.8em;
+  padding: 0 10px 10px;
+  width: calc(100% - 1.6em) !important;
+}
+
+.date-selector .react-datepicker__day-name,
+.date-selector .react-datepicker__day,
+.date-selector .react-datepicker__time-name {
+  width: 2.4rem;
+  height: 2.4rem;
+  line-height: 2.4rem;
+  margin: 0.4rem;
+}
+
+.date-selector .react-datepicker__week {
+  margin-bottom: 5px;
+}
+
+.date-selector .react-datepicker__current-month {
+  font-size: 1.3em;
+  padding-bottom: 10px;
+}
+
+.date-selector .react-datepicker__navigation {
+  top: 20px;
+}
+
+/* Date Picker Styling to Match SearchableDropdown Width */
+.react-datepicker-wrapper,
+.react-datepicker__input-container,
+.react-datepicker__input-container input {
+  display: block;
+  width: 100%;
+}
+
+.react-datepicker__input-container input {
+  height: calc(1.5em + 0.75rem + 2px);
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #495057;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.react-datepicker__input-container input:focus {
+  color: #495057;
+  background-color: #fff;
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Provider available date styles */
+.provider-available-date {
+  position: relative;
+}
+
+.day-content {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.available-dot {
+  position: absolute;
+  bottom: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #28a745;
+  margin: 0 auto;
+}
+
+/* Make react-datepicker more readable */
+.react-datepicker__day--selected {
+  background-color: #007bff !important;
+}
+
+.react-datepicker__day:hover {
+  background-color: #e6f2ff !important;
+}
+
+/* Make all dates selectable but visually indicate provider available dates */
+.react-datepicker__day {
+  cursor: pointer;
+}
+
+/* Nav Tabs styling */
+.nav-tabs {
+  border-bottom: 2px solid #dee2e6;
+}
+
+.nav-tabs .nav-link {
+  border: none;
+  color: #6c757d;
+  padding: 0.75rem 1.25rem;
+  font-weight: 500;
+  position: relative;
+  cursor: pointer;
+}
+
+.nav-tabs .nav-link:hover {
+  border: none;
+  color: #4285f4;
+}
+
+.nav-tabs .nav-link.active {
+  color: #4285f4;
+  font-weight: 600;
+  border: none;
+}
+
+.nav-tabs .nav-link.active:after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #4285f4;
+}
+
+/* Enhanced Nav Tabs styling */
+.appointment-nav-tabs {
+  border-bottom: 2px solid #dee2e6;
+  margin-bottom: 1.5rem !important;
+}
+
+.appointment-tab {
+  border: none !important;
+  color: #495057 !important;
+  padding: 0.85rem 1.25rem !important;
+  font-weight: 500;
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  margin-right: 0.5rem;
+  border-radius: 8px 8px 0 0 !important;
+  transition: all 0.2s ease;
+}
+
+.appointment-tab:hover {
+  background-color: #f8f9fa;
+  color: #4285f4 !important;
+}
+
+.appointment-tab.active {
+  color: #4285f4 !important;
+  background-color: #f0f7ff !important;
+  font-weight: 600;
+  border: none !important;
+}
+
+.appointment-tab.active:after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #4285f4;
+}
+
+/* Button styling */
+button, .btn {
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer !important;
+}
+
+.btn-primary {
+  background-color: #4285f4;
+  border-color: #4285f4;
+}
+
+.btn-primary:hover {
+  background-color: #3367d6;
+  border-color: #3367d6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(66, 133, 244, 0.25);
+}
+
+.btn-outline-primary {
+  color: #4285f4;
+  border-color: #4285f4;
+}
+
+.btn-outline-primary:hover {
+  background-color: #4285f4;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(66, 133, 244, 0.25);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .time-slot-btn {
+    width: calc(50% - 8px);
+  }
+  
+  .booking-steps {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .step-name {
+    display: none;
+  }
+  
+  .appointment-date-box {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+@media (max-width: 576px) {
+  .time-slot-btn {
+    width: calc(100% - 8px);
+  }
+  
+  .appointment-date-box {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .appointment-day {
+    font-size: 1.2rem;
+  }
+  
+  .appointment-actions {
+    flex-direction: column;
+  }
+  
+  .appointment-actions .btn {
+    width: 100%;
+    margin-right: 0;
+  }
+}
+
+/* Application Tracking Styles */
+.application-card {
+  border-radius: 12px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  height: 100%;
+}
+
+.application-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.status-indicator {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  color: white;
+  font-size: 1.2rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.status-warning {
+  background-color: #ffc107;
+}
+
+.status-info {
+  background-color: #17a2b8;
+}
+
+.status-success {
+  background-color: #28a745;
+}
+
+.status-secondary {
+  background-color: #6c757d;
+}
+
+.application-status-card {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.progress-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  position: relative;
+  margin-left: 12px;
+}
+
+.progress-timeline:before {
+  content: '';
+  position: absolute;
+  left: 16px;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background-color: #dee2e6;
+  z-index: 0;
+}
+
+.progress-step {
+  display: flex;
+  position: relative;
+}
+
+.progress-step .progress-icon {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 50%;
+  background-color: #f8f9fa;
+  border: 2px solid #dee2e6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.progress-step.completed .progress-icon {
+  background-color: #28a745;
+  border-color: #28a745;
+  color: white;
+}
+
+.progress-step.in-progress .progress-icon {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: white;
+}
+
+.progress-content {
+  flex: 1;
+}
+
+.progress-content h6 {
+  margin-bottom: 0.2rem;
+  font-weight: 600;
+}
+
+.fa-spin {
+  animation: fa-spin 2s infinite linear;
+}
+
+@keyframes fa-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Application Detail Styles */
+.application-detail .card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive Adjustments for Application Tracking */
+@media (max-width: 768px) {
+  .progress-timeline {
+    margin-left: 8px;
+  }
+  
+  .progress-step .progress-icon {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    margin-right: 12px;
+  }
+}
+
+/* Searchable Dropdown Styles */
+.searchable-dropdown {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.searchable-dropdown .dropdown-container {
+  position: relative;
+}
+
+.searchable-dropdown .dropdown-menu {
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  border-radius: 0.25rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  position: absolute;
+  margin-top: 5px;
+}
+
+.searchable-dropdown .dropdown-item {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.searchable-dropdown .dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+.searchable-dropdown .dropdown-item.active {
+  background-color: #4285f4;
+  color: white;
+}
+
+.searchable-dropdown .dropdown-item.disabled {
+  color: #adb5bd;
+  cursor: default;
+}

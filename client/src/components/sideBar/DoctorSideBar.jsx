@@ -8,13 +8,13 @@ import {
 const DoctorSideBar = ({ isOpen }) => {
   const menuItems = [
     { icon: <FaTachometerAlt />, label: "Dashboard", path: "/patient/dashboard" },
-    { icon: <FaCalendarCheck />, label: "Appointments", path: "/patient/appointments" },
-    { icon: <FaFileMedical />, label: "Health Records", path: "/patient/health-records" },
-    { icon: <FaPills />, label: "Medications", path: "/patient/medications" },
-    { icon: <FaNotesMedical />, label: "Pre-Visit Triage", path: "/patient/triage" },
-    { icon: <FaEnvelope />, label: "Messages", path: "/aimedicare/messages" },
-    { icon: <FaFileInvoiceDollar />, label: "Billing & Insurance", path: "/aimedicare/billing" },
-    { icon: <FaCog />, label: "Settings", path: "/aimedicare/settings" }
+    { icon: <FaCalendarCheck />, label: "Link 1", path: "/patient/appointments" },
+    { icon: <FaFileMedical />, label: "Link 2", path: "/patient/health-records" },
+    { icon: <FaPills />, label: "Link 3", path: "/patient/medications" },
+    { icon: <FaNotesMedical />, label: "Link 4", path: "/patient/triage" },
+    { icon: <FaEnvelope />, label: "Link 5", path: "/aimedicare/messages" },
+    { icon: <FaFileInvoiceDollar />, label: "Link 6", path: "/aimedicare/billing" },
+    { icon: <FaCog />, label: "Link 8", path: "/aimedicare/settings" }
   ];
 
   return (

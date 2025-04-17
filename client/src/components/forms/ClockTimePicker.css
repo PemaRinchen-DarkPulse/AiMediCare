@@ -1,0 +1,265 @@
+.clock-time-picker {
+  width: 100%;
+  max-width: 650px;
+  padding: 15px;
+  border-radius: 12px;
+  background-color: #fff;
+  box-shadow: none;
+}
+
+.clock-header {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.clock-title {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.clock-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 20px;
+  gap: 25px; /* Reduced gap from 60px to 25px to bring time closer to clock */
+}
+
+/* Clock face takes less width now */
+.clock-face {
+  position: relative;
+  width: 280px; /* Increased size from 230px */
+  height: 280px; /* Increased size from 230px */
+  border-radius: 50%;
+  background-color: #444444; /* Even lighter dark gray for better visibility */
+  flex-shrink: 0;
+  margin-right: 5px; /* Reduced margin */
+}
+
+.time-display {
+  font-size: 3rem;
+  font-weight: 600;
+  white-space: nowrap;
+  margin-left: -10px;
+}
+
+.time-part {
+  cursor: pointer;
+  color: #4285f4;
+  transition: color 0.2s ease;
+}
+
+.time-part:hover {
+  color: #0d5bdd;
+}
+
+.time-part.active {
+  color: #0d5bdd;
+  /* Removed the text-decoration: underline; */
+}
+
+.time-separator {
+  color: #4285f4;
+  margin: 0 2px;
+}
+
+.time-period {
+  color: #4285f4;
+  margin-left: 12px; /* Increased from 5px to 12px for better spacing */
+  cursor: pointer; /* Added to indicate it's clickable */
+  transition: color 0.2s ease;
+}
+
+.time-period:hover {
+  color: #0d5bdd;
+}
+
+.mode-switch {
+  display: flex;
+  flex-direction: column;
+}
+
+.mode-btn {
+  padding: 8px 16px;
+  margin: 0 0 8px 0;
+  border: none;
+  background: none;
+  border-radius: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #bac3cb;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.mode-btn:hover {
+  background-color: #f0f7ff;
+  color: #4285f4;
+}
+
+.mode-btn.active {
+  background-color: #4285f4;
+  color: white;
+}
+
+.clock-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px; /* Even larger for better visibility */
+  height: 12px; /* Increased size for better visibility */
+  background-color: #ffffff; /* Bright white for maximum contrast */
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.9); /* Enhanced glow effect */
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+.clock-hand {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: 35%; /* Reduced length to work well with both inner and outer circles */
+  background-color: #ffffff;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
+  transform-origin: center bottom;
+  transform: translate(-50%, -100%) rotate(0deg);
+  z-index: 1;
+  border-radius: 2px;
+}
+
+.clock-number {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #ffffff;
+  background-color: transparent;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.clock-number:hover {
+  background-color: transparent;
+  color: #4dabff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+}
+
+.clock-number.selected {
+  background-color: transparent;
+  color: #4dabff;
+  font-weight: 800;
+  text-shadow: 0 0 12px rgba(77, 171, 255, 0.9);
+}
+
+.clock-number.inner {
+  font-size: 1rem;
+  width: 30px;
+  height: 30px;
+  background-color: transparent;
+  color: #ffffff; /* White text */
+}
+
+.quick-time-slots {
+  margin-top: 30px;
+  width: 100%;
+}
+
+.quick-time-slots h6 {
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.quick-slots {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+.quick-slot-btn {
+  padding: 10px 12px;
+  background-color: #f0f7ff;
+  border: 1px solid #d1e7ff;
+  border-radius: 6px;
+  color: #4285f4;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 90px;
+}
+
+.quick-slot-btn:hover {
+  background-color: #d1e7ff;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .quick-slots {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .clock-time-picker {
+    max-width: 280px;
+  }
+  
+  .clock-container {
+    flex-direction: column;
+  }
+  
+  .clock-face {
+    width: 100%;
+    height: 250px;
+    margin-bottom: 20px;
+  }
+  
+  .time-controls {
+    width: 100%;
+    padding-left: 0;
+    text-align: center;
+  }
+  
+  .mode-switch {
+    flex-direction: row;
+    justify-content: center;
+  }
+  
+  .mode-btn {
+    margin: 0 5px;
+  }
+  
+  .time-display {
+    font-size: 2rem;
+  }
+  
+  .clock-number {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .clock-number.inner {
+    width: 24px;
+    height: 24px;
+    font-size: 0.8rem;
+  }
+  
+  .quick-slots {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
-import SideBar from "../components/sideBar/SideBar";
+import SideBar from "../components/sideBar/DoctorSideBar";
 import ProfileDropdown from "../components/profileManagemnt/ProfileDropdown";
 import Navigation from "../components/Navigation";
 import ChatBotBubble from "../components/chatbot/ChatBotBubble";
