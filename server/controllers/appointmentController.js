@@ -1,0 +1,266 @@
+const Appointment = require('../models/Appointment');
+const User = require('../models/User');
+
+// Get all appointments for a patient
+exports.getPatientAppointments = async (req, res) => {
+  try {
+    const patientId = req.user._id;
+    
+    // Find all appointments for this patient
+    const appointments = await Appointment.find({ patientId })
+      .sort({ date: 1 }) // Sorting by date ascending
+      .populate('doctorId', 'name email profileImage specialty location');
+    
+    // Format appointments for frontend
+    const formattedAppointments = appointments.map(appointment => {
+      const doctor = appointment.doctorId;
+      
+      return {
+        id: appointment._id,
+        providerId: doctor._id,
+        providerName: doctor.name,
+        providerImage: doctor.profileImage || '',
+        specialty: doctor.specialty || '',
+        date: appointment.date,
+        time: appointment.time,
+        type: appointment.type,
+        reason: appointment.reason,
+        status: appointment.status,
+        notes: appointment.notes,
+        location: appointment.location || doctor.location || '',
+        room: appointment.room
+      };
+    });
+    
+    // Separate upcoming and past appointments
+    const now = new Date();
+    const upcomingAppointments = formattedAppointments.filter(
+      appointment => new Date(appointment.date) >= now && appointment.status !== 'Completed'
+    );
+    
+    const pastAppointments = formattedAppointments.filter(
+      appointment => new Date(appointment.date) < now || appointment.status === 'Completed'
+    );
+    
+    res.status(200).json({
+      status: 'success',
+      data: {
+        upcomingAppointments,
+        pastAppointments
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching patient appointments:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch appointments'
+    });
+  }
+};
+
+// Create a new appointment
+exports.createAppointment = async (req, res) => {
+  try {
+    const { doctorId, date, time, type, reason } = req.body;
+    const patientId = req.user._id;
+    
+    // Verify the doctor exists and has role 'doctor'
+    const doctor = await User.findOne({ _id: doctorId, role: 'doctor' });
+    if (!doctor) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Doctor not found'
+      });
+    }
+    
+    // Create new appointment
+    const newAppointment = new Appointment({
+      patientId,
+      doctorId,
+      date,
+      time,
+      type,
+      reason,
+      location: doctor.location // Add doctor's location from User model
+    });
+    
+    await newAppointment.save();
+    
+    res.status(201).json({
+      status: 'success',
+      message: 'Appointment requested successfully',
+      data: {
+        appointment: newAppointment
+      }
+    });
+  } catch (error) {
+    console.error('Error creating appointment:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to create appointment'
+    });
+  }
+};
+
+// Update an appointment
+exports.updateAppointment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, notes } = req.body;
+    const patientId = req.user._id;
+    
+    // Find appointment and check if it belongs to this patient
+    const appointment = await Appointment.findOne({
+      _id: id,
+      patientId
+    });
+    
+    if (!appointment) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Appointment not found or not authorized'
+      });
+    }
+    
+    // Update appointment
+    appointment.status = status || appointment.status;
+    appointment.notes = notes || appointment.notes;
+    
+    await appointment.save();
+    
+    res.status(200).json({
+      status: 'success',
+      message: 'Appointment updated successfully',
+      data: {
+        appointment
+      }
+    });
+  } catch (error) {
+    console.error('Error updating appointment:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to update appointment'
+    });
+  }
+};
+
+// Create dummy appointments for testing
+exports.createDummyAppointments = async (req, res) => {
+  try {
+    // Check if this is a development environment
+    if (process.env.NODE_ENV !== 'development') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'This endpoint is only available in development environment'
+      });
+    }
+    
+    const { userId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'User ID is required'
+      });
+    }
+    
+    // Get user
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found'
+      });
+    }
+    
+    // Get doctors - users with role 'doctor'
+    const doctors = await User.find({ role: 'doctor' });
+    
+    if (doctors.length === 0) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'No doctors found. Please run /api/doctors/seed first'
+      });
+    }
+    
+    // Current date
+    const now = new Date();
+    
+    // Generate past appointments
+    const pastAppointments = [];
+    for (let i = 0; i < 3; i++) {
+      const pastDate = new Date(now);
+      pastDate.setDate(pastDate.getDate() - (i * 15 + 5)); // 5, 20, 35 days ago
+      
+      const doctor = doctors[i % doctors.length];
+      
+      pastAppointments.push({
+        patientId: userId,
+        doctorId: doctor._id,
+        date: pastDate,
+        time: `${10 + (i % 7)}:${i % 2 === 0 ? '00' : '30'} ${i % 2 === 0 ? 'AM' : 'PM'}`,
+        type: ['In-Person Visit', 'Video Call', 'Phone Call'][i % 3],
+        reason: ['Annual checkup', 'Skin rash consultation', 'Migraine evaluation', 'Heart palpitations', 'Anxiety management', 'Knee pain assessment'][i % 6],
+        status: 'Completed',
+        notes: ['Follow-up in 3 months. Continue with prescribed medication.', 'Recommended mindfulness exercises and adjusted medication dosage.', 'Prescribed physical therapy twice weekly for 6 weeks. Provided home exercise program.'][i % 3],
+        location: doctor.location || ''
+      });
+    }
+    
+    // Generate upcoming appointments
+    const upcomingAppointments = [];
+    for (let i = 0; i < 3; i++) {
+      const futureDate = new Date(now);
+      futureDate.setDate(futureDate.getDate() + (i * 3 + 1)); // 1, 4, 7 days in future
+      
+      const doctor = doctors[(i + 3) % doctors.length];
+      
+      upcomingAppointments.push({
+        patientId: userId,
+        doctorId: doctor._id,
+        date: futureDate,
+        time: `${10 + (i % 7)}:${i % 2 === 0 ? '00' : '30'} ${i % 2 === 0 ? 'AM' : 'PM'}`,
+        type: ['In-Person Visit', 'Video Call', 'Phone Call'][i % 3],
+        reason: ['Annual checkup', 'Skin rash consultation', 'Migraine evaluation', 'Heart palpitations', 'Anxiety management', 'Knee pain assessment'][i % 6],
+        status: i === 0 ? 'Pending' : 'Confirmed',
+        location: doctor.location || ''
+      });
+    }
+    
+    // Save all appointments
+    const allAppointments = [...pastAppointments, ...upcomingAppointments];
+    
+    // Check if user already has appointments
+    const existingAppointments = await Appointment.find({ patientId: userId });
+    
+    // Only create new appointments if user doesn't have any
+    if (existingAppointments.length > 0) {
+      return res.status(200).json({
+        status: 'success',
+        message: 'User already has appointments',
+        data: {
+          count: existingAppointments.length,
+          appointments: existingAppointments
+        }
+      });
+    }
+    
+    const createdAppointments = await Appointment.insertMany(allAppointments);
+    
+    res.status(201).json({
+      status: 'success',
+      message: 'Dummy appointments created successfully',
+      data: {
+        count: createdAppointments.length,
+        appointments: createdAppointments
+      }
+    });
+  } catch (error) {
+    console.error('Error creating dummy appointments:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to create dummy appointments'
+    });
+  }
+};

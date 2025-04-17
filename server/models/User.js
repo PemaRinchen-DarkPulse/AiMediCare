@@ -26,6 +26,45 @@ const userSchema = new mongoose.Schema({
     enum: ['patient', 'doctor', 'pharmacist', 'admin'],
     default: 'patient'
   },
+  profileImage: {
+    type: String,
+    default: ''
+  },
+  address: {
+    street: String,
+    city: String,
+    state: String,
+    zipCode: String,
+    country: String
+  },
+  phoneNumber: String,
+  dateOfBirth: Date,
+  gender: String,
+  bio: {
+    type: String,
+    default: 'No bio provided'
+  },
+  languages: [{
+    type: String
+  }],
+  acceptedInsurance: [{
+    type: String
+  }],
+  consultationTypes: [{
+    type: String,
+    enum: ['In-Person Visit', 'Video Call', 'Phone Call']
+  }],
+  availability: [{
+    date: Date,
+    slots: [{
+      startTime: String,
+      endTime: String,
+      isBooked: {
+        type: Boolean,
+        default: false
+      }
+    }]
+  }],
   isVerified: {
     type: Boolean,
     default: false
@@ -38,6 +77,8 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+}, {
+  timestamps: true
 });
 
 // Hash password before saving

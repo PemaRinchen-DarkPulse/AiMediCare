@@ -1,4 +1,7 @@
 const User = require('../models/User');
+const Doctor = require('../models/Doctor');
+const Patient = require('../models/Patient');
+const Pharmacist = require('../models/Pharmacist');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const sendEmail = require('../utils/email');
@@ -13,7 +16,28 @@ const signToken = (id) => {
 // Register a new user with email verification
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { 
+      name, email, password, role, dateOfBirth, gender, phoneNumber,
+      // Address fields
+      streetAddress, city, stateProvince, zipCode, country,
+      
+      // Doctor specific fields
+      medicalLicenseNumber, licenseExpiryDate, issuingAuthority, specialization,
+      yearsExperience, hospitalAffiliation, practiceLocation, consultationFee,
+      bankName, accountNumber, routingNumber,
+      // Clinic details
+      clinicName, clinicPhone, clinicWebsite, 
+      clinicStreet, clinicCity, clinicState, clinicZipCode, clinicCountry,
+      // Hospital affiliations
+      hospitalName, hospitalRole, hospitalStartYear, hospitalCurrent, hospitalEndYear,
+      
+      // Patient specific fields
+      emergencyContactName, emergencyContactPhone, emergencyContactRelationship,
+      insuranceProvider, policyNumber, groupNumber,
+      
+      // Pharmacist specific fields
+      licenseNumber, pharmacyName, pharmacyAddress, pharmacyPhone
+    } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -28,17 +52,95 @@ exports.register = async (req, res) => {
       });
     }
 
-    // Create new user
+    // Create new user with common fields
     const newUser = new User({
       name,
       email,
       password,
-      role: role || 'patient' // Default to patient if no role provided
+      role: role?.toLowerCase() || 'patient', // Default to patient if no role provided
+      dateOfBirth,
+      gender,
+      phoneNumber,
+      address: {
+        street: streetAddress,
+        city,
+        state: stateProvince,
+        zipCode,
+        country
+      }
     });
 
     // Generate verification token
     const verificationToken = newUser.generateVerificationToken();
+    
+    // Save user to get the _id
     await newUser.save();
+    
+    // Based on role, create and save role-specific data
+    try {
+      if (role?.toLowerCase() === 'doctor' && medicalLicenseNumber) {
+        const doctorProfile = new Doctor({
+          user: newUser._id,
+          medicalLicenseNumber,
+          licenseExpiryDate,
+          issuingAuthority,
+          specialty: specialization,
+          yearsExperience,
+          experience: yearsExperience, // Save in both fields for compatibility
+          hospitalName: hospitalName || hospitalAffiliation, // Use hospitalName if available, otherwise use hospitalAffiliation
+
+          clinicAddress: {
+              street: clinicStreet || streetAddress,
+              city: clinicCity || city,
+              state: clinicState || stateProvince,
+              zipCode: clinicZipCode || zipCode,
+              country: clinicCountry || country
+            }
+        ,
+          practiceLocation,
+          consultationFee,
+          bankName,
+          accountNumber,
+          routingNumber
+        });
+        await doctorProfile.save();
+      } 
+      else if (role?.toLowerCase() === 'patient') {
+        const patientProfile = new Patient({
+          user: newUser._id,
+          emergencyContact: {
+            name: emergencyContactName,
+            phone: emergencyContactPhone,
+            relationship: emergencyContactRelationship
+          },
+          insurance: {
+            provider: insuranceProvider,
+            policyNumber,
+            groupNumber
+          }
+        });
+        await patientProfile.save();
+      } 
+      else if (role?.toLowerCase() === 'pharmacist' && licenseNumber) {
+        const pharmacistProfile = new Pharmacist({
+          user: newUser._id,
+          licenseNumber,
+          issuingAuthority,
+          yearsExperience,
+          pharmacyName,
+          pharmacyAddress,
+          pharmacyPhone,
+          bankName,
+          accountNumber,
+          routingNumber
+        });
+        await pharmacistProfile.save();
+      }
+    } catch (profileError) {
+      // If there's an error saving the profile, delete the user and throw error
+      await User.findByIdAndDelete(newUser._id);
+      throw new Error(`Error saving ${role} profile: ${profileError.message}`);
+    }
 
     // Create verification URL that matches the route in authRoutes.js
     const verificationURL = `${process.env.CLIENT_URL}/api/auth/verify/${verificationToken}`;
