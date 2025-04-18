@@ -9,6 +9,13 @@ router.get('/patient', protect, appointmentController.getPatientAppointments);
 router.post('/', protect, appointmentController.createAppointment);
 router.patch('/:id', protect, appointmentController.updateAppointment);
 
+// Doctor routes
+router.get('/doctor', protect, appointmentController.getDoctorAppointments);
+router.post('/:id/respond', protect, appointmentController.doctorRespondToAppointment);
+
+// Patient confirmation route
+router.post('/:id/confirm', protect, appointmentController.patientConfirmAppointment);
+
 // Development route - only available in development
 router.post('/seed', appointmentController.createDummyAppointments);
 

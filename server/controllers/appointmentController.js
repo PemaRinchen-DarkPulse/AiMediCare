@@ -28,25 +28,37 @@ exports.getPatientAppointments = async (req, res) => {
         status: appointment.status,
         notes: appointment.notes,
         location: appointment.location || doctor.location || '',
-        room: appointment.room
+        room: appointment.room,
+        createdAt: appointment.createdAt
       };
     });
     
-    // Separate upcoming and past appointments
     const now = new Date();
+    
+    // Only include appointments with status 'confirmed' in upcoming appointments
     const upcomingAppointments = formattedAppointments.filter(
-      appointment => new Date(appointment.date) >= now && appointment.status !== 'Completed'
+      appointment => new Date(appointment.date) >= now && 
+                     appointment.status === 'confirmed'
     );
     
     const pastAppointments = formattedAppointments.filter(
-      appointment => new Date(appointment.date) < now || appointment.status === 'Completed'
+      appointment => new Date(appointment.date) < now || 
+                     appointment.status === 'completed'
+    );
+    
+    // Add tracking appointments (pending, doctor_accepted, or declined)
+    const trackingAppointments = formattedAppointments.filter(
+      appointment => appointment.status === 'pending' || 
+                     appointment.status === 'doctor_accepted' ||
+                     appointment.status === 'declined'
     );
     
     res.status(200).json({
       status: 'success',
       data: {
         upcomingAppointments,
-        pastAppointments
+        pastAppointments,
+        trackingAppointments
       }
     });
   } catch (error) {
@@ -140,6 +152,172 @@ exports.updateAppointment = async (req, res) => {
     res.status(500).json({
       status: 'error',
       message: 'Failed to update appointment'
+    });
+  }
+};
+
+// Doctor accepts or declines an appointment
+exports.doctorRespondToAppointment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { action, notes } = req.body;
+    const doctorId = req.user._id;
+    
+    if (!['accept', 'decline'].includes(action)) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid action. Must be "accept" or "decline"'
+      });
+    }
+    
+    // Find appointment and check if it belongs to this doctor
+    const appointment = await Appointment.findOne({
+      _id: id,
+      doctorId,
+      status: 'pending' // Only pending appointments can be acted upon
+    });
+    
+    if (!appointment) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Appointment not found, not authorized, or already processed'
+      });
+    }
+    
+    // Update appointment status based on doctor's action
+    appointment.status = action === 'accept' ? 'doctor_accepted' : 'declined';
+    if (notes) {
+      appointment.notes = notes;
+    }
+    
+    await appointment.save();
+    
+    res.status(200).json({
+      status: 'success',
+      message: `Appointment ${action === 'accept' ? 'accepted' : 'declined'} successfully`,
+      data: {
+        appointment
+      }
+    });
+  } catch (error) {
+    console.error('Error responding to appointment:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to respond to appointment'
+    });
+  }
+};
+
+// Patient confirms an appointment
+exports.patientConfirmAppointment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const patientId = req.user._id;
+    
+    // Find appointment and check if it belongs to this patient and has been accepted by doctor
+    const appointment = await Appointment.findOne({
+      _id: id,
+      patientId,
+      status: 'doctor_accepted' // Only doctor_accepted appointments can be confirmed
+    });
+    
+    if (!appointment) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Appointment not found, not authorized, or not ready for confirmation'
+      });
+    }
+    
+    // Update appointment status to confirmed
+    appointment.status = 'confirmed';
+    
+    await appointment.save();
+    
+    res.status(200).json({
+      status: 'success',
+      message: 'Appointment confirmed successfully',
+      data: {
+        appointment
+      }
+    });
+  } catch (error) {
+    console.error('Error confirming appointment:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to confirm appointment'
+    });
+  }
+};
+
+// Get appointments for a doctor that require action
+exports.getDoctorAppointments = async (req, res) => {
+  try {
+    const doctorId = req.user._id;
+    
+    // Find all appointments for this doctor
+    const appointments = await Appointment.find({ doctorId })
+      .sort({ date: 1 }) // Sorting by date ascending
+      .populate('patientId', 'name email profileImage');
+    
+    // Format appointments for frontend
+    const formattedAppointments = appointments.map(appointment => {
+      const patient = appointment.patientId;
+      
+      return {
+        id: appointment._id,
+        patientId: patient._id,
+        patientName: patient.name,
+        patientImage: patient.profileImage || '',
+        date: appointment.date,
+        time: appointment.time,
+        type: appointment.type,
+        reason: appointment.reason,
+        status: appointment.status,
+        notes: appointment.notes,
+        location: appointment.location,
+        room: appointment.room,
+        createdAt: appointment.createdAt
+      };
+    });
+    
+    // Separate appointments based on their status
+    const pendingAppointments = formattedAppointments.filter(
+      appointment => appointment.status === 'pending'
+    );
+    
+    const acceptedAppointments = formattedAppointments.filter(
+      appointment => appointment.status === 'doctor_accepted'
+    );
+    
+    const confirmedAppointments = formattedAppointments.filter(
+      appointment => appointment.status === 'confirmed'
+    );
+    
+    const pastAppointments = formattedAppointments.filter(
+      appointment => appointment.status === 'completed' || 
+                     appointment.status === 'cancelled' ||
+                     appointment.status === 'no_show'
+    );
+    
+    const declinedAppointments = formattedAppointments.filter(
+      appointment => appointment.status === 'declined'
+    );
+    
+    res.status(200).json({
+      status: 'success',
+      data: {
+        pendingAppointments,
+        acceptedAppointments,
+        confirmedAppointments,
+        pastAppointments,
+        declinedAppointments
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching doctor appointments:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch appointments'
     });
   }
 };
