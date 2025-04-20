@@ -75,23 +75,60 @@ const SignUp = () => {
   const handleSendVerificationLink = async () => {
     // Check if email is provided
     if (formData.email) {
+      // Create a base userData object with common fields
       const userData = {
         name: formData.fullName,
         email: formData.email,
         password: formData.password,
         role: formData.role.toLowerCase(),
-        // Add other fields as needed by your backend
         dateOfBirth: formData.dateOfBirth,
         gender: formData.gender,
-        address: {
-          street: formData.streetAddress,
-          city: formData.city,
-          state: formData.stateProvince,
-          zipCode: formData.zipCode,
-          country: formData.country,
-        },
+        streetAddress: formData.streetAddress,
+        city: formData.city,
+        stateProvince: formData.stateProvince,
+        zipCode: formData.zipCode,
+        country: formData.country,
         phoneNumber: formData.phoneNumber,
       };
+      
+      // Add role-specific fields
+      if (formData.role === 'Doctor') {
+        Object.assign(userData, {
+          medicalLicenseNumber: formData.medicalLicenseNumber,
+          licenseExpiryDate: formData.licenseExpiryDate,
+          issuingAuthority: formData.issuingAuthority,
+          specialization: formData.specialization,
+          yearsExperience: formData.yearsExperience,
+          hospitalName: formData.hospitalName, // Use hospitalName to match the form field
+          hospitalAffiliation: formData.hospitalName, // Keep hospitalAffiliation for backward compatibility
+          practiceLocation: formData.practiceLocation,
+          consultationFee: formData.consultationFee,
+          bankName: formData.bankName,
+          accountNumber: formData.accountNumber,
+          routingNumber: formData.routingNumber
+        });
+      } else if (formData.role === 'Patient') {
+        Object.assign(userData, {
+          emergencyContactName: formData.emergencyContactName,
+          emergencyContactPhone: formData.emergencyContactPhone,
+          emergencyContactRelationship: formData.emergencyContactRelationship,
+          insuranceProvider: formData.insuranceProvider,
+          policyNumber: formData.policyNumber,
+          groupNumber: formData.groupNumber
+        });
+      } else if (formData.role === 'Pharmacist') {
+        Object.assign(userData, {
+          licenseNumber: formData.licenseNumber,
+          issuingAuthority: formData.issuingAuthority,
+          yearsExperience: formData.yearsExperience,
+          pharmacyName: formData.pharmacyName,
+          pharmacyAddress: formData.pharmacyAddress,
+          pharmacyPhone: formData.pharmacyPhone,
+          bankName: formData.bankName,
+          accountNumber: formData.accountNumber,
+          routingNumber: formData.routingNumber
+        });
+      }
       
       const result = await register(userData);
       

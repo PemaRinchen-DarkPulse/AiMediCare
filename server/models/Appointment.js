@@ -44,7 +44,11 @@ const appointmentSchema = new mongoose.Schema({
   room: {
     type: String,
     default: ''
-  }
+  },
+  prescriptions: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Prescription'
+  }]
 }, {
   timestamps: true
 });

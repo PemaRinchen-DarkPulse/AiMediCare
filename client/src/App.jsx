@@ -19,6 +19,7 @@ import Settings from "./Settings";
 import PatientHome from "./pages/PatientHome";
 import DoctorHome from "./pages/DoctorHome";
 import PharmacistHome from "./pages/PharmacistHome";
+import DoctorAppointments from "./pages/doctor/DoctorAppointments";
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {
@@ -111,9 +112,9 @@ function App() {
                 <DoctorHome />
               </ProtectedRoute>
             }>
-              <Route index element={<Navigate to="dashboard" />} />
+              <Route index element={<Navigate to="doctor" />} />
               <Route path="dashboard" element={<div>Doctor poo</div>} />
-              <Route path="appointments" element={<div>Doctor Appointments</div>} />
+              <Route path="appointments" element={<DoctorAppointments/>} />
               <Route path="patients" element={<div>Patient Management</div>} />
               <Route path="prescriptions" element={<div>Prescriptions</div>} />
               <Route path="messages" element={<div>Doctor Messages</div>} />

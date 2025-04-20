@@ -16,10 +16,11 @@ import {
   FaCreditCard, FaCheck, FaArrowLeft, FaClipboardList,
   FaHistory, FaSpinner, FaCheckCircle, FaTimes
 } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import ClockTimePicker from '../../components/forms/ClockTimePicker';
+import UserAvatar from '../../components/UserAvatar';
 import './PatientAppointments.css';
 
-// Custom SearchableDropdown component
 const SearchableDropdown = ({ options, value, onChange, placeholder, id, label }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -82,6 +83,7 @@ const SearchableDropdown = ({ options, value, onChange, placeholder, id, label }
 };
 
 const PatientAppointments = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('upcoming');
   const [bookingStep, setBookingStep] = useState(0);
   const [isBooking, setIsBooking] = useState(false);
@@ -102,253 +104,454 @@ const PatientAppointments = () => {
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
   const [applicationTracking, setApplicationTracking] = useState([]);
   const [selectedApplication, setSelectedApplication] = useState(null);
+  const [specialties, setSpecialties] = useState([]);
+  const [locations, setLocations] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setProviders([
-        {
-          id: 1,
-          name: 'Dr. Sarah Johnson',
-          specialty: 'Primary Care',
-          location: 'Downtown Medical Center',
-          image: 'https://randomuser.me/api/portraits/women/68.jpg',
-          rating: 4.8,
-          languages: ['English', 'Spanish'],
-          acceptedInsurance: ['Blue Cross', 'Aetna', 'Medicare'],
-          availableDates: [new Date(), new Date(Date.now() + 86400000), new Date(Date.now() + 172800000)],
-          consultationTypes: ['In-Person Visit', 'Video Call'],
-          bio: 'Board-certified physician with 15 years of experience in family medicine.'
-        },
-        {
-          id: 2,
-          name: 'Dr. Michael Chen',
-          specialty: 'Cardiology',
-          location: 'Heart & Vascular Institute',
-          image: 'https://randomuser.me/api/portraits/men/32.jpg',
-          rating: 4.9,
-          languages: ['English', 'Mandarin'],
-          acceptedInsurance: ['Blue Cross', 'UnitedHealth', 'Cigna'],
-          availableDates: [new Date(Date.now() + 86400000), new Date(Date.now() + 259200000)],
-          consultationTypes: ['In-Person Visit', 'Phone Call'],
-          bio: 'Specialist in cardiovascular health with focus on preventive care.'
-        },
-        {
-          id: 3,
-          name: 'Dr. Amina Patel',
-          specialty: 'Dermatology',
-          location: 'Skin Health Clinic',
-          image: 'https://randomuser.me/api/portraits/women/45.jpg',
-          rating: 4.7,
-          languages: ['English', 'Hindi', 'Gujarati'],
-          acceptedInsurance: ['Aetna', 'Medicare', 'Humana'],
-          availableDates: [new Date(), new Date(Date.now() + 172800000)],
-          consultationTypes: ['Video Call', 'In-Person Visit'],
-          bio: 'Expert in treating various skin conditions with the latest techniques.'
-        },
-        {
-          id: 4,
-          name: 'Dr. James Wilson',
-          specialty: 'Psychiatry',
-          location: 'Behavioral Health Center',
-          image: 'https://randomuser.me/api/portraits/men/55.jpg',
-          rating: 4.6,
-          languages: ['English'],
-          acceptedInsurance: ['Blue Cross', 'UnitedHealth', 'Medicare'],
-          availableDates: [new Date(Date.now() + 86400000)],
-          consultationTypes: ['Video Call', 'Phone Call'],
-          bio: 'Specializing in anxiety, depression, and stress management.'
-        },
-        {
-          id: 5,
-          name: 'Dr. Elena Rodriguez',
-          specialty: 'Neurology',
-          location: 'Neuroscience Institute',
-          image: 'https://randomuser.me/api/portraits/women/28.jpg',
-          rating: 4.9,
-          languages: ['English', 'Spanish'],
-          acceptedInsurance: ['Blue Cross', 'Medicare', 'Cigna'],
-          availableDates: [new Date(Date.now() + 345600000), new Date(Date.now() + 432000000)],
-          consultationTypes: ['In-Person Visit'],
-          bio: 'Neurologist specializing in headache disorders and neurological conditions.'
-        },
-        {
-          id: 6,
-          name: 'Dr. Robert Kim',
-          specialty: 'Orthopedics',
-          location: 'Sports Medicine & Joint Center',
-          image: 'https://randomuser.me/api/portraits/men/42.jpg',
-          rating: 4.8,
-          languages: ['English', 'Korean'],
-          acceptedInsurance: ['Aetna', 'UnitedHealth', 'Blue Cross'],
-          availableDates: [new Date(Date.now() + 172800000), new Date(Date.now() + 259200000)],
-          consultationTypes: ['In-Person Visit', 'Video Call'],
-          bio: 'Orthopedic surgeon with expertise in sports medicine and joint replacement.'
-        }
-      ]);
-
-      setUpcomingAppointments([
-        {
-          id: 101,
-          providerId: 1,
-          providerName: 'Dr. Sarah Johnson',
-          providerImage: 'https://randomuser.me/api/portraits/women/68.jpg',
-          specialty: 'Primary Care',
-          date: new Date('2025-04-18T10:00:00'),
-          time: '10:00 AM',
-          type: 'Video Call',
-          reason: 'Annual checkup',
-          status: 'Confirmed'
-        },
-        {
-          id: 102,
-          providerId: 3,
-          providerName: 'Dr. Amina Patel',
-          providerImage: 'https://randomuser.me/api/portraits/women/45.jpg',
-          specialty: 'Dermatology',
-          date: new Date('2025-04-22T14:30:00'),
-          time: '2:30 PM',
-          type: 'Video Call',
-          reason: 'Skin rash consultation',
-          status: 'Pending'
-        },
-        {
-          id: 103,
-          providerId: 5,
-          providerName: 'Dr. Elena Rodriguez',
-          providerImage: 'https://randomuser.me/api/portraits/women/28.jpg',
-          specialty: 'Neurology',
-          date: new Date('2025-04-25T09:15:00'),
-          time: '9:15 AM',
-          type: 'In-Person Visit',
-          reason: 'Migraine evaluation',
-          status: 'Confirmed'
-        }
-      ]);
-
-      setPastAppointments([
-        {
-          id: 104,
-          providerId: 2,
-          providerName: 'Dr. Michael Chen',
-          providerImage: 'https://randomuser.me/api/portraits/men/32.jpg',
-          specialty: 'Cardiology',
-          date: new Date('2025-03-17T11:15:00'),
-          time: '11:15 AM',
-          type: 'In-Person Visit',
-          reason: 'Heart palpitations',
-          status: 'Completed',
-          notes: 'Follow-up in 3 months. Continue with prescribed medication.'
-        },
-        {
-          id: 105,
-          providerId: 4,
-          providerName: 'Dr. James Wilson',
-          providerImage: 'https://randomuser.me/api/portraits/men/55.jpg',
-          specialty: 'Psychiatry',
-          date: new Date('2025-03-02T15:00:00'),
-          time: '3:00 PM',
-          type: 'Phone Call',
-          reason: 'Anxiety management',
-          status: 'Completed',
-          notes: 'Recommended mindfulness exercises and adjusted medication dosage.'
-        },
-        {
-          id: 106,
-          providerId: 6,
-          providerName: 'Dr. Robert Kim',
-          providerImage: 'https://randomuser.me/api/portraits/men/42.jpg',
-          specialty: 'Orthopedics',
-          date: new Date('2025-02-15T13:30:00'),
-          time: '1:30 PM',
-          type: 'In-Person Visit',
-          reason: 'Knee pain assessment',
-          status: 'Completed',
-          notes: 'Prescribed physical therapy twice weekly for 6 weeks. Provided home exercise program.'
-        }
-      ]);
-
-      setApplicationTracking([
-        {
-          id: 201,
-          providerId: 2,
-          providerName: 'Dr. Michael Chen',
-          providerImage: 'https://randomuser.me/api/portraits/men/32.jpg',
-          specialty: 'Cardiology',
-          date: new Date('2025-05-10T15:30:00'),
-          time: '3:30 PM',
-          type: 'In-Person Visit',
-          reason: 'Heart murmur evaluation',
-          status: 'Under Review',
-          submittedOn: new Date('2025-04-14T09:23:00'),
-          currentStep: 'Doctor Review',
-          medicalReviewStatus: 'Pending',
-          estimatedCompletionTime: '24-48 hours'
-        },
-        {
-          id: 202,
-          providerId: 4,
-          providerName: 'Dr. James Wilson',
-          providerImage: 'https://randomuser.me/api/portraits/men/55.jpg',
-          specialty: 'Psychiatry',
-          date: new Date('2025-05-07T10:00:00'),
-          time: '10:00 AM',
-          type: 'Video Call',
-          reason: 'Depression follow-up',
-          status: 'Pre-approved',
-          submittedOn: new Date('2025-04-12T14:05:00'),
-          currentStep: 'Final Approval',
-          medicalReviewStatus: 'In Progress',
-          estimatedCompletionTime: '12-24 hours'
-        }
-      ]);
-
-      setIsLoading(false);
-    }, 1000);
+    fetchProviders();
+    fetchAppointments();
+    fetchApplicationTracking(); // Add this line to fetch tracking data
   }, []);
 
   useEffect(() => {
-    if (selectedDate) {
+    fetchTimeSlots();
+  }, [selectedDate, selectedProvider]);
+
+  const fetchProviders = async () => {
+    try {
       setIsLoading(true);
-      setTimeout(() => {
-        const slots = [];
-        const date = new Date(selectedDate);
-        const today = new Date();
+      const response = await fetch('http://localhost:5000/api/doctors');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch providers');
+      }
+      
+      const data = await response.json();
+      console.log("Fetched doctors data:", data); // Debug logging
+      
+      if (data.status === 'success') {
+        // Process the data to ensure proper format
+        const processedDoctors = data.data.doctors.map(doctor => ({
+          ...doctor,
+          // Ensure the image property exists for compatibility with UserAvatar component
+          image: doctor.profileImage || doctor.image || "",
+          // Convert availableDates strings to Date objects if they're not already
+          availableDates: (doctor.availableDates || []).map(date => 
+            date instanceof Date ? date : new Date(date)
+          )
+        }));
         
-        // Don't generate time slots for past dates
-        if (date.setHours(0,0,0,0) < today.setHours(0,0,0,0)) {
-          setAvailableTimeSlots([]);
-          setIsLoading(false);
+        console.log("Processed doctors:", processedDoctors); // Debug logging
+        setProviders(processedDoctors);
+        
+        const uniqueSpecialties = [...new Set(processedDoctors.map(doctor => doctor.specialty))];
+        const uniqueLocations = [...new Set(processedDoctors.map(doctor => doctor.location))];
+        
+        setSpecialties(uniqueSpecialties);
+        setLocations(uniqueLocations);
+      } else {
+        throw new Error(data.message || 'Failed to fetch providers');
+      }
+    } catch (error) {
+      console.error('Error fetching providers:', error);
+      setError(error.message);
+      toast.error('Failed to load healthcare providers. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const fetchAppointments = async () => {
+    try {
+      setIsLoading(true);
+      
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setError('Authentication required. Please log in.');
+        setIsLoading(false);
+        return;
+      }
+      
+      const response = await fetch('http://localhost:5000/api/appointments/patient', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          setError('Session expired. Please log in again.');
+          navigate('/login');
           return;
         }
-
-        // For today, only generate future time slots
-        const currentHour = today.getHours();
-        const currentMinute = today.getMinutes();
-        const isToday = date.toDateString() === new Date().toDateString();
-        
-        for (let hour = 9; hour < 17; hour++) {
-          for (let minute of [0, 30]) {
-            // Skip past time slots for today
-            if (isToday && (hour < currentHour || (hour === currentHour && minute <= currentMinute))) {
-              continue;
-            }
-            
-            const time = new Date(date);
-            time.setHours(hour, minute);
-            const available = Math.random() > 0.4;
-            slots.push({
-              time: time,
-              available: available,
-              formattedTime: time.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'})
-            });
-          }
-        }
-        setAvailableTimeSlots(slots);
-        setIsLoading(false);
-      }, 500);
+        throw new Error('Failed to fetch appointments');
+      }
+      
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        setUpcomingAppointments(data.data.upcomingAppointments);
+        setPastAppointments(data.data.pastAppointments);
+      } else {
+        throw new Error(data.message || 'Failed to fetch appointments');
+      }
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+      toast.error('Failed to load appointments. Please try again later.');
+      generateMockAppointments();
+    } finally {
+      setIsLoading(false);
     }
-  }, [selectedDate]);
+  };
+
+  const fetchApplicationTracking = async () => {
+    try {
+      setIsLoading(true);
+      
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setError('Authentication required. Please log in.');
+        setIsLoading(false);
+        return;
+      }
+      
+      const response = await fetch('http://localhost:5000/api/appointments/patient', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          setError('Session expired. Please log in again.');
+          navigate('/login');
+          return;
+        }
+        throw new Error('Failed to fetch application tracking');
+      }
+      
+      const data = await response.json();
+      
+      if (data.status === 'success' && data.data.trackingAppointments) {
+        // Convert tracking appointments to application tracking format
+        const trackingAppointments = data.data.trackingAppointments.map(app => ({
+          id: app.id,
+          providerId: app.providerId,
+          providerName: app.providerName,
+          providerImage: app.providerImage,
+          specialty: app.specialty,
+          date: new Date(app.date),
+          time: app.time,
+          type: app.type,
+          reason: app.reason,
+          status: app.status,
+          submittedOn: new Date(app.createdAt || new Date()),
+          currentStep: app.status === 'pending' ? 'Doctor Review' : 
+                     app.status === 'doctor_accepted' ? 'Patient Confirmation' :
+                     app.status === 'declined' ? 'Declined by Doctor' : 'Pending',
+          medicalReviewStatus: app.status === 'pending' ? 'In Progress' : 
+                             app.status === 'doctor_accepted' ? 'Approved' : 
+                             app.status === 'declined' ? 'Declined' : 'Pending',
+          estimatedCompletionTime: app.status === 'doctor_accepted' ? 'Awaiting your confirmation' : 
+                                 app.status === 'declined' ? 'N/A' : '24-48 hours'
+        }));
+        
+        console.log("Found tracking appointments:", trackingAppointments);
+        setApplicationTracking(trackingAppointments);
+      } else {
+        throw new Error(data.message || 'Failed to fetch application tracking');
+      }
+    } catch (error) {
+      console.error('Error fetching application tracking:', error);
+      toast.error('Failed to load appointment applications. Please try again later.');
+      generateMockApplicationTracking(); // Fallback to mock data
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const generateMockAppointments = () => {
+    console.warn('Using mock appointment data');
+    
+    setUpcomingAppointments([
+      {
+        id: 101,
+        providerId: 1,
+        providerName: 'Dr. Sarah Johnson',
+        providerImage: 'https://randomuser.me/api/portraits/women/68.jpg',
+        specialty: 'Primary Care',
+        date: new Date('2025-04-18T10:00:00'),
+        time: '10:00 AM',
+        type: 'Video Call',
+        reason: 'Annual checkup',
+        status: 'Confirmed'
+      },
+      {
+        id: 102,
+        providerId: 3,
+        providerName: 'Dr. Amina Patel',
+        providerImage: '',
+        specialty: 'Dermatology',
+        date: new Date('2025-04-22T14:30:00'),
+        time: '2:30 PM',
+        type: 'Video Call',
+        reason: 'Skin rash consultation',
+        status: 'Pending'
+      },
+      {
+        id: 103,
+        providerId: 5,
+        providerName: 'Dr. Elena Rodriguez',
+        providerImage: null,
+        specialty: 'Neurology',
+        date: new Date('2025-04-25T09:15:00'),
+        time: '9:15 AM',
+        type: 'In-Person Visit',
+        reason: 'Migraine evaluation',
+        status: 'Confirmed'
+      }
+    ]);
+
+    setPastAppointments([
+      {
+        id: 104,
+        providerId: 2,
+        providerName: 'Dr. Michael Chen',
+        providerImage: 'https://randomuser.me/api/portraits/men/32.jpg',
+        specialty: 'Cardiology',
+        date: new Date('2025-03-17T11:15:00'),
+        time: '11:15 AM',
+        type: 'In-Person Visit',
+        reason: 'Heart palpitations',
+        status: 'Completed',
+        notes: 'Follow-up in 3 months. Continue with prescribed medication.'
+      },
+      {
+        id: 105,
+        providerId: 4,
+        providerName: 'Dr. James Wilson',
+        providerImage: '',
+        specialty: 'Psychiatry',
+        date: new Date('2025-03-02T15:00:00'),
+        time: '3:00 PM',
+        type: 'Phone Call',
+        reason: 'Anxiety management',
+        status: 'Completed',
+        notes: 'Recommended mindfulness exercises and adjusted medication dosage.'
+      }
+    ]);
+  };
+
+  const fetchTimeSlots = async () => {
+    if (selectedDate && selectedProvider) {
+      try {
+        setIsLoading(true);
+        
+        const formattedDate = selectedDate.toISOString().split('T')[0];
+        
+        const response = await fetch(`http://localhost:5000/api/doctors/${selectedProvider.id}/availability?date=${formattedDate}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch time slots');
+        }
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+          const slots = data.data.slots.map(slot => ({
+            time: new Date(`${formattedDate}T${slot.startTime}`),
+            available: !slot.isBooked,
+            formattedTime: new Date(`${formattedDate}T${slot.startTime}`).toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'})
+          }));
+          
+          setAvailableTimeSlots(slots);
+        } else {
+          throw new Error(data.message || 'Failed to fetch time slots');
+        }
+      } catch (error) {
+        console.error('Error fetching time slots:', error);
+        toast.error('Failed to load available time slots. Please try again later.');
+        generateRandomTimeSlots();
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+  
+  const generateRandomTimeSlots = () => {
+    console.warn('Using mock time slot data');
+    
+    const slots = [];
+    const date = new Date(selectedDate);
+    const today = new Date();
+    
+    if (date.setHours(0,0,0,0) < today.setHours(0,0,0,0)) {
+      setAvailableTimeSlots([]);
+      return;
+    }
+
+    const currentHour = today.getHours();
+    const currentMinute = today.getMinutes();
+    const isToday = date.toDateString() === new Date().toDateString();
+    
+    for (let hour = 9; hour < 17; hour++) {
+      for (let minute of [0, 30]) {
+        if (isToday && (hour < currentHour || (hour === currentHour && minute <= currentMinute))) {
+          continue;
+        }
+        
+        const time = new Date(date);
+        time.setHours(hour, minute);
+        const available = Math.random() > 0.4;
+        slots.push({
+          time: time,
+          available: available,
+          formattedTime: time.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'})
+        });
+      }
+    }
+    setAvailableTimeSlots(slots);
+  };
+
+  const createAppointment = async (appointmentData) => {
+    try {
+      setIsLoading(true);
+      
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        toast.error('Please log in to book an appointment');
+        navigate('/login');
+        return { success: false };
+      }
+      
+      const response = await fetch('http://localhost:5000/api/appointments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(appointmentData)
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to book appointment');
+      }
+      
+      toast.success('Appointment booked successfully!');
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error booking appointment:', error);
+      toast.error(error.message || 'Failed to book appointment');
+      return { success: false, error };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const confirmAppointment = async (appointmentId) => {
+    try {
+      setIsLoading(true);
+      
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        toast.error('Please log in to confirm your appointment');
+        navigate('/login');
+        return { success: false };
+      }
+      
+      const response = await fetch(`http://localhost:5000/api/appointments/${appointmentId}/confirm`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to confirm appointment');
+      }
+      
+      toast.success('Appointment confirmed successfully! It has been moved to your Upcoming Appointments.');
+      
+      // Refresh data
+      fetchAppointments();
+      fetchApplicationTracking();
+      
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error confirming appointment:', error);
+      toast.error(error.message || 'Failed to confirm appointment');
+      return { success: false, error };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const generateMockApplicationTracking = () => {
+    console.warn('Using mock application tracking data');
+    const now = new Date();
+    
+    setApplicationTracking([
+      {
+        id: 201,
+        providerId: 2,
+        providerName: 'Dr. Michael Chen',
+        providerImage: 'https://randomuser.me/api/portraits/men/32.jpg',
+        specialty: 'Cardiology',
+        date: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+        time: '2:00 PM',
+        type: 'In-Person Visit',
+        reason: 'Chest pain evaluation',
+        status: 'pending',
+        submittedOn: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+        currentStep: 'Doctor Review',
+        medicalReviewStatus: 'In Progress',
+        estimatedCompletionTime: '24-48 hours'
+      },
+      {
+        id: 202,
+        providerId: 4,
+        providerName: 'Dr. James Wilson',
+        providerImage: '',
+        specialty: 'Psychiatry',
+        date: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
+        time: '10:30 AM',
+        type: 'Video Call',
+        reason: 'Follow-up consultation',
+        status: 'doctor_accepted',
+        submittedOn: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+        currentStep: 'Patient Confirmation',
+        medicalReviewStatus: 'Approved',
+        estimatedCompletionTime: 'Waiting for your confirmation'
+      },
+      {
+        id: 203,
+        providerId: 3,
+        providerName: 'Dr. Amina Patel',
+        providerImage: '',
+        specialty: 'Dermatology',
+        date: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
+        time: '1:15 PM',
+        type: 'In-Person Visit',
+        reason: 'Skin condition follow-up',
+        status: 'declined',
+        submittedOn: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000), // 4 days ago
+        currentStep: 'Declined by Doctor',
+        medicalReviewStatus: 'Declined',
+        estimatedCompletionTime: 'N/A'
+      }
+    ]);
+  };
 
   const toggleTab = (tab) => {
     if (activeTab !== tab) {
@@ -406,12 +609,7 @@ const PatientAppointments = () => {
               <SearchableDropdown
                 options={[
                   { value: 'all', label: 'All Specialties' },
-                  { value: 'Primary Care', label: 'Primary Care' },
-                  { value: 'Cardiology', label: 'Cardiology' },
-                  { value: 'Dermatology', label: 'Dermatology' },
-                  { value: 'Neurology', label: 'Neurology' },
-                  { value: 'Orthopedics', label: 'Orthopedics' },
-                  { value: 'Psychiatry', label: 'Psychiatry' }
+                  ...specialties.map(specialty => ({ value: specialty, label: specialty }))
                 ]}
                 value={specialtyFilter}
                 onChange={setSpecialtyFilter}
@@ -424,12 +622,7 @@ const PatientAppointments = () => {
               <SearchableDropdown
                 options={[
                   { value: 'all', label: 'All Locations' },
-                  { value: 'Downtown Medical Center', label: 'Downtown Medical Center' },
-                  { value: 'Heart & Vascular Institute', label: 'Heart & Vascular Institute' },
-                  { value: 'Skin Health Clinic', label: 'Skin Health Clinic' },
-                  { value: 'Behavioral Health Center', label: 'Behavioral Health Center' },
-                  { value: 'Neuroscience Institute', label: 'Neuroscience Institute' },
-                  { value: 'Sports Medicine & Joint Center', label: 'Sports Medicine & Joint Center' }
+                  ...locations.map(location => ({ value: location, label: location }))
                 ]}
                 value={locationFilter}
                 onChange={setLocationFilter}
@@ -502,41 +695,93 @@ const PatientAppointments = () => {
                       onClick={() => setSelectedProvider(provider)}
                     >
                       <CardBody>
-                        <div className="d-flex align-items-center mb-4">
+                        <div className="d-flex align-items-center mb-3">
                           <div className="me-3">
-                            <img 
-                              src={provider.image} 
-                              alt={provider.name}
-                              className="provider-image rounded-circle"
+                            <UserAvatar 
+                              name={provider.name} 
+                              image={provider.profileImage || provider.image} 
+                              size="lg" 
                             />
                           </div>
                           <div>
                             <h4 className="mb-1">{provider.name}</h4>
-                            <div className="text-muted mb-2">{provider.specialty}</div>
+                            <div className="d-flex align-items-center mb-2">
+                              <Badge color="info" className="me-2">{provider.specialty}</Badge>
+                              <span className="text-muted">
+                                <small>{provider.yearsExperience || 0} {provider.yearsExperience === 1 ? 'year' : 'years'} exp.</small>
+                              </span>
+                            </div>
                             <div className="provider-rating">
-                              <FaStar className="text-warning me-1" size={18} />
-                              <span className="fs-5">{provider.rating}/5.0</span>
+                              {[...Array(5)].map((_, i) => (
+                                <FaStar 
+                                  key={i} 
+                                  className={i < Math.floor(provider.rating || 0) ? "text-warning" : "text-secondary"} 
+                                  size={14} 
+                                />
+                              ))}
+                              <span className="ms-2">{provider.rating || 0}/5.0</span>
+                              <span className="text-muted ms-1">({provider.totalRatings || 0})</span>
                             </div>
                           </div>
                         </div>
                         
                         <div className="provider-details mt-3">
                           <div className="mb-3">
-                            <FaHospital className="me-2 text-primary" size={18} />
-                            <span>{provider.location}</span>
+                            <FaHospital className="me-2 text-primary" size={16} />
+                            <span>{provider.location || 'No location specified'}</span>
                           </div>
-                          <div>
-                            <FaCalendarAlt className="me-2 text-primary" size={18} />
+                          <div className="mb-3">
+                            <FaCalendarAlt className="me-2 text-primary" size={16} />
                             <span>
-                              {provider.availableDates.length > 0 
+                              {provider.availableDates && provider.availableDates.length > 0 
                                 ? `Next available: ${provider.availableDates[0].toLocaleDateString()}` 
                                 : 'No availability'}
                             </span>
                           </div>
+                          {provider.languages && provider.languages.length > 0 && (
+                            <div className="mb-3">
+                              <FaLanguage className="me-2 text-primary" size={16} />
+                              <span>{provider.languages.join(', ')}</span>
+                            </div>
+                          )}
                         </div>
                         
-                        <div className="mt-4 provider-info p-2">
-                          <p className="mb-0">{provider.bio}</p>
+                        <hr className="my-3" />
+                        
+                        <div className="bio-section">
+                          <h6>About</h6>
+                          <p className="provider-bio text-muted small">
+                            {provider.bio || 'No bio available.'}
+                          </p>
+                        </div>
+                        
+                        {provider.education && provider.education.length > 0 && (
+                          <div className="education-section mt-3">
+                            <h6>Education</h6>
+                            <ul className="list-unstyled small">
+                              {provider.education.slice(0, 2).map((edu, idx) => (
+                                <li key={idx} className="text-muted">
+                                  {edu.degree}, {edu.institution} {edu.year ? `(${edu.year})` : ''}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        
+                        <div className="mt-3 text-center">
+                          <Button 
+                            color="primary" 
+                            size="sm" 
+                            outline 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedProvider(provider);
+                              setBookingStep(1);
+                            }}
+                            className="w-100"
+                          >
+                            Book Appointment
+                          </Button>
                         </div>
                       </CardBody>
                     </Card>
@@ -805,10 +1050,11 @@ const PatientAppointments = () => {
                   <Col xs={4} className="text-muted">Provider</Col>
                   <Col xs={8}>
                     <div className="d-flex align-items-center">
-                      <img 
-                        src={selectedProvider?.image} 
-                        alt={selectedProvider?.name} 
-                        className="provider-image-small rounded-circle me-2"
+                      <UserAvatar 
+                        name={selectedProvider?.name} 
+                        image={selectedProvider?.image} 
+                        size="sm"
+                        className="me-2"
                       />
                       <div>
                         <div>{selectedProvider?.name}</div>
@@ -867,33 +1113,68 @@ const PatientAppointments = () => {
           </Button>
           <Button 
             color="success" 
-            onClick={() => {
-              toast.success("Appointment request submitted successfully!");
-              setIsBooking(false);
-              setActiveTab('tracking');
-              
-              // Add application to tracking
-              const newApplication = {
-                id: Math.floor(Math.random() * 1000) + 300,
-                providerId: selectedProvider.id,
-                providerName: selectedProvider.name,
-                providerImage: selectedProvider.image,
-                specialty: selectedProvider.specialty,
+            onClick={async () => {
+              // Create data object to send to the server
+              const appointmentData = {
+                doctorId: selectedProvider.id,
                 date: selectedDate,
                 time: selectedTimeSlot.formattedTime,
                 type: selectedAppointmentType,
-                reason: "Your appointment reason",
-                status: 'Under Review',
-                submittedOn: new Date(),
-                currentStep: 'Doctor Review',
-                medicalReviewStatus: 'Pending',
-                estimatedCompletionTime: '24-48 hours'
+                reason: document.querySelector('textarea[name="reasonForVisit"]')?.value || "General consultation"
               };
-              setApplicationTracking(prev => [...prev, newApplication]);
-              setSelectedApplication(newApplication);
+              
+              // Call API to create appointment
+              setIsLoading(true);
+              const result = await createAppointment(appointmentData);
+              setIsLoading(false);
+              
+              if (result.success) {
+                // Create tracking record for this appointment
+                const newApplication = {
+                  id: result.data.appointment._id || Math.floor(Math.random() * 1000) + 300,
+                  providerId: selectedProvider.id,
+                  providerName: selectedProvider.name,
+                  providerImage: selectedProvider.image,
+                  specialty: selectedProvider.specialty,
+                  date: selectedDate,
+                  time: selectedTimeSlot.formattedTime,
+                  type: selectedAppointmentType,
+                  reason: appointmentData.reason,
+                  status: 'pending',
+                  submittedOn: new Date(),
+                  currentStep: 'Doctor Review',
+                  medicalReviewStatus: 'In Progress',
+                  estimatedCompletionTime: '24-48 hours'
+                };
+                
+                // Add the new application to tracking
+                setApplicationTracking(prev => [...prev, newApplication]);
+                
+                // Show success message
+                toast.success('Appointment request submitted successfully!');
+                
+                // Refresh data in the background without awaiting
+                fetchAppointments();
+                fetchApplicationTracking();
+                
+                // Force redirect to upcoming tab without waiting
+                setActiveTab('upcoming');
+                setIsBooking(false);
+                
+                // Reset booking state 
+                setBookingStep(0);
+                setSelectedProvider(null);
+                setSelectedAppointmentType(null);
+                setSelectedDate(null);
+                setSelectedTimeSlot(null);
+              }
             }}
           >
-            Submit Appointment Request
+            {isLoading ? (
+              <><Spinner size="sm" className="me-2" /> Processing...</>
+            ) : (
+              'Submit Appointment Request'
+            )}
           </Button>
         </div>
       </div>
@@ -941,11 +1222,13 @@ const PatientAppointments = () => {
                   
                   <Col xs={8} md={9}>
                     <div className="d-flex align-items-center mb-2">
-                      <img 
-                        src={appointment.providerImage} 
-                        alt={appointment.providerName}
-                        className="provider-image-small rounded-circle me-3"
-                      />
+                      <div className="me-3">
+                        <UserAvatar 
+                          name={appointment.providerName} 
+                          image={appointment.providerImage} 
+                          size="sm" 
+                        />
+                      </div>
                       <div>
                         <h5 className="mb-0">{appointment.providerName}</h5>
                         <div className="text-muted">{appointment.specialty}</div>
@@ -1043,11 +1326,13 @@ const PatientAppointments = () => {
                 <Row>
                   <Col md={6}>
                     <div className="d-flex align-items-center mb-3">
-                      <img 
-                        src={selectedApplication.providerImage} 
-                        alt={selectedApplication.providerName}
-                        className="provider-image-small rounded-circle me-3"
-                      />
+                      <div className="me-3">
+                        <UserAvatar 
+                          name={selectedApplication.providerName} 
+                          image={selectedApplication.providerImage} 
+                          size="md" 
+                        />
+                      </div>
                       <div>
                         <h5 className="mb-0">{selectedApplication.providerName}</h5>
                         <div className="text-muted">{selectedApplication.specialty}</div>
@@ -1076,13 +1361,17 @@ const PatientAppointments = () => {
                         <h5 className="mb-0">Application Status</h5>
                         <Badge 
                           color={
-                            selectedApplication.status === 'Under Review' ? 'warning' : 
-                            selectedApplication.status === 'Pre-approved' ? 'info' : 
-                            selectedApplication.status === 'Approved' ? 'success' : 'secondary'
+                            selectedApplication.status === 'pending' ? 'warning' : 
+                            selectedApplication.status === 'doctor_accepted' ? 'info' : 
+                            selectedApplication.status === 'declined' ? 'danger' :
+                            selectedApplication.status === 'confirmed' ? 'success' : 'secondary'
                           }
                           pill
                         >
-                          {selectedApplication.status}
+                          {selectedApplication.status === 'pending' ? 'Under Review' : 
+                           selectedApplication.status === 'doctor_accepted' ? 'Doctor Approved' : 
+                           selectedApplication.status === 'declined' ? 'Declined' :
+                           selectedApplication.status === 'confirmed' ? 'Confirmed' : selectedApplication.status}
                         </Badge>
                       </div>
                       
@@ -1117,30 +1406,69 @@ const PatientAppointments = () => {
                       <small className="text-muted">{selectedApplication.submittedOn.toLocaleDateString()}</small>
                     </div>
                   </div>
-                  <div className={`progress-step ${selectedApplication.medicalReviewStatus !== 'Pending' ? 'completed' : ''} ${selectedApplication.medicalReviewStatus === 'In Progress' ? 'in-progress' : ''}`}>
+                  <div className={`progress-step ${selectedApplication.status !== 'pending' ? 'completed' : 'in-progress'}`}>
                     <div className="progress-icon">
-                      {selectedApplication.medicalReviewStatus === 'Approved' ? <FaCheck /> : 
-                       selectedApplication.medicalReviewStatus === 'In Progress' ? <FaSpinner className="fa-spin" /> : '-'}
+                      {selectedApplication.status === 'pending' ? <FaSpinner className="fa-spin" /> : 
+                       selectedApplication.status === 'declined' ? <FaTimes className="text-danger" /> : <FaCheck />}
                     </div>
                     <div className="progress-content">
                       <h6>Doctor Review</h6>
-                      <small className={`text-${selectedApplication.medicalReviewStatus === 'Approved' ? 'success' : selectedApplication.medicalReviewStatus === 'In Progress' ? 'warning' : 'muted'}`}>
-                        {selectedApplication.medicalReviewStatus}
+                      <small className={`text-${
+                        selectedApplication.status === 'pending' ? 'warning' : 
+                        selectedApplication.status === 'declined' ? 'danger' : 'success'
+                      }`}>
+                        {selectedApplication.status === 'pending' ? 'In Progress' : 
+                         selectedApplication.status === 'declined' ? 'Declined' : 'Approved'}
                       </small>
                     </div>
                   </div>
-                  <div className="progress-step">
-                    <div className="progress-icon">-</div>
+                  <div className={`progress-step ${selectedApplication.status === 'confirmed' ? 'completed' : 
+                                                  selectedApplication.status === 'doctor_accepted' ? 'in-progress' : ''}`}>
+                    <div className="progress-icon">
+                      {selectedApplication.status === 'confirmed' ? <FaCheck /> : 
+                       selectedApplication.status === 'doctor_accepted' ? <FaSpinner className="fa-spin" /> : '-'}
+                    </div>
                     <div className="progress-content">
-                      <h6>Final Approval</h6>
-                      <small className="text-muted">Pending</small>
+                      <h6>Patient Confirmation</h6>
+                      <small className={`text-${
+                        selectedApplication.status === 'confirmed' ? 'success' : 
+                        selectedApplication.status === 'doctor_accepted' ? 'warning' : 'muted'
+                      }`}>
+                        {selectedApplication.status === 'confirmed' ? 'Confirmed' : 
+                         selectedApplication.status === 'doctor_accepted' ? 'Action Required' : 'Awaiting Doctor Approval'}
+                      </small>
                     </div>
                   </div>
                 </div>
                 
-                <Alert color="info">
+                <Alert color={
+                  selectedApplication.status === 'pending' ? 'info' : 
+                  selectedApplication.status === 'doctor_accepted' ? 'warning' : 
+                  selectedApplication.status === 'declined' ? 'danger' : 'success'
+                }>
                   <small>
-                    <strong>Note:</strong> Your application is being processed. You will receive a notification when there is an update on your application status.
+                    <strong>Note:</strong> {
+                      selectedApplication.status === 'pending' ? 
+                        'Your appointment request is being reviewed by the doctor. You will receive a notification when there is an update.' :
+                      selectedApplication.status === 'doctor_accepted' ?
+                        'Your appointment has been approved by the doctor and is ready for your final confirmation.' :
+                      selectedApplication.status === 'declined' ?
+                        'Your appointment request has been declined by the doctor. Please book a new appointment or contact support for assistance.' :
+                      'Your appointment has been confirmed and is now scheduled.'
+                    }
+                    
+                    {selectedApplication.status === 'doctor_accepted' && (
+                      <div className="mt-3">
+                        <Button color="success" size="sm" onClick={async () => {
+                          const result = await confirmAppointment(selectedApplication.id);
+                          if (result.success) {
+                            setSelectedApplication(null);
+                          }
+                        }}>
+                          <FaCheck className="me-1" /> Confirm Appointment
+                        </Button>
+                      </div>
+                    )}
                   </small>
                 </Alert>
               </CardBody>
@@ -1150,9 +1478,24 @@ const PatientAppointments = () => {
               <Button color="outline-secondary" onClick={() => setSelectedApplication(null)}>
                 Back to Applications
               </Button>
-              <Button color="outline-danger">
-                Cancel Application
-              </Button>
+              {selectedApplication.status === 'doctor_accepted' && (
+                <Button 
+                  color="success"
+                  onClick={async () => {
+                    const result = await confirmAppointment(selectedApplication.id);
+                    if (result.success) {
+                      setSelectedApplication(null);
+                    }
+                  }}
+                >
+                  Confirm Appointment
+                </Button>
+              )}
+              {selectedApplication.status !== 'declined' && (
+                <Button color="outline-danger">
+                  Cancel Application
+                </Button>
+              )}
             </div>
           </div>
         ) : (
@@ -1165,47 +1508,40 @@ const PatientAppointments = () => {
                 <Card className="application-card h-100">
                   <CardBody>
                     <Row className="align-items-center">
-                      <Col xs={2} md={2} className="text-center">
-                        <div className={`status-indicator status-${application.status === 'Under Review' ? 'warning' : 
-                                                                   application.status === 'Pre-approved' ? 'info' : 
-                                                                   application.status === 'Approved' ? 'success' : 'secondary'}`}>
-                          {application.status === 'Under Review' && <FaSpinner className="fa-spin" />}
-                          {application.status === 'Pre-approved' && <FaCheckCircle />}
-                          {application.status === 'Approved' && <FaCheck />}
+                      <Col xs={12}>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <h5 className="mb-0">
+                            Appointment with {application.providerName}
+                          </h5>
+                          <Badge 
+                            color={
+                              application.status === 'pending' ? 'secondary' : 
+                              application.status === 'doctor_accepted' ? 'info' : 
+                              application.status === 'declined' ? 'danger' :
+                              'success'
+                            }
+                            pill
+                          >
+                            {application.status === 'pending' ? 'pending' : 
+                             application.status === 'doctor_accepted' ? 'doctor_accepted' : 
+                             application.status === 'declined' ? 'declined' :
+                             application.status}
+                          </Badge>
                         </div>
-                      </Col>
-                      <Col xs={10} md={10}>
-                        <div className="d-flex justify-content-between">
-                          <div>
-                            <h5 className="mb-1">
-                              Appointment with {application.providerName}
-                              <Badge 
-                                color={
-                                  application.status === 'Under Review' ? 'warning' : 
-                                  application.status === 'Pre-approved' ? 'info' : 
-                                  application.status === 'Approved' ? 'success' : 'secondary'
-                                }
-                                className="ms-2"
-                                pill
-                              >
-                                {application.status}
-                              </Badge>
-                            </h5>
-                            <p className="text-muted mb-1">{application.specialty} • {application.type}</p>
-                            <p className="text-muted mb-1">
-                              <small>
-                                {application.date.toLocaleDateString()} at {application.time} • 
-                                Submitted on {application.submittedOn.toLocaleDateString()}
-                              </small>
-                            </p>
-                            <p className="mb-0">
-                              <small>
-                                <strong>Current step:</strong> {application.currentStep}
-                              </small>
-                            </p>
-                          </div>
+                        <div>
+                          <p className="text-muted mb-1">• {application.type}</p>
+                          <p className="text-muted mb-1">
+                            <small>
+                              {application.date.toLocaleDateString()} at {application.time} • Submitted on {application.submittedOn.toLocaleDateString()}
+                            </small>
+                          </p>
+                          <p className="mb-2">
+                            <small>
+                              <strong>Current step:</strong> {application.currentStep}
+                            </small>
+                          </p>
                         </div>
-                        <div className="mt-3 text-end">
+                        <div className="d-flex justify-content-end">
                           <Button 
                             color="primary" 
                             outline

@@ -16,6 +16,7 @@ import { ImagingStudies, Allergies, Immunizations } from './HealthRecordsSection
 import MedicalHistory from './health-records/MedicalHistory';
 import LaboratoryResults from './health-records/LaboratoryResults';
 import HospitalRecords from './health-records/HospitalRecords';
+import PrescriptionHistory from './health-records/PrescriptionHistory';
 
 // Mock user data
 const userData = {
@@ -241,6 +242,11 @@ const HealthRecords = () => {
                   </Nav.Link>
                 </Nav.Item>
                 <Nav.Item>
+                  <Nav.Link eventKey="prescriptions">
+                    <FaPills className="me-2" /> Prescription History
+                  </Nav.Link>
+                </Nav.Item>
+                <Nav.Item>
                   <Nav.Link eventKey="allergies">
                     <FaAllergies className="me-2" /> Allergies
                   </Nav.Link>
@@ -331,6 +337,10 @@ const HealthRecords = () => {
             
             <Tab.Pane eventKey="imaging" className="fade-in">
               <ImagingStudies />
+            </Tab.Pane>
+            
+            <Tab.Pane eventKey="prescriptions" className="fade-in">
+              <PrescriptionHistory />
             </Tab.Pane>
             
             <Tab.Pane eventKey="allergies" className="fade-in">
