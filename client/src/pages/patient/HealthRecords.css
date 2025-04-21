@@ -5,67 +5,105 @@
   color: #333;
   font-family: 'Roboto', 'Segoe UI', sans-serif;
   background-color: #f8f9fa;
-  min-height: 100vh;
+  min-height: calc(100vh - 80px);
 }
 
-h2, h3, h4, h5, h6 {
+.health-records-container h2, 
+.health-records-container h3, 
+.health-records-container h4, 
+.health-records-container h5, 
+.health-records-container h6 {
   color: #2c3e50;
 }
 
 /* Accessibility - Improved Focus States */
-a:focus, button:focus, input:focus, select:focus, textarea:focus {
+.health-records-container a:focus, 
+.health-records-container button:focus, 
+.health-records-container input:focus, 
+.health-records-container select:focus, 
+.health-records-container textarea:focus {
   outline: 3px solid rgba(21, 156, 228, 0.4);
   outline-offset: 2px;
 }
 
 /* Card Styling */
-.card {
+.health-records-container .card {
   border-radius: 0.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.card:hover {
+.health-records-container .card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
-.card-header {
-  border-radius: calc(0.5rem - 1px) calc(0.5rem - 1px) 0 0 !important;
-  font-weight: 500;
+.health-records-container .card-header {
+  background-color: rgba(248, 249, 250, 0.8);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-/* Navigation Pills */
-.nav-pills .nav-link {
-  border-radius: 0;
-  padding: 0.75rem 1rem;
-  color: #495057;
-  transition: all 0.2s;
+/* Timeline styles */
+.timeline {
+  position: relative;
+  padding: 20px 0;
 }
 
-.nav-pills .nav-link:hover {
-  background-color: rgba(0, 123, 255, 0.05);
+.timeline:before {
+  content: '';
+  position: absolute;
+  height: 100%;
+  width: 2px;
+  background: #e9ecef;
+  left: 80px;
+  top: 0;
 }
 
-.nav-pills .nav-link.active {
-  background-color: #f1f8ff;
-  color: #0d6efd;
-  font-weight: 500;
-  border-left: 3px solid #0d6efd;
+.timeline-item {
+  display: flex;
+  margin-bottom: 25px;
+  position: relative;
 }
 
-/* Search Bar */
-.search-bar .form-control {
-  border-right: none;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
+.timeline-date {
+  width: 80px;
+  text-align: right;
+  padding-right: 20px;
+  font-size: 0.85rem;
+  color: #6c757d;
 }
 
-.search-bar .btn {
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
+.timeline-content {
+  flex-grow: 1;
+  padding-left: 25px;
+  padding-bottom: 10px;
+  position: relative;
 }
 
-/* Timeline Mini */
+.timeline-content:before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #0d6efd;
+  border: 2px solid #fff;
+}
+
+.timeline-content.diagnosis:before {
+  background-color: #dc3545;
+}
+
+.timeline-content.imaging:before {
+  background-color: #6f42c1;
+}
+
+.timeline-content.immunization:before {
+  background-color: #198754;
+}
+
+/* Mini timeline for medical history */
 .timeline-mini {
   position: relative;
   padding-left: 30px;
@@ -93,15 +131,6 @@ a:focus, button:focus, input:focus, select:focus, textarea:focus {
   padding-bottom: 1rem;
 }
 
-/* Health Timeline */
-.health-timeline {
-  height: 200px;
-  overflow-x: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* Lab Results Table */
 .lab-results-table th {
   background-color: #f8f9fa;
@@ -114,47 +143,163 @@ a:focus, button:focus, input:focus, select:focus, textarea:focus {
   background-color: #f1f8ff;
 }
 
-/* AI Insights */
-.ai-insight {
+/* Allergies Card */
+.allergies-card .allergy-severity-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Immunizations */
+.immunization-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.status-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-right: 20px;
+  margin-bottom: 20px;
+  color: #fff;
+}
+
+.status-circle.complete {
+  background-color: #198754;
+}
+
+.status-circle.warning {
+  background-color: #ffc107;
+}
+
+.status-text {
+  font-size: 0.75rem;
+  font-weight: normal;
+}
+
+.immunization-timeline {
+  flex: 1;
+  position: relative;
+}
+
+.immunization-event {
+  margin-bottom: 1.5rem;
+  position: relative;
+  padding-left: 15px;
+  border-left: 2px solid #dee2e6;
+}
+
+.immunization-event::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.immunization-event.completed::before {
+  background-color: #198754;
+}
+
+.immunization-event.upcoming::before {
+  background-color: #ffc107;
+}
+
+/* Treatment Plan */
+.treatment-plan {
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 1.5rem;
+}
+
+.treatment-plan:last-child {
+  border-bottom: none;
+}
+
+/* Vitals Chart */
+.vitals-section .nav-tabs .nav-link {
+  cursor: pointer;
+}
+
+/* AI Insights Card */
+.ai-insights-card .ai-insight {
+  background-color: #f0f7ff;
   border-left: 3px solid #0d6efd;
-  background-color: #f8f9ff !important;
+  border-radius: 4px;
 }
 
-/* Share Records List */
-.share-records-list {
-  max-height: 200px;
-  overflow-y: auto;
-  padding: 0.5rem;
-  border: 1px solid #dee2e6;
-  border-radius: 0.25rem;
+/* Medical Info Card */
+.profile-card .card-header {
+  background-color: rgba(25, 135, 84, 0.1);
 }
 
-.share-records-list .form-check {
-  margin-bottom: 0.5rem;
+.emergency-contacts-card .card-header {
+  background-color: rgba(220, 53, 69, 0.1);
 }
 
-/* Privacy Controls */
-.privacy-controls {
-  padding: 0.5rem;
+.allergies-card .card-header {
+  background-color: rgba(255, 193, 7, 0.1);
 }
 
-/* Accessibility - High Contrast Text */
-.text-high-contrast {
-  color: #000 !important;
-  font-weight: 500;
+.medications-card .card-header {
+  background-color: rgba(13, 110, 253, 0.1);
+}
+
+/* Critical notifications */
+.critical-notification {
+  border-left: 5px solid #dc3545;
+  background-color: #f8d7da;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+/* Accessibility Features */
+body.high-contrast {
+  background-color: #000;
+  color: #fff;
+}
+
+body.high-contrast .card {
+  background-color: #222;
+  color: #fff;
+  border: 1px solid #444;
+}
+
+body.high-contrast .card-header {
+  background-color: #333;
+  border-bottom: 1px solid #444;
+}
+
+body.large-text {
+  font-size: 1.2rem;
 }
 
 /* Responsive Adjustments */
-@media (max-width: 992px) {
-  .nav-pills .nav-link {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.9rem;
-  }
-}
-
 @media (max-width: 768px) {
-  .health-records-container {
-    padding: 1rem;
+  .timeline:before {
+    left: 40px;
+  }
+  
+  .timeline-date {
+    width: 40px;
+    font-size: 0.75rem;
+  }
+  
+  .status-circle {
+    width: 80px;
+    height: 80px;
+    font-size: 1.2rem;
   }
   
   .card-body {
@@ -204,361 +349,49 @@ a:focus, button:focus, input:focus, select:focus, textarea:focus {
   to { opacity: 1; }
 }
 
-/* Lab results and metrics visualization */
+/* Health metrics cards */
+.metric-card {
+  position: relative;
+  overflow: hidden;
+}
+
 .metric-chart {
   height: 100px;
   width: 100%;
-  margin-bottom: 1rem;
+  margin-top: 10px;
 }
 
-/* Health Records Accordion Styling */
-.accordion-button:focus {
-  box-shadow: none;
-  border-color: rgba(0, 123, 255, 0.25);
-}
-
-.accordion-button:not(.collapsed) {
-  background-color: #f1f8ff;
+.metric-value {
+  font-size: 1.5rem;
+  font-weight: 600;
   color: #0d6efd;
 }
 
-/* Medical term definition styling */
-.medical-term {
-  text-decoration: underline;
-  text-decoration-style: dotted;
-  cursor: help;
-  display: inline-block; /* Ensure it's visible */
+.metric-label {
+  font-size: 0.85rem;
+  color: #6c757d;
 }
 
-/* Image gallery for radiology/imaging - UPDATED WITH DISPLAY FIXES */
-.image-gallery {
-  display: grid !important; /* Force display */
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 1rem;
-  margin: 20px 0; /* Add margin for visibility */
-  width: 100%; /* Ensure full width */
+/* Imaging gallery */
+.imaging-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
 }
 
-.gallery-item {
-  border: 1px solid #dee2e6;
-  border-radius: 0.25rem;
-  overflow: hidden;
-  position: relative;
-  aspect-ratio: 4/3;
-  cursor: pointer;
-  display: block !important; /* Force display */
-}
-
-.gallery-item img {
-  width: 100%;
-  height: 100%;
+.imaging-preview {
+  height: 150px;
   object-fit: cover;
-  transition: transform 0.3s;
-  display: block !important; /* Force display */
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s;
 }
 
-.gallery-item:hover img {
+.imaging-preview:hover {
   transform: scale(1.05);
 }
 
-/* Enhanced Imaging Studies Styles - VISIBILITY FIXES */
-.imaging-card {
-  transition: transform 0.2s ease;
-  height: 100%;
-  display: block !important; /* Force display */
-  margin-bottom: 15px;
-}
-
-.imaging-card:hover {
-  transform: translateY(-5px);
-}
-
-.imaging-card .card-img-top {
-  height: 200px;
-  object-fit: cover;
-  background-color: #f8f9fa;
-  display: block !important; /* Force display */
-}
-
-.imaging-viewer-modal .modal-body {
-  padding: 0;
-  background-color: #000;
-  text-align: center;
-}
-
-.imaging-viewer-modal img {
-  max-height: 80vh;
-  max-width: 100%;
-}
-
-.imaging-details {
-  font-size: 0.9rem;
-  display: block !important; /* Force display */
-}
-
-.imaging-controls {
-  background-color: rgba(0,0,0,0.7);
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 10px;
-  display: flex;
-  justify-content: center;
-}
-
-/* Allergies Section Styling - VISIBILITY FIXES */
-.allergy-item {
-  padding: 15px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  display: flex !important; /* Force display as flex */
-  align-items: center;
-  background-color: #ffffff;
-  border: 1px solid #eaeaea;
-}
-
-.allergy-severity-indicator {
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  display: inline-block !important; /* Force display */
-  margin-right: 8px;
-  flex-shrink: 0;
-}
-
-.allergy-details {
-  flex-grow: 1;
-  display: block !important; /* Force display */
-}
-
-.severity-severe {
-  background-color: #dc3545;
-  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.3);
-}
-
-.severity-moderate {
-  background-color: #fd7e14;
-}
-
-.severity-mild {
-  background-color: #ffc107;
-}
-
-.allergy-item:hover {
-  background-color: #f8f9fa;
-  transform: translateY(-2px);
-}
-
-.allergy-item.severe {
-  border-left: 4px solid #dc3545;
-}
-
-.allergy-item.moderate {
-  border-left: 4px solid #fd7e14;
-}
-
-.allergy-item.mild {
-  border-left: 4px solid #ffc107;
-}
-
-.allergy-reaction-tag {
-  display: inline-block !important; /* Force display */
-  padding: 3px 8px;
-  border-radius: 12px;
-  background-color: #f8f9fa;
-  margin: 2px;
-  font-size: 0.8rem;
-  border: 1px solid #eaeaea;
-}
-
-/* Immunization Status Styling - VISIBILITY FIXES */
-.immunization-container {
-  display: block !important; /* Force display */
-  margin: 20px 0;
-}
-
-.status-circle {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  display: flex !important; /* Force display as flex */
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 20px auto;
-  font-weight: bold;
-  font-size: 1.5rem;
-  color: white;
-  position: relative;
-}
-
-.status-circle.complete {
-  background: linear-gradient(45deg, #28a745, #20c997);
-  box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
-}
-
-.status-circle.almost {
-  background: linear-gradient(45deg, #fd7e14, #ffc107);
-  box-shadow: 0 4px 10px rgba(253, 126, 20, 0.3);
-}
-
-.status-circle.incomplete {
-  background: linear-gradient(45deg, #dc3545, #f86b6b);
-  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
-}
-
-.status-circle::after {
-  content: '';
-  position: absolute;
-  top: 5px;
-  left: 5px;
-  right: 5px;
-  bottom: 5px;
-  border-radius: 50%;
-  border: 2px dashed rgba(255, 255, 255, 0.3);
-}
-
-.immunization-timeline {
-  position: relative;
-  margin-left: 20px;
-  padding-left: 30px;
-  border-left: 2px solid #dee2e6;
-  display: block !important; /* Force display */
-  margin-top: 30px;
-}
-
-.immunization-event {
-  position: relative;
-  margin-bottom: 30px;
-  display: block !important; /* Force display */
-  padding-left: 10px;
-}
-
-.immunization-event::before {
-  content: '';
-  position: absolute;
-  left: -41px;
-  top: 0;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background-color: #0d6efd;
-  border: 3px solid #fff;
-  box-shadow: 0 0 0 2px #dee2e6;
-  display: block !important; /* Force display */
-}
-
-.immunization-event.completed::before {
-  background-color: #28a745;
-}
-
-.immunization-event.upcoming::before {
-  background-color: #ffc107;
-}
-
-.immunization-event.missed::before {
-  background-color: #dc3545;
-}
-
-.vaccine-brand {
-  display: inline-block;
-  padding: 2px 8px;
-  background-color: #f1f8ff;
-  border-radius: 4px;
-  margin-left: 8px;
-  font-size: 0.8rem;
-  color: #0d6efd;
-}
-
-/* Hospital Records Timeline */
-.hospital-admission::before {
-  content: '';
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  left: -39px;
-  background-color: #0d6efd;
-  border-radius: 50%;
-  border: 3px solid white;
-  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.3);
-}
-
-.timeline-hospital {
-  position: relative;
-  padding-left: 50px;
-  border-left: 3px solid #dee2e6;
-  margin-bottom: 30px;
-}
-
-.timeline-event {
-  position: relative;
-  padding-bottom: 20px;
-}
-
-.timeline-event::before {
-  content: '';
-  position: absolute;
-  left: -58px;
-  top: 0;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-
-.timeline-event.admission::before {
-  background-color: #0d6efd;
-}
-
-.timeline-event.procedure::before {
-  background-color: #fd7e14;
-}
-
-.timeline-event.medication::before {
-  background-color: #20c997;
-}
-
-.timeline-event.discharge::before {
-  background-color: #28a745;
-}
-
-/* Responsive adjustments for imaging, allergies and immunizations */
-@media (max-width: 768px) {
-  .status-circle {
-    width: 80px;
-    height: 80px;
-    font-size: 1.2rem;
-  }
-  
-  .imaging-card .card-img-top {
-    height: 150px;
-  }
-  
-  .immunization-timeline {
-    margin-left: 10px;
-    padding-left: 20px;
-  }
-  
-  .immunization-event::before {
-    left: -31px;
-    width: 16px;
-    height: 16px;
-  }
-}
-
-@media (max-width: 576px) {
-  .imaging-gallery {
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  }
-  
-  .status-circle {
-    width: 60px;
-    height: 60px;
-    font-size: 1rem;
-  }
-}
-
-/* Patient document viewer */
+/* Document viewer */
 .document-viewer {
   border: 1px solid #dee2e6;
   height: 500px;
@@ -576,303 +409,3 @@ a:focus, button:focus, input:focus, select:focus, textarea:focus {
   border-radius: 0.25rem;
   margin-bottom: 1rem;
 }
-
-/* High-priority notification for critical values */
-.critical-notification {
-  border-left: 5px solid #dc3545;
-  background-color: #f8d7da;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
-}
-
-/* Accessibility - Skip to main content link */
-.skip-link {
-  position: absolute;
-  top: -40px;
-  left: 0;
-  background: #000;
-  color: white;
-  padding: 8px;
-  z-index: 100;
-}
-
-.skip-link:focus {
-  top: 0;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .dark-mode-compatible {
-    --bg-color: #121212;
-    --text-color: #e0e0e0;
-    --card-bg: #1e1e1e;
-    --border-color: #333;
-    
-    background-color: var(--bg-color);
-    color: var(--text-color);
-  }
-  
-  .dark-mode-compatible .card {
-    background-color: var(--card-bg);
-    border-color: var(--border-color);
-  }
-}
-
-/* Enhanced Records Categories Tab Navigator */
-.records-categories-tabs {
-  background-color: #fff;
-  border-radius: 0.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  margin-bottom: 1.5rem;
-}
-
-.records-categories-tabs .nav-pills {
-  padding: 0.5rem;
-  display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: thin;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-}
-
-.records-categories-tabs .nav-pills::-webkit-scrollbar {
-  height: 5px;
-}
-
-.records-categories-tabs .nav-pills::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 123, 255, 0.3);
-  border-radius: 10px;
-}
-
-.records-categories-tabs .nav-pills .nav-item {
-  margin: 0 0.25rem;
-  white-space: nowrap;
-}
-
-.records-categories-tabs .nav-pills .nav-link {
-  border-radius: 2rem;
-  padding: 0.65rem 1.25rem;
-  display: flex;
-  align-items: center;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  border: 1px solid transparent;
-}
-
-.records-categories-tabs .nav-pills .nav-link.active {
-  background-color: #0d6efd;
-  color: #fff;
-  border-left: none;
-  box-shadow: 0 2px 5px rgba(13, 110, 253, 0.3);
-}
-
-.records-categories-tabs .nav-pills .nav-link:not(.active):hover {
-  background-color: #f8f9fa;
-  border-color: #dee2e6;
-}
-
-.records-categories-tabs .nav-pills .nav-link svg {
-  margin-right: 0.5rem;
-  font-size: 1.1rem;
-}
-
-.records-categories-tabs .tab-content {
-  padding: 1.5rem;
-}
-
-/* Category indicator badges */
-.category-badge {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.75rem;
-  margin-left: 0.5rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: 1rem;
-  background-color: rgba(0, 123, 255, 0.1);
-  color: #0d6efd;
-}
-
-/* Active category indicator */
-.category-indicator {
-  height: 3px;
-  background-color: #0d6efd;
-  transition: transform 0.3s ease;
-  border-radius: 3px;
-}
-
-/* Tab scroll buttons for mobile */
-.tab-scroll-button {
-  display: none;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background-color: #fff;
-  border: 1px solid #dee2e6;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-  align-items: center;
-  justify-content: center;
-}
-
-.tab-scroll-button-left {
-  left: 0;
-}
-
-.tab-scroll-button-right {
-  right: 0;
-}
-
-@media (max-width: 768px) {
-  .records-categories-tabs .nav-pills {
-    padding: 0.5rem 2rem;
-  }
-  
-  .tab-scroll-button {
-    display: flex;
-  }
-  
-  .records-categories-tabs .nav-pills .nav-link {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-  }
-}
-
-/* Sticky tab navigation for desktop */
-@media (min-width: 992px) {
-  .sticky-tabs-wrapper {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-}
-
-/* Enhanced tab content transitions */
-.tab-content > .tab-pane {
-  transition: all 0.3s ease-in-out;
-}
-
-.tab-pane-entering {
-  animation: slideIn 0.3s forwards;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Navigation pills vertical style override for desktop */
-@media (min-width: 992px) {
-  .records-sidebar .nav-pills {
-    flex-direction: column;
-    border-right: 1px solid #dee2e6;
-    height: 100%;
-  }
-  
-  .records-sidebar .nav-pills .nav-link {
-    border-radius: 0;
-    border-right: 3px solid transparent;
-    justify-content: flex-start;
-  }
-  
-  .records-sidebar .nav-pills .nav-link.active {
-    border-left: none;
-    border-right: 3px solid #0d6efd;
-    background-color: #f1f8ff;
-    color: #0d6efd;
-  }
-}
-
-/* Remove metrics/vital signs styles */
-.metric-card,
-.metric-value,
-.metric-label,
-.metric-normal,
-.metric-warning,
-.metric-danger {
-  display: none;
-}
-
-/* Imaging, allergies and immunizations sections */
-.imaging-studies-section,
-.allergies-section,
-.immunization-container {
-  margin-bottom: 30px; /* keeping spacing between sections */
-  padding: 20px; /* keeping internal padding */
-}
-
-.timeline {
-    position: relative;
-    padding: 20px 0;
-  }
-  
-  .timeline:before {
-    content: '';
-    position: absolute;
-    height: 100%;
-    width: 2px;
-    background: #e9ecef;
-    left: 80px;
-    top: 0;
-  }
-  
-  .timeline-item {
-    display: flex;
-    margin-bottom: 25px;
-    position: relative;
-  }
-  
-  .timeline-date {
-    width: 80px;
-    text-align: right;
-    padding-right: 20px;
-    font-weight: 600;
-    color: #495057;
-  }
-  
-  .timeline-content {
-    background: #f8f9fa;
-    border-radius: 4px;
-    padding: 12px 15px;
-    flex: 1;
-    position: relative;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  }
-  
-  .timeline-content:before {
-    content: '';
-    position: absolute;
-    left: -8px;
-    top: 15px;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: white;
-    border: 2px solid #6c757d;
-  }
-  
-  .timeline-content h6 {
-    margin-bottom: 5px;
-    font-weight: 600;
-  }
-  
-  .timeline-content p {
-    margin-bottom: 0;
-    font-size: 0.9rem;
-  }

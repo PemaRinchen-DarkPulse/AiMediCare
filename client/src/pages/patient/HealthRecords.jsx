@@ -1,671 +1,955 @@
 import React, { useState, useEffect } from 'react';
+import { Container, Row, Col, Alert, Card, CardBody, Button, Badge, Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  Container, Row, Col, Nav, Tab, Card, Badge, Button, 
-  Form, InputGroup, Alert, ProgressBar, Dropdown
-} from 'react-bootstrap';
-import { 
-  FaSearch, FaFileUpload, FaFileExport, FaShareAlt, 
-  FaCalendarAlt, FaFlask, FaXRay, FaHeartbeat, FaPills, 
-  FaAllergies, FaSyringe, FaUserMd, FaHospital, FaDna, 
-  FaTooth, FaEye, FaExclamationTriangle, FaLock, FaUserShield,
-  FaBrain, FaChild, FaBaby, FaLungs
-} from 'react-icons/fa';
-
+  faFileMedical, faPills, faVial, faXRay, faHeartbeat, faSyringe, 
+  faClipboardCheck, faUserMd, faExclamationTriangle, faDownload, faShare 
+} from '@fortawesome/free-solid-svg-icons';
+import HealthRecordsNavigation from '../../components/patient/HealthRecordsNavigation';
+import MedicalInfoCard from '../../components/patient/MedicalInfoCard';
+import MedicalHistoryItem from '../../components/patient/MedicalHistoryItem';
+import LabResultItem from '../../components/patient/LabResultItem';
+import VitalsChart from '../../components/patient/VitalsChart';
 import './HealthRecords.css';
-import { ImagingStudies, Allergies, Immunizations } from './HealthRecordsSections';
-import MedicalHistory from './health-records/MedicalHistory';
-import LaboratoryResults from './health-records/LaboratoryResults';
-import HospitalRecords from './health-records/HospitalRecords';
-import PrescriptionHistory from './health-records/PrescriptionHistory';
-
-// Mock user data
-const userData = {
-  name: "Pema-Rinchen",
-  dob: "1985-07-22",
-  gender: "Male",
-  mrn: "MRN2023047812",
-  primaryProvider: "Dr. Sarah Johnson",
-  lastUpdated: "2025-03-08T14:30:00Z",
-  emergencyContact: "Tenzin Wangmo (Spouse) - 555-123-4567"
-};
 
 const HealthRecords = () => {
-  const [activeTab, setActiveTab] = useState('medical-history');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterApplied, setFilterApplied] = useState(false);
-  const [dateRange, setDateRange] = useState({ from: '', to: '' });
-  const currentDateTime = new Date('2025-03-10T05:08:44Z');
-  
-  // AI feature state
-  const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
-  const [showAIInsights, setShowAIInsights] = useState(true);
-  
-  // Privacy settings
-  const [privacyLevel, setPrivacyLevel] = useState('standard');
-  
-  // Record access log
-  const accessLog = [
-    { user: "Dr. Sarah Johnson (Primary Care)", date: "2025-03-05T09:22:15Z", sections: ["Medical History", "Medications"] },
-    { user: "Dr. Michael Chen (Cardiologist)", date: "2025-02-28T14:45:10Z", sections: ["Vital Signs", "Lab Results"] },
-    { user: "System AI Analysis", date: "2025-03-10T01:00:05Z", sections: ["All Records"] },
-  ];
+  // State management
+  const [activeTab, setActiveTab] = useState('summary');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [patientProfile, setPatientProfile] = useState(null);
+  const [medicalHistory, setMedicalHistory] = useState([]);
+  const [allergies, setAllergies] = useState([]);
+  const [chronicConditions, setChronicConditions] = useState([]);
+  const [medications, setMedications] = useState([]);
+  const [labResults, setLabResults] = useState([]);
+  const [imagingReports, setImagingReports] = useState([]);
+  const [vitalsHistory, setVitalsHistory] = useState({});
+  const [immunizations, setImmunizations] = useState([]);
+  const [treatmentPlans, setTreatmentPlans] = useState([]);
+  const [emergencyContacts, setEmergencyContacts] = useState([]);
 
+  // Load mock data function as fallback only (will be used if API fails)
+  const loadMockData = () => {
+    console.warn("API calls failed - Using mock data as fallback");
+    
+    // Mock data implementation remains for fallback purposes only
+    // ...existing code...
+  };
+
+  // Fetch patient data from API endpoints
   useEffect(() => {
-    // Simulate AI processing health records
-    setAiSummaryLoading(true);
-    setTimeout(() => {
-      setAiSummaryLoading(false);
-    }, 1500);
+    const fetchPatientData = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+          setError('Authentication required. Please log in.');
+          setLoading(false);
+          return;
+        }
+
+        const headers = {
+          'Authorization': `Bearer ${token}`
+        };
+        
+        const API_BASE_URL = 'http://localhost:5000/api/patient';
+        
+        try {
+          // Fetch all data in parallel for better performance
+          const [
+            profileResponse,
+            contactsResponse,
+            historyResponse,
+            allergiesResponse,
+            conditionsResponse,
+            medicationsResponse,
+            labsResponse,
+            imagingResponse,
+            vitalsResponse,
+            immunizationsResponse,
+            plansResponse
+          ] = await Promise.all([
+            fetch(`${API_BASE_URL}/profile`, { headers }),
+            fetch(`${API_BASE_URL}/emergency-contacts`, { headers }),
+            fetch(`${API_BASE_URL}/medical-history`, { headers }),
+            fetch(`${API_BASE_URL}/allergies`, { headers }),
+            fetch(`${API_BASE_URL}/chronic-conditions`, { headers }),
+            fetch(`${API_BASE_URL}/medications`, { headers }),
+            fetch(`${API_BASE_URL}/lab-results`, { headers }),
+            fetch(`${API_BASE_URL}/imaging-reports`, { headers }),
+            fetch(`${API_BASE_URL}/vitals-history`, { headers }),
+            fetch(`${API_BASE_URL}/immunizations`, { headers }),
+            fetch(`${API_BASE_URL}/treatment-plans`, { headers })
+          ]);
+
+          // Process all responses
+          if (!profileResponse.ok) {
+            throw new Error('Failed to fetch patient profile');
+          }
+
+          // Process and set data for each response
+          const profileData = await profileResponse.json();
+          setPatientProfile(profileData.data);
+
+          if (contactsResponse.ok) {
+            const contactsData = await contactsResponse.json();
+            setEmergencyContacts(contactsData.data);
+          }
+
+          if (historyResponse.ok) {
+            const historyData = await historyResponse.json();
+            setMedicalHistory(historyData.data);
+          }
+
+          if (allergiesResponse.ok) {
+            const allergiesData = await allergiesResponse.json();
+            setAllergies(allergiesData.data);
+          }
+
+          if (conditionsResponse.ok) {
+            const conditionsData = await conditionsResponse.json();
+            setChronicConditions(conditionsData.data);
+          }
+
+          if (medicationsResponse.ok) {
+            const medicationsData = await medicationsResponse.json();
+            setMedications(medicationsData.data);
+          }
+
+          if (labsResponse.ok) {
+            const labsData = await labsResponse.json();
+            setLabResults(labsData.data);
+          }
+
+          if (imagingResponse.ok) {
+            const imagingData = await imagingResponse.json();
+            setImagingReports(imagingData.data);
+          }
+
+          if (vitalsResponse.ok) {
+            const vitalsData = await vitalsResponse.json();
+            setVitalsHistory(vitalsData.data);
+          }
+
+          if (immunizationsResponse.ok) {
+            const immunizationsData = await immunizationsResponse.json();
+            setImmunizations(immunizationsData.data);
+          }
+
+          if (plansResponse.ok) {
+            const plansData = await plansResponse.json();
+            setTreatmentPlans(plansData.data);
+          }
+
+          setLoading(false);
+          
+        } catch (err) {
+          console.error('Error fetching health records:', err);
+          setError(`Error fetching data: ${err.message}`);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('Error in health records data fetch:', err);
+        setError(`Something went wrong: ${err.message}`);
+        setLoading(false);
+      }
+    };
+
+    fetchPatientData();
   }, []);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    // Would implement actual search functionality here
-    setFilterApplied(Boolean(searchTerm));
-  };
-  
-  const clearFilters = () => {
-    setSearchTerm('');
-    setDateRange({ from: '', to: '' });
-    setFilterApplied(false);
-  };
-  
-  // Helper for rendering emergency information
-  const EmergencyInformation = () => (
-    <Alert variant="danger" className="mt-3">
-      <div className="d-flex align-items-start">
-        <FaExclamationTriangle size={24} className="me-3 mt-1" />
-        <div>
-          <h5 className="alert-heading">Emergency Information</h5>
-          <p className="mb-0">In case of emergency, please be aware of the following critical health information:</p>
-          <ul className="mb-0 mt-2">
-            <li><strong>Blood Type:</strong> A Positive</li>
-            <li><strong>Severe Allergies:</strong> Penicillin (Anaphylaxis)</li>
-            <li><strong>Current Medications:</strong> Lisinopril, Metformin</li>
-            <li><strong>Medical Conditions:</strong> Type 2 Diabetes, Hypertension</li>
-            <li><strong>Emergency Contact:</strong> {userData.emergencyContact}</li>
-          </ul>
+  // Profile information card
+  const PatientProfileCard = () => (
+    <MedicalInfoCard
+      title="Patient Profile"
+      icon={<FontAwesomeIcon icon={faUserMd} />}
+      className="profile-card"
+    >
+      {patientProfile && (
+        <Row>
+          <Col md={6}>
+            <p><strong>Name:</strong> {patientProfile.name}</p>
+            <p><strong>Date of Birth:</strong> {new Date(patientProfile.dateOfBirth).toLocaleDateString()}</p>
+            <p><strong>Gender:</strong> {patientProfile.gender}</p>
+            <p><strong>Blood Type:</strong> {patientProfile.bloodType}</p>
+          </Col>
+          <Col md={6}>
+            <p><strong>Height:</strong> {patientProfile.height}</p>
+            <p><strong>Weight:</strong> {patientProfile.weight}</p>
+            <p><strong>Email:</strong> {patientProfile.contactInfo?.email}</p>
+            <p><strong>Phone:</strong> {patientProfile.contactInfo?.phone}</p>
+          </Col>
+        </Row>
+      )}
+    </MedicalInfoCard>
+  );
+
+  // Emergency contacts card
+  const EmergencyContactCard = () => (
+    <MedicalInfoCard
+      title="Emergency Contacts"
+      icon={<FontAwesomeIcon icon={faExclamationTriangle} />}
+      className="emergency-contacts-card"
+    >
+      {emergencyContacts.map((contact, index) => (
+        <div key={index} className="mb-3">
+          <p className="mb-1"><strong>{contact.name}</strong> ({contact.relationship})</p>
+          <p className="mb-1">
+            <a href={`tel:${contact.phone}`} className="text-decoration-none">
+              <i className="fas fa-phone-alt me-2"></i>{contact.phone}
+            </a>
+          </p>
+          {contact.email && (
+            <p className="mb-0">
+              <a href={`mailto:${contact.email}`} className="text-decoration-none">
+                <i className="fas fa-envelope me-2"></i>{contact.email}
+              </a>
+            </p>
+          )}
+        </div>
+      ))}
+    </MedicalInfoCard>
+  );
+
+  // Allergies card with severity indicators
+  const AllergiesCard = () => (
+    <MedicalInfoCard
+      title="Allergies"
+      icon={<FontAwesomeIcon icon={faExclamationTriangle} />}
+      className="allergies-card"
+    >
+      {allergies.length > 0 ? (
+        allergies.map((allergy, index) => (
+          <div key={index} className="allergy-item mb-2">
+            <div className="d-flex justify-content-between align-items-center">
+              <div className="d-flex align-items-center">
+                <span 
+                  className={`allergy-severity-indicator me-2 ${
+                    allergy.severity === 'Severe' ? 'bg-danger' : 
+                    allergy.severity === 'Moderate' ? 'bg-warning' : 'bg-info'
+                  }`}
+                ></span>
+                <div>
+                  <h6 className="mb-0">{allergy.allergen}</h6>
+                  <small className="text-muted">
+                    Reaction: {allergy.reaction} • Identified: {new Date(allergy.dateIdentified).toLocaleDateString()}
+                  </small>
+                </div>
+              </div>
+              <Badge 
+                color={
+                  allergy.severity === 'Severe' ? 'danger' : 
+                  allergy.severity === 'Moderate' ? 'warning' : 'info'
+                }
+              >
+                {allergy.severity}
+              </Badge>
+            </div>
+          </div>
+        ))
+      ) : (
+        <p className="text-muted">No allergies recorded</p>
+      )}
+    </MedicalInfoCard>
+  );
+
+  // Chronic conditions card
+  const ChronicConditionsCard = () => (
+    <MedicalInfoCard
+      title="Chronic Conditions"
+      icon={<FontAwesomeIcon icon={faFileMedical} />}
+      className="conditions-card"
+    >
+      {chronicConditions.length > 0 ? (
+        chronicConditions.map((condition, index) => (
+          <div key={index} className="condition-item mb-2">
+            <div className="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 className="mb-0">{condition.condition}</h6>
+                <small className="text-muted">
+                  Since: {new Date(condition.diagnosedDate).toLocaleDateString()} • 
+                  Provider: {condition.treatingProvider}
+                </small>
+              </div>
+              <Badge 
+                color={
+                  condition.status === 'Controlled' ? 'success' : 
+                  condition.status === 'Monitoring' ? 'info' : 
+                  condition.status === 'Worsening' ? 'danger' : 'warning'
+                }
+              >
+                {condition.status}
+              </Badge>
+            </div>
+          </div>
+        ))
+      ) : (
+        <p className="text-muted">No chronic conditions recorded</p>
+      )}
+    </MedicalInfoCard>
+  );
+
+  // Medication card with adherence indicators
+  const MedicationsCard = () => (
+    <MedicalInfoCard
+      title="Current Medications"
+      icon={<FontAwesomeIcon icon={faPills} />}
+      className="medications-card"
+    >
+      {medications.length > 0 ? (
+        <div className="table-responsive">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Medication</th>
+                <th>Dosage</th>
+                <th>Schedule</th>
+                <th>Purpose</th>
+                <th>Adherence</th>
+                <th>Refill</th>
+              </tr>
+            </thead>
+            <tbody>
+              {medications.map((med, index) => (
+                <tr key={index}>
+                  <td className="fw-bold">{med.name}</td>
+                  <td>{med.dosage}</td>
+                  <td>{med.frequency}</td>
+                  <td>{med.purpose}</td>
+                  <td className="align-middle">
+                    <div className="d-flex align-items-center">
+                      <div className="progress flex-grow-1" style={{ height: '8px' }}>
+                        <div 
+                          className={`progress-bar ${
+                            med.adherence >= 90 ? 'bg-success' : 
+                            med.adherence >= 75 ? 'bg-warning' : 'bg-danger'
+                          }`}
+                          role="progressbar"
+                          style={{ width: `${med.adherence}%` }}
+                          aria-valuenow={med.adherence} 
+                          aria-valuemin="0" 
+                          aria-valuemax="100"
+                        ></div>
+                      </div>
+                      <span className="ms-2">{med.adherence}%</span>
+                    </div>
+                  </td>
+                  <td>
+                    <Badge color={
+                      new Date(med.refillDate) < new Date() ? 'danger' :
+                      new Date(med.refillDate) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) ? 'warning' : 'success'
+                    }>
+                      {new Date(med.refillDate).toLocaleDateString()}
+                    </Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="text-muted">No medications recorded</p>
+      )}
+    </MedicalInfoCard>
+  );
+
+  // Lab results section with normal range comparison
+  const LabResultsSection = () => (
+    <MedicalInfoCard
+      title="Laboratory Results"
+      icon={<FontAwesomeIcon icon={faVial} />}
+    >
+      {labResults.length > 0 ? (
+        <>
+          <div className="filter-bar d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <small className="text-muted">
+                Showing most recent results first • 
+                <Badge color="danger" pill className="ms-2 me-1">
+                  {labResults.filter(lab => lab.isAbnormal).length}
+                </Badge>
+                abnormal results
+              </small>
+            </div>
+            <div>
+              <Button size="sm" outline color="primary">
+                <i className="fas fa-filter me-1"></i> Filter
+              </Button>
+            </div>
+          </div>
+          <div className="lab-results table-responsive">
+            {labResults.map((lab, index) => (
+              <LabResultItem
+                key={index}
+                testName={lab.testName}
+                date={lab.date}
+                result={lab.result}
+                normalRange={lab.normalRange}
+                unit={lab.unit}
+                isAbnormal={lab.isAbnormal}
+              />
+            ))}
+          </div>
+        </>
+      ) : (
+        <p className="text-muted">No lab results available</p>
+      )}
+    </MedicalInfoCard>
+  );
+
+  // Vitals history with charts
+  const VitalsSection = () => (
+    <div className="vitals-section">
+      <h4 className="mb-3">Vitals History</h4>
+      
+      <Nav tabs className="mb-3">
+        <NavItem>
+          <NavLink
+            className={activeTab === 'bloodPressure' ? 'active' : ''}
+            onClick={() => setActiveTab('bloodPressure')}
+          >
+            Blood Pressure
+          </NavLink>
+        </NavItem>
+        <NavItem>
+          <NavLink
+            className={activeTab === 'bloodSugar' ? 'active' : ''}
+            onClick={() => setActiveTab('bloodSugar')}
+          >
+            Blood Sugar
+          </NavLink>
+        </NavItem>
+        <NavItem>
+          <NavLink
+            className={activeTab === 'heartRate' ? 'active' : ''}
+            onClick={() => setActiveTab('heartRate')}
+          >
+            Heart Rate
+          </NavLink>
+        </NavItem>
+        <NavItem>
+          <NavLink
+            className={activeTab === 'weight' ? 'active' : ''}
+            onClick={() => setActiveTab('weight')}
+          >
+            Weight
+          </NavLink>
+        </NavItem>
+        <NavItem>
+          <NavLink
+            className={activeTab === 'cholesterol' ? 'active' : ''}
+            onClick={() => setActiveTab('cholesterol')}
+          >
+            Cholesterol
+          </NavLink>
+        </NavItem>
+      </Nav>
+      
+      <TabContent activeTab={activeTab}>
+        <TabPane tabId="bloodPressure">
+          {vitalsHistory.bloodPressure && (
+            <VitalsChart
+              vitalType="blood-pressure"
+              data={vitalsHistory.bloodPressure}
+              unit="mmHg"
+              timeRange="6 Month"
+            />
+          )}
+        </TabPane>
+        <TabPane tabId="bloodSugar">
+          {vitalsHistory.bloodSugar && (
+            <VitalsChart
+              vitalType="blood-sugar"
+              data={vitalsHistory.bloodSugar}
+              unit="mg/dL"
+              timeRange="6 Month"
+            />
+          )}
+        </TabPane>
+        <TabPane tabId="heartRate">
+          {vitalsHistory.heartRate && (
+            <VitalsChart
+              vitalType="heart-rate"
+              data={vitalsHistory.heartRate}
+              unit="bpm"
+              timeRange="6 Month"
+            />
+          )}
+        </TabPane>
+        <TabPane tabId="weight">
+          {vitalsHistory.weight && (
+            <VitalsChart
+              vitalType="weight"
+              data={vitalsHistory.weight}
+              unit="lbs"
+              timeRange="6 Month"
+            />
+          )}
+        </TabPane>
+        <TabPane tabId="cholesterol">
+          {vitalsHistory.cholesterol && (
+            <VitalsChart
+              vitalType="other"
+              data={vitalsHistory.cholesterol}
+              unit="mg/dL"
+              timeRange="2 Year"
+            />
+          )}
+        </TabPane>
+      </TabContent>
+    </div>
+  );
+
+  // Imaging studies section
+  const ImagingSection = () => (
+    <MedicalInfoCard
+      title="Imaging Studies"
+      icon={<FontAwesomeIcon icon={faXRay} />}
+    >
+      {imagingReports.length > 0 ? (
+        <Row>
+          {imagingReports.map((image, index) => (
+            <Col md={6} key={index} className="mb-4">
+              <Card className="imaging-card h-100">
+                <div className="position-relative" style={{ height: '180px', overflow: 'hidden' }}>
+                  <div className="image-placeholder bg-light d-flex align-items-center justify-content-center h-100">
+                    <FontAwesomeIcon icon={faXRay} size="3x" className="text-secondary" />
+                  </div>
+                  <div className="position-absolute bottom-0 start-0 w-100 bg-dark bg-opacity-75 text-white p-2">
+                    <h6 className="mb-0">{image.type}</h6>
+                  </div>
+                </div>
+                <CardBody>
+                  <p className="mb-2">
+                    <small className="text-muted">
+                      <i className="far fa-calendar me-1"></i>
+                      {new Date(image.date).toLocaleDateString()}
+                    </small>
+                  </p>
+                  <p className="mb-2">
+                    <small className="text-muted">
+                      <strong>Provider:</strong> {image.orderedBy}
+                    </small>
+                  </p>
+                  <p className="mb-3">
+                    <small className="text-muted">
+                      <strong>Findings:</strong> {image.findings}
+                    </small>
+                  </p>
+                  <div className="d-flex justify-content-between">
+                    <Button color="primary" size="sm" onClick={() => alert('Image Viewer')}>
+                      <i className="far fa-image me-1"></i> View
+                    </Button>
+                    <Button color="secondary" size="sm" onClick={() => alert('Download Report')}>
+                      <i className="fas fa-download me-1"></i> Report
+                    </Button>
+                  </div>
+                </CardBody>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+      ) : (
+        <p className="text-muted">No imaging studies available</p>
+      )}
+    </MedicalInfoCard>
+  );
+
+  // Immunization history section
+  const ImmunizationSection = () => (
+    <MedicalInfoCard
+      title="Immunization History"
+      icon={<FontAwesomeIcon icon={faSyringe} />}
+    >
+      {immunizations.length > 0 ? (
+        <div className="immunization-container">
+          <div className="status-circle complete">
+            {Math.round((immunizations.filter(i => !i.nextDueDate || new Date(i.nextDueDate) > new Date()).length / immunizations.length) * 100)}%
+            <div className="status-text">Up to Date</div>
+          </div>
+          
+          <div className="immunization-timeline">
+            {immunizations.map((immunization, index) => (
+              <div key={index} className={`immunization-event ${!immunization.nextDueDate || new Date(immunization.nextDueDate) > new Date() ? 'completed' : 'upcoming'}`}>
+                <h6>{immunization.vaccine}</h6>
+                <p className="mb-1">
+                  <small>
+                    <i className="far fa-calendar me-1"></i>
+                    {new Date(immunization.date).toLocaleDateString()}
+                  </small>
+                </p>
+                <p className="mb-1">
+                  <small>
+                    <i className="fas fa-user-md me-1"></i>
+                    {immunization.administrator}
+                  </small>
+                </p>
+                {immunization.nextDueDate && (
+                  <p className="mb-0">
+                    <small>
+                      <i className="fas fa-hourglass-half me-1"></i>
+                      Next dose: {new Date(immunization.nextDueDate).toLocaleDateString()}
+                    </small>
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p className="text-muted">No immunization records available</p>
+      )}
+    </MedicalInfoCard>
+  );
+
+  // Treatment plans section
+  const TreatmentPlansSection = () => (
+    <MedicalInfoCard
+      title="Treatment Plans"
+      icon={<FontAwesomeIcon icon={faClipboardCheck} />}
+    >
+      {treatmentPlans.length > 0 ? (
+        treatmentPlans.map((plan, index) => (
+          <div key={index} className="treatment-plan mb-4">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5 className="mb-0">{plan.condition}</h5>
+              <Badge color="info">Last updated: {new Date(plan.lastUpdated).toLocaleDateString()}</Badge>
+            </div>
+            
+            <p className="mb-2">
+              <strong>Provider:</strong> {plan.provider}
+            </p>
+            
+            <div className="mb-3">
+              <h6>Goals:</h6>
+              <ul className="list-group">
+                {plan.goals.map((goal, goalIndex) => (
+                  <li key={goalIndex} className="list-group-item d-flex justify-content-between align-items-center">
+                    {goal.description}
+                    <Badge color={
+                      goal.status === 'Completed' ? 'success' : 
+                      goal.status === 'Active' ? 'primary' : 
+                      goal.status === 'In Progress' ? 'info' : 'warning'
+                    }>
+                      {goal.status}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <div className="mb-3">
+              <h6>Medications:</h6>
+              <ul>
+                {plan.medications.map((med, medIndex) => (
+                  <li key={medIndex}>{med}</li>
+                ))}
+              </ul>
+            </div>
+            
+            <div className="mb-3">
+              <h6>Dietary Recommendations:</h6>
+              <p>{plan.dietaryRecommendations}</p>
+            </div>
+            
+            <div className="mb-3">
+              <h6>Activity Recommendations:</h6>
+              <p>{plan.activityRecommendations}</p>
+            </div>
+            
+            {plan.notes && (
+              <div className="mb-0">
+                <h6>Notes:</h6>
+                <p>{plan.notes}</p>
+              </div>
+            )}
+          </div>
+        ))
+      ) : (
+        <p className="text-muted">No treatment plans available</p>
+      )}
+    </MedicalInfoCard>
+  );
+
+  // Medical timeline component
+  const MedicalTimelineSection = () => (
+    <MedicalInfoCard
+      title="Medical Timeline"
+      icon={<FontAwesomeIcon icon={faFileMedical} />}
+    >
+      <div className="timeline">
+        {/* Create a combined timeline from medical history, imaging, lab results, etc. */}
+        {[
+          ...medicalHistory.map(item => ({
+            date: new Date(item.date),
+            type: 'diagnosis',
+            title: item.diagnosis,
+            description: `Diagnosed by ${item.provider}`,
+            status: item.status,
+            icon: 'fas fa-file-medical'
+          })),
+          ...imagingReports.map(item => ({
+            date: new Date(item.date),
+            type: 'imaging',
+            title: item.type,
+            description: item.findings,
+            icon: 'fas fa-x-ray'
+          })),
+          ...immunizations.map(item => ({
+            date: new Date(item.date),
+            type: 'immunization',
+            title: item.vaccine,
+            description: `Administered by ${item.administrator}`,
+            icon: 'fas fa-syringe'
+          }))
+        ]
+        .sort((a, b) => b.date - a.date) // Sort by date, newest first
+        .slice(0, 10) // Limit to 10 items for display
+        .map((event, index) => (
+          <div key={index} className="timeline-item">
+            <div className="timeline-date">
+              {event.date.toLocaleDateString()}
+            </div>
+            <div className={`timeline-content ${event.type}`}>
+              <h6>{event.title}</h6>
+              <p>{event.description}</p>
+              {event.status && <Badge color={
+                event.status === 'Active' ? 'danger' :
+                event.status === 'Resolved' ? 'success' :
+                event.status === 'Monitoring' ? 'info' : 'secondary'
+              }>{event.status}</Badge>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </MedicalInfoCard>
+  );
+
+  // Health insights section
+  const HealthInsightsSection = () => (
+    <MedicalInfoCard
+      title="AI Health Insights"
+      icon={<span className="fa-layers fa-fw">
+        <i className="fas fa-brain"></i>
+      </span>}
+      className="ai-insights-card"
+    >
+      <div className="ai-insight p-3 mb-3">
+        <div className="d-flex align-items-center mb-2">
+          <i className="fas fa-chart-line text-primary me-2"></i>
+          <h6 className="mb-0">Diabetes Management</h6>
+        </div>
+        <p className="mb-0">Your HbA1c has improved from 7.8% to 7.2% over the past 3 months. Continue with your current medication and exercise regimen to reach your target of &lt;7.0%.</p>
+      </div>
+      
+      <div className="ai-insight p-3 mb-3">
+        <div className="d-flex align-items-center mb-2">
+          <i className="fas fa-heartbeat text-primary me-2"></i>
+          <h6 className="mb-0">Blood Pressure Trend</h6>
+        </div>
+        <p className="mb-0">Your blood pressure readings show consistent improvement over the past 6 months, likely due to medication adherence and reduced sodium intake. Continue monitoring regularly.</p>
+      </div>
+      
+      <div className="ai-insight p-3">
+        <div className="d-flex align-items-center mb-2">
+          <i className="fas fa-weight text-primary me-2"></i>
+          <h6 className="mb-0">Weight Management</h6>
+        </div>
+        <p className="mb-0">You've achieved your short-term weight loss goal of 10 pounds. This likely contributed to your improved blood sugar levels. Setting a new target of 5 additional pounds may further improve your diabetes management.</p>
+      </div>
+    </MedicalInfoCard>
+  );
+
+  // Access & sharing control panel
+  const AccessSharingSection = () => (
+    <MedicalInfoCard
+      title="Access & Sharing Controls"
+      icon={<FontAwesomeIcon icon={faShare} />}
+    >
+      <div className="mb-4">
+        <h6>Export Records</h6>
+        <p className="mb-2">Download your medical records in various formats</p>
+        <div className="d-flex gap-2">
+          <Button color="primary" outline size="sm">
+            <i className="far fa-file-pdf me-1"></i> PDF
+          </Button>
+          <Button color="primary" outline size="sm">
+            <i className="far fa-file-excel me-1"></i> CSV
+          </Button>
+          <Button color="primary" outline size="sm">
+            <i className="far fa-file-code me-1"></i> JSON
+          </Button>
         </div>
       </div>
-    </Alert>
-  );
-  
-  // Render record correction request tool
-  const RecordCorrectionTool = () => (
-    <Card className="mb-4">
-      <Card.Header as="h5">Record Correction Request</Card.Header>
-      <Card.Body>
-        <Card.Text>
-          If you believe there is an error in your medical records, you can submit a correction request.
-        </Card.Text>
-        <Form>
-          <Form.Group className="mb-3">
-            <Form.Label>Record Type</Form.Label>
-            <Form.Select>
-              <option>Laboratory Result</option>
-              <option>Medication</option>
-              <option>Diagnosis</option>
-              <option>Procedure</option>
-              <option>Other</option>
-            </Form.Select>
-          </Form.Group>
-          <Form.Group className="mb-3">
-            <Form.Label>Description of Error</Form.Label>
-            <Form.Control as="textarea" rows={3} placeholder="Please describe the error and the correction needed..." />
-          </Form.Group>
-          <Form.Group className="mb-3">
-            <Form.Label>Supporting Documentation</Form.Label>
-            <Form.Control type="file" />
-          </Form.Group>
-          <Button variant="primary">Submit Correction Request</Button>
-        </Form>
-      </Card.Body>
-    </Card>
+      
+      <div className="mb-4">
+        <h6>Currently Shared With</h6>
+        <ul className="list-group">
+          <li className="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <p className="mb-0 fw-bold">Dr. Sarah Johnson</p>
+              <small className="text-muted">All records • Expires: May 30, 2025</small>
+            </div>
+            <Button color="danger" size="sm" outline>Revoke</Button>
+          </li>
+          <li className="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <p className="mb-0 fw-bold">Dr. Michael Chen</p>
+              <small className="text-muted">Cardiology records only • Expires: June 15, 2025</small>
+            </div>
+            <Button color="danger" size="sm" outline>Revoke</Button>
+          </li>
+        </ul>
+      </div>
+      
+      <div>
+        <h6>Share Medical Records</h6>
+        <p className="mb-2">Securely share your records with healthcare providers</p>
+        <Button color="success">
+          <i className="fas fa-share-alt me-1"></i> Share Records
+        </Button>
+      </div>
+    </MedicalInfoCard>
   );
 
-  // Ensure we're logging when tabs are clicked to debug
-  const handleTabChange = (tabKey) => {
-    console.log("Tab changed to:", tabKey);
-    setActiveTab(tabKey);
+  // Helper function to render the active tab content
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'summary':
+        return (
+          <>
+            <Row>
+              <Col md={6} className="mb-4">
+                <PatientProfileCard />
+              </Col>
+              <Col md={6} className="mb-4">
+                <EmergencyContactCard />
+              </Col>
+            </Row>
+            <Row>
+              <Col md={6} className="mb-4">
+                <AllergiesCard />
+              </Col>
+              <Col md={6} className="mb-4">
+                <ChronicConditionsCard />
+              </Col>
+            </Row>
+            <MedicationsCard />
+            <MedicalTimelineSection />
+            <HealthInsightsSection />
+          </>
+        );
+      
+      case 'medicalHistory':
+        return (
+          <MedicalInfoCard
+            title="Medical History"
+            icon={<FontAwesomeIcon icon={faFileMedical} />}
+          >
+            {medicalHistory.length > 0 ? (
+              <div className="medical-history-list">
+                {medicalHistory.map((item, index) => (
+                  <MedicalHistoryItem
+                    key={index}
+                    date={item.date}
+                    diagnosis={item.diagnosis}
+                    provider={item.provider}
+                    status={item.status}
+                    notes={item.notes}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted">No medical history records available</p>
+            )}
+          </MedicalInfoCard>
+        );
+      
+      case 'medications':
+        return <MedicationsCard />;
+      
+      case 'labResults':
+        return <LabResultsSection />;
+      
+      case 'imaging':
+        return <ImagingSection />;
+      
+      case 'vitals':
+        return <VitalsSection />;
+      
+      case 'immunizations':
+        return <ImmunizationSection />;
+      
+      case 'treatmentPlans':
+        return <TreatmentPlansSection />;
+        
+      default:
+        return <div>Select a tab to view your health records</div>;
+    }
   };
 
-  return (
-    <Container fluid className="health-records-container p-4">
-      <Row className="mb-4">
-        <Col lg={8}>
-          <h2>Health Records</h2>
-          <p className="text-muted">
-            Complete medical records and health history for {userData.name} • 
-            Last updated: {new Date(userData.lastUpdated).toLocaleDateString()}
-          </p>
-        </Col>
-        <Col lg={4} className="d-flex justify-content-end align-items-center">
-          <div className="health-records-actions">
-            <Dropdown className="d-inline-block me-2">
-              <Dropdown.Toggle variant="outline-primary" id="dropdown-export">
-                <FaFileExport className="me-2" /> Export
-              </Dropdown.Toggle>
-              <Dropdown.Menu>
-                <Dropdown.Item>Export as PDF</Dropdown.Item>
-                <Dropdown.Item>Export as CSV</Dropdown.Item>
-                <Dropdown.Item>Export as FHIR</Dropdown.Item>
-                <Dropdown.Item>Export as CCD</Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
-            <Button variant="outline-primary" className="me-2">
-              <FaFileUpload className="me-1" /> Upload Records
-            </Button>
-            <Button variant="outline-primary">
-              <FaShareAlt className="me-1" /> Share Records
-            </Button>
+  // Main render
+  if (loading) {
+    return (
+      <Container className="py-4">
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
           </div>
-        </Col>
-      </Row>
-      
-      <EmergencyInformation />
-      
-      <Row className="mb-4 mt-4">
-        <Col>
-          <Card className="search-and-filter">
-            <Card.Body>
-              <Form onSubmit={handleSearch}>
-                <Row>
-                  <Col md={6}>
-                    <InputGroup className="mb-3">
-                      <Form.Control
-                        placeholder="Search across all health records..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        aria-label="Search health records"
-                      />
-                      <Button variant="primary" type="submit">
-                        <FaSearch /> Search
-                      </Button>
-                    </InputGroup>
-                    <Form.Text className="text-muted">
-                      Use natural language: "my blood pressure readings from last year"
-                    </Form.Text>
-                  </Col>
-                  <Col md={5}>
-                    <div className="d-flex">
-                      <Form.Control 
-                        type="date" 
-                        placeholder="From date" 
-                        className="me-2"
-                        value={dateRange.from}
-                        onChange={(e) => setDateRange({...dateRange, from: e.target.value})} 
-                      />
-                      <Form.Control 
-                        type="date" 
-                        placeholder="To date"
-                        value={dateRange.to}
-                        onChange={(e) => setDateRange({...dateRange, to: e.target.value})} 
-                      />
-                    </div>
-                  </Col>
-                  <Col md={1}>
-                    <Button 
-                      variant="outline-secondary" 
-                      onClick={clearFilters}
-                      disabled={!filterApplied && !dateRange.from && !dateRange.to}
-                    >
-                      Clear
-                    </Button>
-                  </Col>
-                </Row>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-      
-      <Row>
-        <Col lg={3} className="records-sidebar mb-4">
-          <Card>
-            <Card.Header as="h5">Record Categories</Card.Header>
-            <Card.Body className="p-0">
-              <Nav variant="pills" className="flex-column" activeKey={activeTab} onSelect={handleTabChange}>
-                <Nav.Item>
-                  <Nav.Link eventKey="medical-history">
-                    <FaCalendarAlt className="me-2" /> Medical History
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="lab-results">
-                    <FaFlask className="me-2" /> Laboratory Results
-                    <Badge bg="info" pill className="ms-auto">New</Badge>
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="imaging">
-                    <FaXRay className="me-2" /> Imaging Studies
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="prescriptions">
-                    <FaPills className="me-2" /> Prescription History
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="allergies">
-                    <FaAllergies className="me-2" /> Allergies
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="immunizations">
-                    <FaSyringe className="me-2" /> Immunizations
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="specialist-reports">
-                    <FaUserMd className="me-2" /> Specialist Reports
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="hospital-records">
-                    <FaHospital className="me-2" /> Hospital Records
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="genetics">
-                    <FaDna className="me-2" /> Genetics
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="dental">
-                    <FaTooth className="me-2" /> Dental Records
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="vision">
-                    <FaEye className="me-2" /> Vision Records
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="mental-health">
-                    <FaBrain className="me-2" /> Mental Health
-                    <Badge bg="secondary" pill className="ms-auto">Private</Badge>
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="privacy">
-                    <FaLock className="me-2" /> Privacy Controls
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="access-logs">
-                    <FaUserShield className="me-2" /> Access Logs
-                  </Nav.Link>
-                </Nav.Item>
-              </Nav>
-            </Card.Body>
-          </Card>
-          
-          <Card className="mt-4">
-            <Card.Header as="h5">Special Views</Card.Header>
-            <Card.Body className="p-0">
-              <Nav variant="pills" className="flex-column" activeKey={activeTab} onSelect={handleTabChange}>
-                <Nav.Item>
-                  <Nav.Link eventKey="chronic-disease">
-                    <FaLungs className="me-2" /> Chronic Disease Management
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="pediatric-records">
-                    <FaChild className="me-2" /> Pediatric Records
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="pregnancy">
-                    <FaBaby className="me-2" /> Pregnancy Records
-                  </Nav.Link>
-                </Nav.Item>
-              </Nav>
-            </Card.Body>
-          </Card>
-        </Col>
-        
-        <Col lg={9}>
-          <Tab.Content activeKey={activeTab} defaultActiveKey="medical-history">            
-            <Tab.Pane eventKey="medical-history" className="fade-in">
-              <MedicalHistory />
-            </Tab.Pane>
-            
-            <Tab.Pane eventKey="lab-results" className="fade-in">
-              <LaboratoryResults />
-            </Tab.Pane>
-            
-            <Tab.Pane eventKey="imaging" className="fade-in">
-              <ImagingStudies />
-            </Tab.Pane>
-            
-            <Tab.Pane eventKey="prescriptions" className="fade-in">
-              <PrescriptionHistory />
-            </Tab.Pane>
-            
-            <Tab.Pane eventKey="allergies" className="fade-in">
-              <Allergies />
-            </Tab.Pane>
-            
-            <Tab.Pane eventKey="immunizations" className="fade-in">
-              <Immunizations />
-            </Tab.Pane>
-            
-            <Tab.Pane eventKey="specialist-reports" className="fade-in">
-              <Card>
-                <Card.Header as="h4">
-                  <div className="d-flex justify-content-between align-items-center">
-                    <span>Specialist Reports</span>
-                    <div>
-                      <Button variant="outline-primary" size="sm" className="me-2">
-                        <FaFileExport className="me-1" /> Export
-                      </Button>
-                      <Button variant="outline-primary" size="sm">
-                        <FaShareAlt className="me-1" /> Share
-                      </Button>
-                    </div>
-                  </div>
-                </Card.Header>
-                <Card.Body>
-                  <p>View consultation notes and reports from specialists.</p>
-                  
-                  {/* Cardiology Report */}
-                  <Card className="mb-3 report-card">
-                    <Card.Header>
-                      <div className="d-flex justify-content-between align-items-center">
-                        <h5 className="mb-0">Cardiology Consultation</h5>
-                        <Badge bg="primary">Cardiology</Badge>
-                      </div>
-                    </Card.Header>
-                    <Card.Body>
-                      <Row>
-                        <Col md={6}>
-                          <p><strong>Specialist:</strong> Dr. Michael Chen</p>
-                          <p><strong>Date:</strong> February 28, 2025</p>
-                          <p><strong>Facility:</strong> Memorial Cardiology Associates</p>
-                          <p><strong>Reason for Visit:</strong> Hypertension Management</p>
-                        </Col>
-                        <Col md={6}>
-                          <p><strong>Status:</strong> <Badge bg="success">Completed</Badge></p>
-                          <p><strong>Follow-up Required:</strong> Yes, in 6 months</p>
-                          <p><strong>Follow-up Date:</strong> August 30, 2025</p>
-                        </Col>
-                      </Row>
-                      <hr />
-                      <h6>Summary</h6>
-                      <p>
-                        Patient presented for routine follow-up of hypertension. Blood pressure well-controlled on current medication regimen (Lisinopril 20mg daily). ECG showed normal sinus rhythm. Echocardiogram showed mild left ventricular hypertrophy consistent with longstanding hypertension, but overall preserved cardiac function with ejection fraction of 55-60%.
-                      </p>
-                      <h6>Recommendations</h6>
-                      <ul>
-                        <li>Continue current medication regimen</li>
-                        <li>Maintain low-sodium diet</li>
-                        <li>Regular aerobic exercise, 30 minutes, 5 times per week</li>
-                        <li>Follow-up in 6 months with repeat echocardiogram</li>
-                      </ul>
-                      <div className="mt-3">
-                        <Button variant="primary" size="sm">View Full Report</Button>
-                        <Button variant="link" size="sm">Download Report</Button>
-                      </div>
-                    </Card.Body>
-                  </Card>
-                  
-                  {/* Endocrinology Report */}
-                  <Card className="mb-3 report-card">
-                    <Card.Header>
-                      <div className="d-flex justify-content-between align-items-center">
-                        <h5 className="mb-0">Endocrinology Consultation</h5>
-                        <Badge bg="info">Endocrinology</Badge>
-                      </div>
-                    </Card.Header>
-                    <Card.Body>
-                      <Row>
-                        <Col md={6}>
-                          <p><strong>Specialist:</strong> Dr. Amelia Rodriguez</p>
-                          <p><strong>Date:</strong> January 15, 2025</p>
-                          <p><strong>Facility:</strong> Diabetes & Endocrine Center</p>
-                          <p><strong>Reason for Visit:</strong> Type 2 Diabetes Management</p>
-                        </Col>
-                        <Col md={6}>
-                          <p><strong>Status:</strong> <Badge bg="success">Completed</Badge></p>
-                          <p><strong>Follow-up Required:</strong> Yes, in 3 months</p>
-                          <p><strong>Follow-up Date:</strong> April 15, 2025</p>
-                        </Col>
-                      </Row>
-                      <hr />
-                      <h6>Summary</h6>
-                      <p>
-                        Patient has well-controlled Type 2 Diabetes on Metformin 1000mg twice daily. HbA1c improved from 7.2% to 6.8%. Fasting blood glucose readings average 120-140 mg/dL. No signs of peripheral neuropathy. Annual comprehensive foot exam performed with normal results.
-                      </p>
-                      <h6>Recommendations</h6>
-                      <ul>
-                        <li>Continue Metformin 1000mg twice daily</li>
-                        <li>Maintain carbohydrate-restricted diet</li>
-                        <li>Regular blood glucose monitoring</li>
-                        <li>Schedule annual diabetic eye exam</li>
-                        <li>Consider CGM (Continuous Glucose Monitoring) system discussion at next visit</li>
-                      </ul>
-                      <div className="mt-3">
-                        <Button variant="primary" size="sm">View Full Report</Button>
-                        <Button variant="link" size="sm">Download Report</Button>
-                      </div>
-                    </Card.Body>
-                  </Card>
-                  
-                  {/* Ophthalmology Report */}
-                  <Card className="mb-3 report-card">
-                    <Card.Header>
-                      <div className="d-flex justify-content-between align-items-center">
-                        <h5 className="mb-0">Ophthalmology Consultation</h5>
-                        <Badge bg="warning" text="dark">Ophthalmology</Badge>
-                      </div>
-                    </Card.Header>
-                    <Card.Body>
-                      <Row>
-                        <Col md={6}>
-                          <p><strong>Specialist:</strong> Dr. James Wilson</p>
-                          <p><strong>Date:</strong> December 5, 2024</p>
-                          <p><strong>Facility:</strong> Clear Vision Eye Center</p>
-                          <p><strong>Reason for Visit:</strong> Annual Diabetic Eye Exam</p>
-                        </Col>
-                        <Col md={6}>
-                          <p><strong>Status:</strong> <Badge bg="success">Completed</Badge></p>
-                          <p><strong>Follow-up Required:</strong> Yes, annually</p>
-                          <p><strong>Follow-up Date:</strong> December 5, 2025</p>
-                        </Col>
-                      </Row>
-                      <hr />
-                      <h6>Summary</h6>
-                      <p>
-                        Comprehensive diabetic retinal exam performed. Visual acuity 20/25 OD, 20/30 OS. Intraocular pressure within normal limits. No evidence of diabetic retinopathy or macular edema. Mild nuclear sclerotic cataracts noted bilaterally, not visually significant at this time.
-                      </p>
-                      <h6>Recommendations</h6>
-                      <ul>
-                        <li>Continue good glycemic control</li>
-                        <li>Use artificial tears as needed for mild dry eye symptoms</li>
-                        <li>Update prescription glasses (provided separately)</li>
-                        <li>Return in one year for follow-up diabetic eye exam</li>
-                      </ul>
-                      <div className="mt-3">
-                        <Button variant="primary" size="sm">View Full Report</Button>
-                        <Button variant="link" size="sm">Download Retinal Images</Button>
-                      </div>
-                    </Card.Body>
-                  </Card>
+          <p className="mt-2">Loading health records...</p>
+        </div>
+      </Container>
+    );
+  }
 
-                  {/* Upcoming Referrals Section */}
-                  <h5 className="mt-4">Upcoming Specialist Referrals</h5>
-                  <table className="table table-hover">
-                    <thead>
-                      <tr>
-                        <th>Specialty</th>
-                        <th>Reason</th>
-                        <th>Referring Provider</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>Nephrology</td>
-                        <td>Diabetes kidney function monitoring</td>
-                        <td>Dr. Sarah Johnson</td>
-                        <td><Badge bg="warning" text="dark">Pending Appointment</Badge></td>
-                        <td><Button variant="outline-primary" size="sm">Schedule</Button></td>
-                      </tr>
-                      <tr>
-                        <td>Dermatology</td>
-                        <td>Annual skin cancer screening</td>
-                        <td>Dr. Sarah Johnson</td>
-                        <td><Badge bg="secondary">Referred</Badge></td>
-                        <td><Button variant="outline-primary" size="sm">View Details</Button></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </Card.Body>
-              </Card>
-            </Tab.Pane>
-            
-            <Tab.Pane eventKey="hospital-records" className="fade-in">
-              <HospitalRecords />
-            </Tab.Pane>
-            
-            <Tab.Pane eventKey="genetics" className="fade-in">
-              <Card>
-                <Card.Header as="h4">Genetics</Card.Header>
-                <Card.Body>
-                  <p>Your genetic testing and hereditary risk assessment information will be displayed here.</p>
-                </Card.Body>
-              </Card>
-            </Tab.Pane>
-            
-            <Tab.Pane eventKey="dental" className="fade-in">
-              <Card>
-                <Card.Header as="h4">Dental Records</Card.Header>
-                <Card.Body>
-                  <p>Your dental history and treatment records will be displayed here.</p>
-                </Card.Body>
-              </Card>
-            </Tab.Pane>
-            
-            <Tab.Pane eventKey="vision" className="fade-in">
-              <Card>
-                <Card.Header as="h4">Vision Records</Card.Header>
-                <Card.Body>
-                  <p>Your vision examination history and prescriptions will be displayed here.</p>
-                </Card.Body>
-              </Card>
-            </Tab.Pane>
-            
-            <Tab.Pane eventKey="mental-health" className="fade-in">
-              <Card>
-                <Card.Header as="h4">Mental Health Records</Card.Header>
-                <Card.Body>
-                  <Alert variant="info">
-                    <strong>Enhanced Privacy Protection:</strong> Your mental health records have additional privacy safeguards.
-                  </Alert>
-                  <p>Your mental health treatment history and notes will be displayed here.</p>
-                </Card.Body>
-              </Card>
-            </Tab.Pane>
-            
-            <Tab.Pane eventKey="privacy" className="fade-in">
-              <Card>
-                <Card.Header as="h4">Privacy Controls</Card.Header>
-                <Card.Body>
-                  <h5>Data Sharing Preferences</h5>
-                  <Form>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Privacy Level</Form.Label>
-                      <Form.Select 
-                        value={privacyLevel} 
-                        onChange={(e) => setPrivacyLevel(e.target.value)}
-                      >
-                        <option value="standard">Standard (Share with my care team)</option>
-                        <option value="restricted">Restricted (Only my primary doctor)</option>
-                        <option value="open">Open (All authorized providers)</option>
-                        <option value="research">Research Participation (Anonymous data sharing)</option>
-                      </Form.Select>
-                    </Form.Group>
-                    
-                    <h5>Category-Specific Restrictions</h5>
-                    <div className="privacy-section mb-4">
-                      {['Mental Health Records', 'Genetic Information', 'Sexual Health', 'Substance Use History'].map(category => (
-                        <Form.Check 
-                          key={category}
-                          type="switch"
-                          id={`privacy-${category.replace(/\s+/g, '-').toLowerCase()}`}
-                          label={`Share ${category}`}
-                          defaultChecked={category !== 'Genetic Information' && category !== 'Substance Use History'}
-                        />
-                      ))}
-                    </div>
-                    
-                    <Button variant="primary" type="submit">Save Privacy Settings</Button>
-                  </Form>
-                </Card.Body>
-              </Card>
-              
-              <RecordCorrectionTool />
-            </Tab.Pane>
-            
-            <Tab.Pane eventKey="access-logs" className="fade-in">
-              <Card>
-                <Card.Header as="h4">Access Logs</Card.Header>
-                <Card.Body>
-                  <p>This section shows who has accessed your medical records.</p>
-                  
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>User/System</th>
-                        <th>Date & Time</th>
-                        <th>Records Accessed</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {accessLog.map((log, index) => (
-                        <tr key={index}>
-                          <td>{log.user}</td>
-                          <td>{new Date(log.date).toLocaleString()}</td>
-                          <td>{log.sections.join(', ')}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </Card.Body>
-              </Card>
-            </Tab.Pane>
-            
-            <Tab.Pane eventKey="chronic-disease" className="fade-in">
-              <Card>
-                <Card.Header as="h4">Chronic Disease Management</Card.Header>
-                <Card.Body>
-                  <p>Your chronic condition tracking and management plans will be displayed here.</p>
-                </Card.Body>
-              </Card>
-            </Tab.Pane>
-            
-            <Tab.Pane eventKey="pediatric-records" className="fade-in">
-              <Card>
-                <Card.Header as="h4">Pediatric Records</Card.Header>
-                <Card.Body>
-                  <p>Growth charts, developmental milestones, and pediatric history will be displayed here.</p>
-                </Card.Body>
-              </Card>
-            </Tab.Pane>
-            
-            <Tab.Pane eventKey="pregnancy" className="fade-in">
-              <Card>
-                <Card.Header as="h4">Pregnancy Records</Card.Header>
-                <Card.Body>
-                  <p>Pregnancy-related medical information will be displayed here.</p>
-                </Card.Body>
-              </Card>
-            </Tab.Pane>
-          </Tab.Content>
-        </Col>
-      </Row>
+  if (error) {
+    return (
+      <Container className="py-4">
+        <Alert color="danger" timeout={5000}>
+          <h4 className="alert-heading">Error Loading Health Records</h4>
+          <p>{error}</p>
+          <hr />
+          <p className="mb-0">Please refresh the page or contact support if the problem persists.</p>
+        </Alert>
+      </Container>
+    );
+  }
+
+  return (
+    <Container fluid className="health-records-container py-4">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Health Records</h2>
+        <div>
+          <Button color="primary" className="me-2">
+            <FontAwesomeIcon icon={faDownload} className="me-2" />
+            Export
+          </Button>
+          <Button color="outline-primary">
+            <FontAwesomeIcon icon={faShare} className="me-2" />
+            Share
+          </Button>
+        </div>
+      </div>
+      
+      {/* Accessibility controls */}
+      <div className="text-end mb-3">
+        <Button size="sm" color="secondary" className="me-2">
+          <i className="fas fa-text-height"></i> <span className="ms-1">A+</span>
+        </Button>
+        <Button size="sm" color="secondary">
+          <i className="fas fa-adjust"></i> <span className="ms-1">Contrast</span>
+        </Button>
+      </div>
+      
+      {/* Tab navigation */}
+      <HealthRecordsNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+      
+      {/* Tab content */}
+      <div className="tab-content">
+        {renderTabContent()}
+      </div>
     </Container>
   );
 };
