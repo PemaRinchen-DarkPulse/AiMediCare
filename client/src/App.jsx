@@ -20,7 +20,7 @@ import PatientHome from "./pages/PatientHome";
 import DoctorHome from "./pages/DoctorHome";
 import PharmacistHome from "./pages/PharmacistHome";
 import DoctorAppointments from "./pages/doctor/DoctorAppointments";
-
+import Patients from "./pages/doctor/Patients";
 // Protected route component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -115,7 +115,7 @@ function App() {
               <Route index element={<Navigate to="doctor" />} />
               <Route path="dashboard" element={<div>Doctor poo</div>} />
               <Route path="appointments" element={<DoctorAppointments/>} />
-              <Route path="patients" element={<div>Patient Management</div>} />
+              <Route path="patients" element={<Patients/>} />
               <Route path="prescriptions" element={<div>Prescriptions</div>} />
               <Route path="messages" element={<div>Doctor Messages</div>} />
               <Route path="settings" element={<Settings/>} />

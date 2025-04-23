@@ -9,7 +9,4 @@ router.get('/', doctorController.getDoctors);
 router.get('/:id', doctorController.getDoctor);
 router.get('/:id/availability', doctorController.getDoctorAvailability);
 
-// Development routes - only available in development
-router.post('/seed', doctorController.createDummyDoctors);
-
 module.exports = router;
