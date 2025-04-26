@@ -5,27 +5,39 @@ const HealthRecord = require('../models/HealthRecord');
 const EmergencyContact = require('../models/EmergencyContact');
 const Allergy = require('../models/Allergy');
 const ChronicCondition = require('../models/ChronicCondition');
-const Medication = require('../models/Medication');
-const LabResult = require('../models/LabResult');
-const ImagingReport = require('../models/ImagingReport');
+const Prescription = require('../models/Prescription'); // Changed from Medication to Prescription
 const VitalRecord = require('../models/VitalRecord');
 const Immunization = require('../models/Immunization');
-const TreatmentPlan = require('../models/TreatmentPlan');
 
 // @desc    Get patient profile
 // @route   GET /api/patient/profile
 // @access  Private
 const getPatientProfile = asyncHandler(async (req, res) => {
-  const patient = await Patient.findOne({ user: req.user._id });
+  // Find patient and populate with user data to get name, email, etc.
+  const patient = await Patient.findOne({ user: req.user._id }).populate('user', 'name email phoneNumber dateOfBirth gender');
 
   if (!patient) {
     res.status(404);
     throw new Error('Patient profile not found');
   }
 
+  // Create a complete profile by combining user and patient data
+  const profile = {
+    name: req.user.name,
+    dateOfBirth: req.user.dateOfBirth || null,
+    gender: req.user.gender || '',
+    bloodType: patient.bloodType || '',
+    height: patient.height || '',
+    weight: patient.weight || '',
+    contactInfo: {
+      email: req.user.email || '',
+      phone: req.user.phoneNumber || ''
+    }
+  };
+
   res.status(200).json({
     success: true,
-    data: patient
+    data: profile
   });
 });
 
@@ -119,7 +131,31 @@ const getMedications = asyncHandler(async (req, res) => {
     throw new Error('Patient profile not found');
   }
 
-  const medications = await Medication.find({ patient: patient._id }).sort({ startDate: -1 });
+  // Get active prescriptions for this patient
+  const prescriptions = await Prescription.find({ 
+    patientId: req.user._id,
+    status: 'active'
+  })
+  .sort({ issuedDate: -1 })
+  .populate('doctorId', 'name');
+
+  // Format medications from prescriptions
+  const medications = [];
+  
+  prescriptions.forEach(prescription => {
+    prescription.medications.forEach(med => {
+      medications.push({
+        name: med.name,
+        dosage: med.dosage,
+        frequency: med.frequency,
+        instructions: med.instructions,
+        duration: med.duration,
+        prescribedBy: prescription.doctorId ? prescription.doctorId.name : 'Unknown Doctor',
+        prescriptionDate: prescription.issuedDate,
+        status: prescription.status
+      });
+    });
+  });
 
   res.status(200).json({
     success: true,
@@ -127,44 +163,9 @@ const getMedications = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Get lab results
-// @route   GET /api/patient/lab-results
-// @access  Private
-const getLabResults = asyncHandler(async (req, res) => {
-  const patient = await Patient.findOne({ user: req.user._id });
-  
-  if (!patient) {
-    res.status(404);
-    throw new Error('Patient profile not found');
-  }
-
-  const labResults = await LabResult.find({ patient: patient._id }).sort({ date: -1 });
-
-  res.status(200).json({
-    success: true,
-    data: labResults
-  });
-});
 
 // @desc    Get imaging reports
-// @route   GET /api/patient/imaging-reports
-// @access  Private
-const getImagingReports = asyncHandler(async (req, res) => {
-  const patient = await Patient.findOne({ user: req.user._id });
-  
-  if (!patient) {
-    res.status(404);
-    throw new Error('Patient profile not found');
-  }
-
-  const imagingReports = await ImagingReport.find({ patient: patient._id }).sort({ date: -1 });
-
-  res.status(200).json({
-    success: true,
-    data: imagingReports
-  });
-});
-
+// @route   GET /api/patient/imaging-report
 // @desc    Get vitals history
 // @route   GET /api/patient/vitals-history
 // @access  Private
@@ -247,25 +248,6 @@ const getImmunizations = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Get treatment plans
-// @route   GET /api/patient/treatment-plans
-// @access  Private
-const getTreatmentPlans = asyncHandler(async (req, res) => {
-  const patient = await Patient.findOne({ user: req.user._id });
-  
-  if (!patient) {
-    res.status(404);
-    throw new Error('Patient profile not found');
-  }
-
-  const treatmentPlans = await TreatmentPlan.find({ patient: patient._id }).sort({ lastUpdated: -1 });
-
-  res.status(200).json({
-    success: true,
-    data: treatmentPlans
-  });
-});
-
 module.exports = {
   getPatientProfile,
   getEmergencyContacts,
@@ -273,9 +255,6 @@ module.exports = {
   getAllergies,
   getChronicConditions,
   getMedications,
-  getLabResults,
-  getImagingReports,
   getVitalsHistory,
-  getImmunizations,
-  getTreatmentPlans
+  getImmunizations
 };

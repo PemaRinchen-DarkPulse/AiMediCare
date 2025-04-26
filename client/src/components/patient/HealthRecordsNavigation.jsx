@@ -7,11 +7,8 @@ const HealthRecordsNavigation = ({ activeTab, setActiveTab }) => {
     { id: 'summary', label: 'Summary', icon: 'fas fa-clipboard-list' },
     { id: 'medicalHistory', label: 'Medical History', icon: 'fas fa-file-medical' },
     { id: 'medications', label: 'Medications', icon: 'fas fa-pills' },
-    { id: 'labResults', label: 'Lab Results', icon: 'fas fa-flask' },
-    { id: 'imaging', label: 'Imaging', icon: 'fas fa-x-ray' },
     { id: 'vitals', label: 'Vitals', icon: 'fas fa-heartbeat' },
-    { id: 'immunizations', label: 'Immunizations', icon: 'fas fa-syringe' },
-    { id: 'treatmentPlans', label: 'Treatment Plans', icon: 'fas fa-clipboard-check' }
+    { id: 'immunizations', label: 'Immunizations', icon: 'fas fa-syringe' }
   ];
 
   return (

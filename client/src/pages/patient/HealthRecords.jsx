@@ -2,13 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Alert, Card, CardBody, Button, Badge, Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  faFileMedical, faPills, faVial, faXRay, faHeartbeat, faSyringe, 
-  faClipboardCheck, faUserMd, faExclamationTriangle, faDownload, faShare 
+  faFileMedical, faPills, faHeartbeat, faSyringe, 
+  faUserMd, faExclamationTriangle, faDownload, faShare 
 } from '@fortawesome/free-solid-svg-icons';
 import HealthRecordsNavigation from '../../components/patient/HealthRecordsNavigation';
 import MedicalInfoCard from '../../components/patient/MedicalInfoCard';
 import MedicalHistoryItem from '../../components/patient/MedicalHistoryItem';
-import LabResultItem from '../../components/patient/LabResultItem';
 import VitalsChart from '../../components/patient/VitalsChart';
 import './HealthRecords.css';
 
@@ -26,7 +25,6 @@ const HealthRecords = () => {
   const [imagingReports, setImagingReports] = useState([]);
   const [vitalsHistory, setVitalsHistory] = useState({});
   const [immunizations, setImmunizations] = useState([]);
-  const [treatmentPlans, setTreatmentPlans] = useState([]);
   const [emergencyContacts, setEmergencyContacts] = useState([]);
 
   // Load mock data function as fallback only (will be used if API fails)
@@ -65,11 +63,8 @@ const HealthRecords = () => {
             allergiesResponse,
             conditionsResponse,
             medicationsResponse,
-            labsResponse,
-            imagingResponse,
             vitalsResponse,
-            immunizationsResponse,
-            plansResponse
+            immunizationsResponse
           ] = await Promise.all([
             fetch(`${API_BASE_URL}/profile`, { headers }),
             fetch(`${API_BASE_URL}/emergency-contacts`, { headers }),
@@ -77,11 +72,8 @@ const HealthRecords = () => {
             fetch(`${API_BASE_URL}/allergies`, { headers }),
             fetch(`${API_BASE_URL}/chronic-conditions`, { headers }),
             fetch(`${API_BASE_URL}/medications`, { headers }),
-            fetch(`${API_BASE_URL}/lab-results`, { headers }),
-            fetch(`${API_BASE_URL}/imaging-reports`, { headers }),
             fetch(`${API_BASE_URL}/vitals-history`, { headers }),
-            fetch(`${API_BASE_URL}/immunizations`, { headers }),
-            fetch(`${API_BASE_URL}/treatment-plans`, { headers })
+            fetch(`${API_BASE_URL}/immunizations`, { headers })
           ]);
 
           // Process all responses
@@ -118,15 +110,9 @@ const HealthRecords = () => {
             setMedications(medicationsData.data);
           }
 
-          if (labsResponse.ok) {
-            const labsData = await labsResponse.json();
-            setLabResults(labsData.data);
-          }
-
-          if (imagingResponse.ok) {
-            const imagingData = await imagingResponse.json();
-            setImagingReports(imagingData.data);
-          }
+          // Use mock data for lab results and imaging reports since APIs don't exist
+          setLabResults([]);
+          setImagingReports([]);
 
           if (vitalsResponse.ok) {
             const vitalsData = await vitalsResponse.json();
@@ -136,11 +122,6 @@ const HealthRecords = () => {
           if (immunizationsResponse.ok) {
             const immunizationsData = await immunizationsResponse.json();
             setImmunizations(immunizationsData.data);
-          }
-
-          if (plansResponse.ok) {
-            const plansData = await plansResponse.json();
-            setTreatmentPlans(plansData.data);
           }
 
           setLoading(false);
@@ -170,18 +151,21 @@ const HealthRecords = () => {
       {patientProfile && (
         <Row>
           <Col md={6}>
-            <p><strong>Name:</strong> {patientProfile.name}</p>
-            <p><strong>Date of Birth:</strong> {new Date(patientProfile.dateOfBirth).toLocaleDateString()}</p>
-            <p><strong>Gender:</strong> {patientProfile.gender}</p>
-            <p><strong>Blood Type:</strong> {patientProfile.bloodType}</p>
+            <p><strong>Name:</strong> {patientProfile.name || 'N/A'}</p>
+            <p><strong>Date of Birth:</strong> {patientProfile.dateOfBirth ? new Date(patientProfile.dateOfBirth).toLocaleDateString() : 'N/A'}</p>
+            <p><strong>Gender:</strong> {patientProfile.gender || 'N/A'}</p>
+            <p><strong>Blood Type:</strong> {patientProfile.bloodType || 'N/A'}</p>
           </Col>
           <Col md={6}>
-            <p><strong>Height:</strong> {patientProfile.height}</p>
-            <p><strong>Weight:</strong> {patientProfile.weight}</p>
-            <p><strong>Email:</strong> {patientProfile.contactInfo?.email}</p>
-            <p><strong>Phone:</strong> {patientProfile.contactInfo?.phone}</p>
+            <p><strong>Height:</strong> {patientProfile.height || 'N/A'}</p>
+            <p><strong>Weight:</strong> {patientProfile.weight || 'N/A'}</p>
+            <p><strong>Email:</strong> {patientProfile.contactInfo?.email || 'N/A'}</p>
+            <p><strong>Phone:</strong> {patientProfile.contactInfo?.phone || 'N/A'}</p>
           </Col>
         </Row>
+      )}
+      {!patientProfile && (
+        <p className="text-muted">Patient profile information not available</p>
       )}
     </MedicalInfoCard>
   );
@@ -355,50 +339,6 @@ const HealthRecords = () => {
     </MedicalInfoCard>
   );
 
-  // Lab results section with normal range comparison
-  const LabResultsSection = () => (
-    <MedicalInfoCard
-      title="Laboratory Results"
-      icon={<FontAwesomeIcon icon={faVial} />}
-    >
-      {labResults.length > 0 ? (
-        <>
-          <div className="filter-bar d-flex justify-content-between align-items-center mb-3">
-            <div>
-              <small className="text-muted">
-                Showing most recent results first • 
-                <Badge color="danger" pill className="ms-2 me-1">
-                  {labResults.filter(lab => lab.isAbnormal).length}
-                </Badge>
-                abnormal results
-              </small>
-            </div>
-            <div>
-              <Button size="sm" outline color="primary">
-                <i className="fas fa-filter me-1"></i> Filter
-              </Button>
-            </div>
-          </div>
-          <div className="lab-results table-responsive">
-            {labResults.map((lab, index) => (
-              <LabResultItem
-                key={index}
-                testName={lab.testName}
-                date={lab.date}
-                result={lab.result}
-                normalRange={lab.normalRange}
-                unit={lab.unit}
-                isAbnormal={lab.isAbnormal}
-              />
-            ))}
-          </div>
-        </>
-      ) : (
-        <p className="text-muted">No lab results available</p>
-      )}
-    </MedicalInfoCard>
-  );
-
   // Vitals history with charts
   const VitalsSection = () => (
     <div className="vitals-section">
@@ -502,61 +442,6 @@ const HealthRecords = () => {
     </div>
   );
 
-  // Imaging studies section
-  const ImagingSection = () => (
-    <MedicalInfoCard
-      title="Imaging Studies"
-      icon={<FontAwesomeIcon icon={faXRay} />}
-    >
-      {imagingReports.length > 0 ? (
-        <Row>
-          {imagingReports.map((image, index) => (
-            <Col md={6} key={index} className="mb-4">
-              <Card className="imaging-card h-100">
-                <div className="position-relative" style={{ height: '180px', overflow: 'hidden' }}>
-                  <div className="image-placeholder bg-light d-flex align-items-center justify-content-center h-100">
-                    <FontAwesomeIcon icon={faXRay} size="3x" className="text-secondary" />
-                  </div>
-                  <div className="position-absolute bottom-0 start-0 w-100 bg-dark bg-opacity-75 text-white p-2">
-                    <h6 className="mb-0">{image.type}</h6>
-                  </div>
-                </div>
-                <CardBody>
-                  <p className="mb-2">
-                    <small className="text-muted">
-                      <i className="far fa-calendar me-1"></i>
-                      {new Date(image.date).toLocaleDateString()}
-                    </small>
-                  </p>
-                  <p className="mb-2">
-                    <small className="text-muted">
-                      <strong>Provider:</strong> {image.orderedBy}
-                    </small>
-                  </p>
-                  <p className="mb-3">
-                    <small className="text-muted">
-                      <strong>Findings:</strong> {image.findings}
-                    </small>
-                  </p>
-                  <div className="d-flex justify-content-between">
-                    <Button color="primary" size="sm" onClick={() => alert('Image Viewer')}>
-                      <i className="far fa-image me-1"></i> View
-                    </Button>
-                    <Button color="secondary" size="sm" onClick={() => alert('Download Report')}>
-                      <i className="fas fa-download me-1"></i> Report
-                    </Button>
-                  </div>
-                </CardBody>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      ) : (
-        <p className="text-muted">No imaging studies available</p>
-      )}
-    </MedicalInfoCard>
-  );
-
   // Immunization history section
   const ImmunizationSection = () => (
     <MedicalInfoCard
@@ -601,129 +486,6 @@ const HealthRecords = () => {
       ) : (
         <p className="text-muted">No immunization records available</p>
       )}
-    </MedicalInfoCard>
-  );
-
-  // Treatment plans section
-  const TreatmentPlansSection = () => (
-    <MedicalInfoCard
-      title="Treatment Plans"
-      icon={<FontAwesomeIcon icon={faClipboardCheck} />}
-    >
-      {treatmentPlans.length > 0 ? (
-        treatmentPlans.map((plan, index) => (
-          <div key={index} className="treatment-plan mb-4">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h5 className="mb-0">{plan.condition}</h5>
-              <Badge color="info">Last updated: {new Date(plan.lastUpdated).toLocaleDateString()}</Badge>
-            </div>
-            
-            <p className="mb-2">
-              <strong>Provider:</strong> {plan.provider}
-            </p>
-            
-            <div className="mb-3">
-              <h6>Goals:</h6>
-              <ul className="list-group">
-                {plan.goals.map((goal, goalIndex) => (
-                  <li key={goalIndex} className="list-group-item d-flex justify-content-between align-items-center">
-                    {goal.description}
-                    <Badge color={
-                      goal.status === 'Completed' ? 'success' : 
-                      goal.status === 'Active' ? 'primary' : 
-                      goal.status === 'In Progress' ? 'info' : 'warning'
-                    }>
-                      {goal.status}
-                    </Badge>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            
-            <div className="mb-3">
-              <h6>Medications:</h6>
-              <ul>
-                {plan.medications.map((med, medIndex) => (
-                  <li key={medIndex}>{med}</li>
-                ))}
-              </ul>
-            </div>
-            
-            <div className="mb-3">
-              <h6>Dietary Recommendations:</h6>
-              <p>{plan.dietaryRecommendations}</p>
-            </div>
-            
-            <div className="mb-3">
-              <h6>Activity Recommendations:</h6>
-              <p>{plan.activityRecommendations}</p>
-            </div>
-            
-            {plan.notes && (
-              <div className="mb-0">
-                <h6>Notes:</h6>
-                <p>{plan.notes}</p>
-              </div>
-            )}
-          </div>
-        ))
-      ) : (
-        <p className="text-muted">No treatment plans available</p>
-      )}
-    </MedicalInfoCard>
-  );
-
-  // Medical timeline component
-  const MedicalTimelineSection = () => (
-    <MedicalInfoCard
-      title="Medical Timeline"
-      icon={<FontAwesomeIcon icon={faFileMedical} />}
-    >
-      <div className="timeline">
-        {/* Create a combined timeline from medical history, imaging, lab results, etc. */}
-        {[
-          ...medicalHistory.map(item => ({
-            date: new Date(item.date),
-            type: 'diagnosis',
-            title: item.diagnosis,
-            description: `Diagnosed by ${item.provider}`,
-            status: item.status,
-            icon: 'fas fa-file-medical'
-          })),
-          ...imagingReports.map(item => ({
-            date: new Date(item.date),
-            type: 'imaging',
-            title: item.type,
-            description: item.findings,
-            icon: 'fas fa-x-ray'
-          })),
-          ...immunizations.map(item => ({
-            date: new Date(item.date),
-            type: 'immunization',
-            title: item.vaccine,
-            description: `Administered by ${item.administrator}`,
-            icon: 'fas fa-syringe'
-          }))
-        ]
-        .sort((a, b) => b.date - a.date) // Sort by date, newest first
-        .slice(0, 10) // Limit to 10 items for display
-        .map((event, index) => (
-          <div key={index} className="timeline-item">
-            <div className="timeline-date">
-              {event.date.toLocaleDateString()}
-            </div>
-            <div className={`timeline-content ${event.type}`}>
-              <h6>{event.title}</h6>
-              <p>{event.description}</p>
-              {event.status && <Badge color={
-                event.status === 'Active' ? 'danger' :
-                event.status === 'Resolved' ? 'success' :
-                event.status === 'Monitoring' ? 'info' : 'secondary'
-              }>{event.status}</Badge>}
-            </div>
-          </div>
-        ))}
-      </div>
     </MedicalInfoCard>
   );
 
@@ -837,7 +599,6 @@ const HealthRecords = () => {
               </Col>
             </Row>
             <MedicationsCard />
-            <MedicalTimelineSection />
             <HealthInsightsSection />
           </>
         );
@@ -870,20 +631,11 @@ const HealthRecords = () => {
       case 'medications':
         return <MedicationsCard />;
       
-      case 'labResults':
-        return <LabResultsSection />;
-      
-      case 'imaging':
-        return <ImagingSection />;
-      
       case 'vitals':
         return <VitalsSection />;
       
       case 'immunizations':
         return <ImmunizationSection />;
-      
-      case 'treatmentPlans':
-        return <TreatmentPlansSection />;
         
       default:
         return <div>Select a tab to view your health records</div>;

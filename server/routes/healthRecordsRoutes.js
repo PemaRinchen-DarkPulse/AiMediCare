@@ -8,11 +8,8 @@ const {
   getAllergies,
   getChronicConditions,
   getMedications,
-  getLabResults,
-  getImagingReports,
   getVitalsHistory,
-  getImmunizations,
-  getTreatmentPlans
+  getImmunizations
 } = require('../controllers/healthRecordsController');
 
 // All routes are protected with auth middleware
@@ -22,10 +19,7 @@ router.get('/medical-history', protect, getMedicalHistory);
 router.get('/allergies', protect, getAllergies);
 router.get('/chronic-conditions', protect, getChronicConditions);
 router.get('/medications', protect, getMedications);
-router.get('/lab-results', protect, getLabResults);
-router.get('/imaging-reports', protect, getImagingReports);
 router.get('/vitals-history', protect, getVitalsHistory);
 router.get('/immunizations', protect, getImmunizations);
-router.get('/treatment-plans', protect, getTreatmentPlans);
 
 module.exports = router;

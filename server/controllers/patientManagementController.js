@@ -5,12 +5,10 @@ const HealthRecord = require('../models/HealthRecord');
 const EmergencyContact = require('../models/EmergencyContact');
 const Allergy = require('../models/Allergy');
 const ChronicCondition = require('../models/ChronicCondition');
-const Medication = require('../models/Medication');
-const LabResult = require('../models/LabResult');
-const ImagingReport = require('../models/ImagingReport');
+const Prescription = require('../models/Prescription'); // Changed from Medication to Prescription (if needed)
 const VitalRecord = require('../models/VitalRecord');
 const Immunization = require('../models/Immunization');
-const TreatmentPlan = require('../models/TreatmentPlan');
+
 
 // @desc    Get all patients (with filters)
 // @route   GET /api/doctor/patients
