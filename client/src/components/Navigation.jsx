@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaSearch, FaBell, FaBars, FaCog, FaSignOutAlt } from "react-icons/fa";
 import { Dropdown } from "react-bootstrap";
@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 const Navigation = ({ toggleSidebar }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [showDropdown, setShowDropdown] = useState(false);
 
   // Handle user logout
   const handleLogout = async () => {
@@ -27,6 +28,31 @@ const Navigation = ({ toggleSidebar }) => {
       return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
     }
     return nameParts[0][0].toUpperCase();
+  };
+
+  // Handle settings navigation based on user role
+  const navigateToSettings = () => {
+    if (!user) return;
+    setShowDropdown(false);
+    
+    switch (user.role) {
+      case 'patient':
+        navigate('/patient/settings');
+        break;
+      case 'doctor':
+        navigate('/doctor/settings');
+        break;
+      case 'pharmacist':
+        navigate('/pharmacist/settings');
+        break;
+      default:
+        navigate('/patient/settings');
+    }
+  };
+  
+  const navigateToProfile = () => {
+    setShowDropdown(false);
+    navigate('/patient/profile');
   };
 
   return (
@@ -61,10 +87,15 @@ const Navigation = ({ toggleSidebar }) => {
       
       <div className="d-flex align-items-center gap-4">
         {/* Settings Icon */}
-        <FaCog size={22} className="cursor-pointer text-muted" onClick={() => navigate('/patient/settings')} />
+        <FaCog 
+          size={22} 
+          className="cursor-pointer text-muted" 
+          onClick={navigateToSettings} 
+          style={{ cursor: 'pointer' }}
+        />
 
         {/* Notification Bell */}
-        <div className="position-relative cursor-pointer text-muted">
+        <div className="position-relative cursor-pointer text-muted" style={{ cursor: 'pointer' }}>
           <FaBell size={22} />
           <span
             className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
@@ -75,7 +106,11 @@ const Navigation = ({ toggleSidebar }) => {
         </div>
 
         {/* Profile Circle with Dropdown */}
-        <Dropdown align="end">
+        <Dropdown 
+          align="end" 
+          show={showDropdown} 
+          onToggle={(isOpen) => setShowDropdown(isOpen)}
+        >
           <Dropdown.Toggle as="div" id="profile-dropdown" className="p-0">
             <div
               style={{
@@ -98,8 +133,8 @@ const Navigation = ({ toggleSidebar }) => {
           </Dropdown.Toggle>
 
           <Dropdown.Menu>
-            <Dropdown.Item onClick={() => navigate('/patient/profile')}>My Profile</Dropdown.Item>
-            <Dropdown.Item onClick={() => navigate('/patient/settings')}>Settings</Dropdown.Item>
+            <Dropdown.Item onClick={navigateToProfile}>My Profile</Dropdown.Item>
+            <Dropdown.Item onClick={navigateToSettings}>Settings</Dropdown.Item>
             <Dropdown.Divider />
             <Dropdown.Item onClick={handleLogout} className="text-danger">
               <FaSignOutAlt className="me-2" /> Logout

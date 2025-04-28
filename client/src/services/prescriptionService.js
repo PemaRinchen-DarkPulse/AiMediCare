@@ -93,3 +93,89 @@ export const requestRefill = async (prescriptionId) => {
     throw error;
   }
 };
+
+// Get medication reviews
+export const getMedicationReviews = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/reviews`, {
+      headers: getAuthHeader()
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error('Error fetching medication reviews:', error);
+    throw error;
+  }
+};
+
+// Request a new medication review
+export const requestMedicationReview = async () => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/reviews/request`,
+      {},
+      { headers: getAuthHeader() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error requesting medication review:', error);
+    throw error;
+  }
+};
+
+// Create a medication review (for doctors)
+export const createMedicationReview = async (reviewData) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/reviews`,
+      reviewData,
+      { headers: getAuthHeader() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error creating medication review:', error);
+    throw error;
+  }
+};
+
+// Get medication reconciliation data
+export const getMedicationReconciliation = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/reconciliation`, {
+      headers: getAuthHeader()
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error('Error fetching medication reconciliation:', error);
+    throw error;
+  }
+};
+
+// Create a new medication reconciliation
+export const createMedicationReconciliation = async (reconciliationData) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/reconciliation`,
+      reconciliationData,
+      { headers: getAuthHeader() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error creating medication reconciliation:', error);
+    throw error;
+  }
+};
+
+// Update a discrepancy in medication reconciliation
+export const updateReconciliationDiscrepancy = async (updateData) => {
+  try {
+    const response = await axios.patch(
+      `${API_URL}/reconciliation/discrepancy`,
+      updateData,
+      { headers: getAuthHeader() }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error updating reconciliation discrepancy:', error);
+    throw error;
+  }
+};

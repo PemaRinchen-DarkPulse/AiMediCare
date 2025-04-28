@@ -1,0 +1,93 @@
+.settings-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.settings-card {
+  border-radius: 12px;
+  border: none;
+}
+
+.settings-category-title {
+  color: #344767;
+  font-weight: 600;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+}
+
+.settings-items {
+  margin-bottom: 20px;
+}
+
+.setting-item {
+  padding: 12px 5px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+  margin-bottom: 5px;
+}
+
+.setting-item:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.setting-icon {
+  width: 40px;
+  height: 40px;
+  background-color: #f8f9fa;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 15px;
+  color: #3a86ff;
+  font-size: 1.1rem;
+}
+
+.setting-name {
+  font-weight: 500;
+  color: #495057;
+  font-size: 1rem;
+}
+
+hr {
+  margin: 15px 0;
+  opacity: 0.15;
+}
+
+/* Fix for dropdown menu */
+.dropdown-menu {
+  background-color: #fff;
+  border: none;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+  border-radius: 10px;
+  padding: 0.75rem 0;
+  min-width: 200px;
+  z-index: 1100;
+}
+
+.dropdown-item {
+  padding: 0.6rem 1.5rem;
+  font-size: 0.9rem;
+  color: #495057;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: rgba(0,0,0,0.04);
+}
+
+.dropdown-divider {
+  margin: 0.5rem 0;
+  opacity: 0.1;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}
+
+/* Ensure the dropdown appears above other content */
+.dropdown {
+  position: relative;
+  z-index: 1050;
+}

@@ -78,3 +78,63 @@ export const updateRequestStatus = async (requestId, status) => {
     throw error;
   }
 };
+
+// Get patient diagnostic requests
+export const getPatientDiagnosticRequests = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/patient/requests`, {
+      headers: getAuthHeader()
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching patient diagnostic requests:', error);
+    throw error;
+  }
+};
+
+// Get patient test results
+export const getPatientTestResults = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/patient/results`, {
+      headers: getAuthHeader()
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching patient test results:', error);
+    throw error;
+  }
+};
+
+// Accept diagnostic request
+export const acceptDiagnosticRequest = async (requestId) => {
+  try {
+    const response = await axios.patch(
+      `${API_URL}/patient/requests/${requestId}/accept`,
+      {},
+      {
+        headers: getAuthHeader()
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error accepting diagnostic request:', error);
+    throw error;
+  }
+};
+
+// Decline diagnostic request
+export const declineDiagnosticRequest = async (requestId) => {
+  try {
+    const response = await axios.patch(
+      `${API_URL}/patient/requests/${requestId}/decline`,
+      {},
+      {
+        headers: getAuthHeader()
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error declining diagnostic request:', error);
+    throw error;
+  }
+};

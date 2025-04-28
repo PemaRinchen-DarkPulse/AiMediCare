@@ -25,6 +25,8 @@ import Diagnostics from "./pages/doctor/Diagnostics";
 import DoctorPrescriptions from "./pages/doctor/DoctorPrescriptions";
 import DoctorSettings from "./pages/doctor/DoctorSettings";
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
+import PatientSettings from "./pages/patient/PatientSettings";
+import PatientDiagnostics from "./pages/patient/PatientDiagnostics";
 // Protected route component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -106,8 +108,8 @@ function App() {
               <Route path="medications" element={<Medications/>} />
               <Route path="triage" element={<PrevisitTriage/>} />
               <Route path="messages" element={<Messages/>} />
-              <Route path="billing" element={<BillingInsurance/>} />
-              <Route path="settings" element={<DoctorSettings/>} />
+              <Route path="diagnostics" element={<PatientDiagnostics/>} />
+              <Route path="settings" element={<PatientSettings/>} />
             </Route>
             
             {/* Doctor Routes */}
