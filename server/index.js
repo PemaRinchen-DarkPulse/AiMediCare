@@ -9,6 +9,8 @@ const prescriptionRoutes = require('./routes/prescriptionRoutes');
 const healthRecordsRoutes = require('./routes/healthRecordsRoutes');
 const patientManagementRoutes = require('./routes/patientManagementRoutes');
 const diagnosticsRoutes = require('./routes/diagnosticsRoutes');
+const medicineRecommendationsRoutes = require('./routes/medicineRecommendationsRoutes');
+const doctorSettingsRoutes = require('./routes/doctorSettingsRoutes');
 
 // Create Express app
 const app = express();
@@ -38,9 +40,11 @@ app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/patient', healthRecordsRoutes);
 app.use('/api/doctor/patients', patientManagementRoutes);
 app.use('/api/diagnostics', diagnosticsRoutes);
+app.use('/api/medicine-recommendations', medicineRecommendationsRoutes);
+app.use('/api/settings', doctorSettingsRoutes);
 
 // Test route
-app.get('/', (req, res) => {
+app.use('/', (req, res) => {
   res.send('AiMediCare API is running!');
 });
 

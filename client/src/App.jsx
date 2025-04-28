@@ -22,6 +22,9 @@ import PharmacistHome from "./pages/PharmacistHome";
 import DoctorAppointments from "./pages/doctor/DoctorAppointments";
 import Patients from "./pages/doctor/Patients";
 import Diagnostics from "./pages/doctor/Diagnostics";
+import DoctorPrescriptions from "./pages/doctor/DoctorPrescriptions";
+import DoctorSettings from "./pages/doctor/DoctorSettings";
+import DoctorDashboard from "./pages/doctor/DoctorDashboard";
 // Protected route component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -104,7 +107,7 @@ function App() {
               <Route path="triage" element={<PrevisitTriage/>} />
               <Route path="messages" element={<Messages/>} />
               <Route path="billing" element={<BillingInsurance/>} />
-              <Route path="settings" element={<Settings/>} />
+              <Route path="settings" element={<DoctorSettings/>} />
             </Route>
             
             {/* Doctor Routes */}
@@ -114,12 +117,12 @@ function App() {
               </ProtectedRoute>
             }>
               <Route index element={<Navigate to="doctor" />} />
-              <Route path="dashboard" element={<div>Doctor poo</div>} />
+              <Route path="dashboard" element={<DoctorDashboard/>} />
               <Route path="appointments" element={<DoctorAppointments/>} />
               <Route path="patients" element={<Patients/>} />
               <Route path="diagnostics" element={<Diagnostics/>} />
-              <Route path="messages" element={<div>Doctor Messages</div>} />
-              <Route path="settings" element={<Settings/>} />
+              <Route path="Prescriptions" element={<DoctorPrescriptions/>} />
+              <Route path="settings" element={<DoctorSettings/>} />
             </Route>
             
             {/* Pharmacist Routes */}

@@ -11,10 +11,7 @@ const DoctorSideBar = ({ isOpen }) => {
     { icon: <FaCalendarCheck />, label: "Appointmenst", path: "/doctor/appointments" },
     { icon: <FaFileMedical />, label: "Patients", path: "/doctor/patients" },
     { icon: <FaPills />, label: "Diagnostics", path: "/doctor/diagnostics" },
-    { icon: <FaNotesMedical />, label: "Link 4", path: "/patient/triage" },
-    { icon: <FaEnvelope />, label: "Link 5", path: "/aimedicare/messages" },
-    { icon: <FaFileInvoiceDollar />, label: "Link 6", path: "/aimedicare/billing" },
-    { icon: <FaCog />, label: "Link 8", path: "/aimedicare/settings" }
+    { icon: <FaNotesMedical />, label: "Settings", path: "/doctor/settings" },
   ];
 
   return (

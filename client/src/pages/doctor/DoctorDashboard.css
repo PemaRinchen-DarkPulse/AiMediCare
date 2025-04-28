@@ -1,0 +1,114 @@
+/* Doctor Dashboard Styles */
+
+.doctor-dashboard .welcome-card {
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7)),
+              url('https://images.unsplash.com/photo-1579684385127-1ef15d508118?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=880&q=80') no-repeat center right;
+  background-size: cover;
+  border-radius: 12px;
+}
+
+.doctor-dashboard .stat-label {
+  color: #6c757d;
+  font-size: 0.8rem;
+}
+
+.doctor-dashboard .stat-value {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.doctor-dashboard .avatar-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.doctor-dashboard .notification-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #e8f4fe;
+  color: #4a90e2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.doctor-dashboard .notification-icon.urgent {
+  background-color: #ffebee;
+  color: #ef5350;
+}
+
+.doctor-dashboard .metric-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.doctor-dashboard .gender-stat {
+  flex: 1;
+}
+
+.doctor-dashboard .gender-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 18px;
+  margin: 0 auto;
+}
+
+.doctor-dashboard .gender-icon.male {
+  background-color: #e3f2fd;
+  color: #2196f3;
+}
+
+.doctor-dashboard .gender-icon.female {
+  background-color: #fce4ec;
+  color: #e91e63;
+}
+
+.doctor-dashboard .gender-icon.other {
+  background-color: #f3e5f5;
+  color: #9c27b0;
+}
+
+/* Card Header Styling */
+.doctor-dashboard .card-header {
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  padding: 1rem 1.25rem;
+}
+
+/* Progress bar customization */
+.doctor-dashboard .progress {
+  border-radius: 20px;
+  height: 8px;
+}
+
+/* Badge styling */
+.doctor-dashboard .badge-pill {
+  padding: 0.4rem 0.8rem;
+  font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .doctor-dashboard .stat-value {
+    font-size: 1.5rem;
+  }
+  
+  .doctor-dashboard .welcome-card {
+    background-position: 200% center;
+  }
+}
