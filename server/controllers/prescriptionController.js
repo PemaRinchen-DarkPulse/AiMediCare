@@ -2,6 +2,8 @@ const Prescription = require('../models/Prescription');
 const Appointment = require('../models/Appointment');
 const Doctor = require('../models/Doctor');
 const Patient = require('../models/Patient');
+const MedicationReview = require('../models/MedicationReview');
+const MedicationReconciliation = require('../models/MedicationReconciliation');
 
 // Create a new prescription
 exports.createPrescription = async (req, res) => {
@@ -257,6 +259,191 @@ exports.deletePrescription = async (req, res) => {
       message: 'Prescription deleted successfully'
     });
   } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Get all medication reviews for a patient
+exports.getPatientMedicationReviews = async (req, res) => {
+  try {
+    const patientId = req.user.id;
+    
+    // Find all medication reviews for this patient
+    const reviews = await MedicationReview.find({ patientId })
+      .populate('doctorId', 'name specialization')
+      .sort({ reviewDate: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: reviews
+    });
+  } catch (error) {
+    console.error('Error fetching medication reviews:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Create a new medication review by doctor
+exports.createMedicationReview = async (req, res) => {
+  try {
+    const { patientId, medications, assessment, followUpDate, urgent } = req.body;
+    const doctorId = req.user.id;
+    
+    // Get doctor name
+    const doctor = await Doctor.findOne({ user: doctorId }).populate('user', 'name');
+    
+    if (!doctor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Doctor information not found'
+      });
+    }
+    
+    // Create new medication review
+    const review = await MedicationReview.create({
+      patientId,
+      doctorId,
+      doctorName: doctor.user.name,
+      medications,
+      assessment,
+      followUpDate,
+      urgent,
+      reviewDate: new Date()
+    });
+
+    res.status(201).json({
+      success: true,
+      data: review
+    });
+  } catch (error) {
+    console.error('Error creating medication review:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Get medication reconciliation data for a patient
+exports.getPatientMedicationReconciliation = async (req, res) => {
+  try {
+    const patientId = req.user.id;
+    
+    // Find the most recent reconciliation for this patient
+    const reconciliation = await MedicationReconciliation.findOne({ patientId })
+      .sort({ lastReconciliationDate: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: reconciliation
+    });
+  } catch (error) {
+    console.error('Error fetching medication reconciliation:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Create a new medication reconciliation
+exports.createMedicationReconciliation = async (req, res) => {
+  try {
+    const { patientId, sources, discrepancies } = req.body;
+    const performerId = req.user.id;
+    let performerName = 'System';
+    
+    // Get performer name based on user role
+    if (req.user.role === 'doctor') {
+      const doctor = await Doctor.findOne({ user: performerId }).populate('user', 'name');
+      if (doctor) {
+        performerName = doctor.user.name;
+      }
+    }
+    
+    // Create new medication reconciliation
+    const reconciliation = await MedicationReconciliation.create({
+      patientId,
+      performerId,
+      performedBy: performerName,
+      lastReconciliationDate: new Date(),
+      status: discrepancies.some(d => d.status === 'conflict') ? 'conflict' : 
+              discrepancies.some(d => d.status === 'pending') ? 'pending' : 'resolved',
+      sources,
+      discrepancies
+    });
+
+    res.status(201).json({
+      success: true,
+      data: reconciliation
+    });
+  } catch (error) {
+    console.error('Error creating medication reconciliation:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Update a discrepancy in medication reconciliation
+exports.updateReconciliationDiscrepancy = async (req, res) => {
+  try {
+    const { reconciliationId, discrepancyIndex, resolution, status } = req.body;
+    const resolverId = req.user.id;
+    let resolverName = 'System';
+    
+    // Get resolver name based on user role
+    if (req.user.role === 'doctor') {
+      const doctor = await Doctor.findOne({ user: resolverId }).populate('user', 'name');
+      if (doctor) {
+        resolverName = doctor.user.name;
+      }
+    }
+    
+    // Find the reconciliation record
+    const reconciliation = await MedicationReconciliation.findById(reconciliationId);
+    
+    if (!reconciliation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Medication reconciliation record not found'
+      });
+    }
+    
+    // Update the specific discrepancy
+    if (reconciliation.discrepancies[discrepancyIndex]) {
+      reconciliation.discrepancies[discrepancyIndex].status = status;
+      reconciliation.discrepancies[discrepancyIndex].resolution = resolution;
+      reconciliation.discrepancies[discrepancyIndex].resolvedBy = resolverName;
+      reconciliation.discrepancies[discrepancyIndex].resolutionDate = new Date();
+      
+      // Update overall status based on all discrepancies
+      const hasConflicts = reconciliation.discrepancies.some(d => d.status === 'conflict');
+      const hasPending = reconciliation.discrepancies.some(d => d.status === 'pending');
+      
+      reconciliation.status = hasConflicts ? 'conflict' : hasPending ? 'pending' : 'resolved';
+      
+      await reconciliation.save();
+      
+      res.status(200).json({
+        success: true,
+        data: reconciliation
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid discrepancy index'
+      });
+    }
+  } catch (error) {
+    console.error('Error updating reconciliation discrepancy:', error);
     res.status(500).json({
       success: false,
       message: error.message

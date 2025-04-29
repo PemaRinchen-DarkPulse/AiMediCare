@@ -219,10 +219,174 @@ const updateRequestStatus = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Get patient's diagnostic requests
+// @route   GET /api/diagnostics/patient/requests
+// @access  Private/Patient
+const getPatientDiagnosticRequests = asyncHandler(async (req, res) => {
+  // Find patient ID associated with the logged-in user
+  const patient = await Patient.findOne({ user: req.user._id });
+  
+  if (!patient) {
+    res.status(404);
+    throw new Error('Patient profile not found');
+  }
+  
+  // Find all diagnostic tests for this patient
+  const requests = await DiagnosticTest.find({ patient: patient._id })
+    .populate('requestedBy', 'name')
+    .sort({ requestDate: -1 });
+    
+  // Format the response
+  const formattedRequests = requests.map(request => ({
+    id: request._id,
+    testType: request.testType,
+    priority: request.priority,
+    requestDate: request.requestDate,
+    requestedBy: request.requestedBy?.name || 'Unknown Doctor',
+    status: request.status,
+    notes: request.notes,
+    createdAt: request.createdAt,
+    hasResults: request.hasResults || false
+  }));
+  
+  res.status(200).json({
+    success: true,
+    data: formattedRequests
+  });
+});
+
+// @desc    Get patient's test results
+// @route   GET /api/diagnostics/patient/results
+// @access  Private/Patient
+const getPatientTestResults = asyncHandler(async (req, res) => {
+  // Find patient ID associated with the logged-in user
+  const patient = await Patient.findOne({ user: req.user._id });
+  
+  if (!patient) {
+    res.status(404);
+    throw new Error('Patient profile not found');
+  }
+  
+  // Find all completed diagnostic tests with results for this patient
+  const testsWithResults = await DiagnosticTest.find({ 
+    patient: patient._id,
+    hasResults: true
+  })
+    .populate('requestedBy', 'name')
+    .sort({ resultDate: -1 });
+    
+  // Format the response
+  const formattedResults = testsWithResults.map(test => ({
+    id: test._id,
+    requestId: test._id,
+    testType: test.testType,
+    resultDate: test.resultDate || test.updatedAt,
+    requestDate: test.requestDate,
+    requestedBy: test.requestedBy?.name || 'Unknown Doctor',
+    findings: test.findings || '',
+    interpretation: test.interpretation || '',
+    technician: test.technician || '',
+    attachmentUrl: test.attachmentUrl || null,
+    notes: test.resultNotes || '',
+    status: test.status
+  }));
+  
+  res.status(200).json({
+    success: true,
+    data: formattedResults
+  });
+});
+
+// @desc    Accept diagnostic request
+// @route   PATCH /api/diagnostics/patient/requests/:id/accept
+// @access  Private/Patient
+const acceptDiagnosticRequest = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  
+  // Find patient ID associated with the logged-in user
+  const patient = await Patient.findOne({ user: req.user._id });
+  
+  if (!patient) {
+    res.status(404);
+    throw new Error('Patient profile not found');
+  }
+  
+  // Find the diagnostic test
+  const diagnosticTest = await DiagnosticTest.findById(id);
+  
+  if (!diagnosticTest) {
+    res.status(404);
+    throw new Error('Diagnostic test request not found');
+  }
+  
+  // Verify this test belongs to the patient
+  if (diagnosticTest.patient.toString() !== patient._id.toString()) {
+    res.status(403);
+    throw new Error('Not authorized to accept this diagnostic test request');
+  }
+  
+  // Update the status
+  diagnosticTest.status = 'accepted by patient';
+  await diagnosticTest.save();
+  
+  res.status(200).json({
+    success: true,
+    data: {
+      id: diagnosticTest._id,
+      status: diagnosticTest.status
+    }
+  });
+});
+
+// @desc    Decline diagnostic request
+// @route   PATCH /api/diagnostics/patient/requests/:id/decline
+// @access  Private/Patient
+const declineDiagnosticRequest = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  
+  // Find patient ID associated with the logged-in user
+  const patient = await Patient.findOne({ user: req.user._id });
+  
+  if (!patient) {
+    res.status(404);
+    throw new Error('Patient profile not found');
+  }
+  
+  // Find the diagnostic test
+  const diagnosticTest = await DiagnosticTest.findById(id);
+  
+  if (!diagnosticTest) {
+    res.status(404);
+    throw new Error('Diagnostic test request not found');
+  }
+  
+  // Verify this test belongs to the patient
+  if (diagnosticTest.patient.toString() !== patient._id.toString()) {
+    res.status(403);
+    throw new Error('Not authorized to decline this diagnostic test request');
+  }
+  
+  // Update the status
+  diagnosticTest.status = 'declined by patient';
+  await diagnosticTest.save();
+  
+  res.status(200).json({
+    success: true,
+    data: {
+      id: diagnosticTest._id,
+      status: diagnosticTest.status
+    }
+  });
+});
+
 module.exports = {
   getDiagnosticRequests,
   createDiagnosticRequest,
   getTestResults,
   uploadTestResult,
-  updateRequestStatus
+  updateRequestStatus,
+  getPatientDiagnosticRequests,
+  getPatientTestResults,
+  acceptDiagnosticRequest,
+  declineDiagnosticRequest
 };

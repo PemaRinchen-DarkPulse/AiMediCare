@@ -11,6 +11,7 @@ const patientManagementRoutes = require('./routes/patientManagementRoutes');
 const diagnosticsRoutes = require('./routes/diagnosticsRoutes');
 const medicineRecommendationsRoutes = require('./routes/medicineRecommendationsRoutes');
 const doctorSettingsRoutes = require('./routes/doctorSettingsRoutes');
+const patientSettingsRoutes = require('./routes/patientSettingsRoutes');
 
 // Create Express app
 const app = express();
@@ -42,6 +43,7 @@ app.use('/api/doctor/patients', patientManagementRoutes);
 app.use('/api/diagnostics', diagnosticsRoutes);
 app.use('/api/medicine-recommendations', medicineRecommendationsRoutes);
 app.use('/api/settings', doctorSettingsRoutes);
+app.use('/api/patient/settings', patientSettingsRoutes);
 
 // Test route
 app.use('/', (req, res) => {
