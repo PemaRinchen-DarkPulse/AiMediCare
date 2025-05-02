@@ -99,10 +99,16 @@ const SignUp = () => {
           issuingAuthority: formData.issuingAuthority,
           specialization: formData.specialization,
           yearsExperience: formData.yearsExperience,
-          hospitalName: formData.hospitalName, // Use hospitalName to match the form field
-          hospitalAffiliation: formData.hospitalName, // Keep hospitalAffiliation for backward compatibility
-          practiceLocation: formData.practiceLocation,
+          hospitalName: formData.hospitalName, 
+          hospitalAddress: formData.hospitalAddress,
+          clinicStreet: formData.clinicStreet || formData.streetAddress,
+          clinicCity: formData.clinicCity || formData.city,
+          clinicState: formData.clinicState || formData.stateProvince,
+          clinicZipCode: formData.clinicZipCode || formData.zipCode,
+          clinicCountry: formData.clinicCountry || formData.country,
+          practiceLocation: formData.practiceLocation || formData.hospitalAddress,
           consultationFee: formData.consultationFee,
+          accountHolder: formData.accountHolder,
           bankName: formData.bankName,
           accountNumber: formData.accountNumber,
           routingNumber: formData.routingNumber
@@ -119,16 +125,23 @@ const SignUp = () => {
       } else if (formData.role === 'Pharmacist') {
         Object.assign(userData, {
           licenseNumber: formData.licenseNumber,
+          licenseExpiryDate: formData.licenseExpiryDate, // Make sure this field is included
           issuingAuthority: formData.issuingAuthority,
           yearsExperience: formData.yearsExperience,
           pharmacyName: formData.pharmacyName,
           pharmacyAddress: formData.pharmacyAddress,
           pharmacyPhone: formData.pharmacyPhone,
+          weekdayHours: formData.weekdayHours,
+          weekendHours: formData.weekendHours,
+          customHours: formData.customHours,
+          accountHolder: formData.accountHolder,
           bankName: formData.bankName,
           accountNumber: formData.accountNumber,
           routingNumber: formData.routingNumber
         });
       }
+      
+      console.log('Sending registration data:', userData); // Debug log
       
       const result = await register(userData);
       

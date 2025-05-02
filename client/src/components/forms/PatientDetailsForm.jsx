@@ -37,7 +37,8 @@ const PatientDetailsForm = ({ formData, handleChange }) => {
               <InputGroup hasValidation>
                 <InputGroup.Text>+</InputGroup.Text>
                 <Form.Control
-                  type="tel"
+                  type="number"
+                  pattern="[0-9]*"
                   placeholder="Emergency contact phone"
                   name="emergencyContactPhone"
                   value={formData.emergencyContactPhone || ''}

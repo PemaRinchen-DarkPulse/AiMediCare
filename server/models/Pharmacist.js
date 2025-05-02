@@ -16,6 +16,11 @@ const pharmacistSchema = new mongoose.Schema({
   pharmacyName: String,
   pharmacyAddress: String,
   pharmacyPhone: String,
+  operationalHours: {
+    weekday: String,
+    weekend: String,
+    custom: String
+  },
   certification: [{
     name: String,
     issuingOrganization: String,
@@ -28,6 +33,7 @@ const pharmacistSchema = new mongoose.Schema({
     institution: String,
     graduationYear: Number
   }],
+  accountHolder: String,
   bankName: String,
   accountNumber: String,
   routingNumber: String

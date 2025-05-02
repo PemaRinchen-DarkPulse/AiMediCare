@@ -182,7 +182,7 @@ const DoctorDetailsForm = ({ formData, handleChange }) => {
               <FaCreditCard />
             </InputGroup.Text>
             <Form.Control
-              type="text"
+              type="number"
               placeholder="Bank account number"
               name="accountNumber"
               value={formData.accountNumber || ''}

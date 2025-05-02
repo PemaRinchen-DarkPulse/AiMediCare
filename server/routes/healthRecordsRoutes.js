@@ -9,7 +9,8 @@ const {
   getChronicConditions,
   getMedications,
   getVitalsHistory,
-  getImmunizations
+  getImmunizations,
+  addVitalRecord
 } = require('../controllers/healthRecordsController');
 
 // All routes are protected with auth middleware
@@ -21,5 +22,8 @@ router.get('/chronic-conditions', protect, getChronicConditions);
 router.get('/medications', protect, getMedications);
 router.get('/vitals-history', protect, getVitalsHistory);
 router.get('/immunizations', protect, getImmunizations);
+
+// Add new route for creating vitals
+router.post('/vitals', protect, addVitalRecord);
 
 module.exports = router;

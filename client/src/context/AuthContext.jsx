@@ -139,12 +139,22 @@ export const AuthProvider = ({ children }) => {
       });
       
       const data = await response.json();
+      console.log('Registration response:', data); // Debug logging
       
       if (response.ok) {
-        toast.success(data.message || 'Registration successful! Please check your email to verify your account.');
+        if (data.toast) {
+          toast[data.toast.type](data.toast.message);
+        } else {
+          toast.success(data.message || 'Registration successful! Please check your email to verify your account.');
+        }
         return { success: true };
       } else {
-        toast.error(data.message || 'Registration failed');
+        if (data.toast) {
+          toast[data.toast.type](data.toast.message);
+        } else {
+          toast.error(data.message || 'Registration failed');
+        }
+        console.error('Registration error from server:', data);
         return { success: false, message: data.message };
       }
     } catch (error) {

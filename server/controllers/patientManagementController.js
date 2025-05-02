@@ -2,13 +2,12 @@ const asyncHandler = require('express-async-handler');
 const Patient = require('../models/Patient');
 const User = require('../models/User');
 const HealthRecord = require('../models/HealthRecord');
-const EmergencyContact = require('../models/EmergencyContact');
+// Removed EmergencyContact import as it no longer exists
 const Allergy = require('../models/Allergy');
 const ChronicCondition = require('../models/ChronicCondition');
 const Prescription = require('../models/Prescription'); // Changed from Medication to Prescription (if needed)
 const VitalRecord = require('../models/VitalRecord');
 const Immunization = require('../models/Immunization');
-
 
 // @desc    Get all patients (with filters)
 // @route   GET /api/doctor/patients
@@ -261,7 +260,7 @@ const getPatientVitals = asyncHandler(async (req, res) => {
 // @access  Private/Doctor
 const addPatientVital = asyncHandler(async (req, res) => {
   const { patientId } = req.params;
-  const { vitalType, value, systolic, diastolic, notes, date } = req.body;
+  const { vitalType, value, systolic, diastolic, unit, notes, date } = req.body;
 
   // Find patient
   const patient = await Patient.findById(patientId);
@@ -278,6 +277,7 @@ const addPatientVital = asyncHandler(async (req, res) => {
     value,
     systolic,
     diastolic,
+    unit, // Include the unit field
     notes,
     date: date || Date.now()
   });
@@ -316,7 +316,7 @@ const getPatientAllergies = asyncHandler(async (req, res) => {
 // @access  Private/Doctor
 const addPatientAllergy = asyncHandler(async (req, res) => {
   const { patientId } = req.params;
-  const { allergen, reaction, severity, notes } = req.body;
+  const { allergen, reaction, severity, notes, dateIdentified } = req.body;
 
   // Find patient
   const patient = await Patient.findById(patientId);
@@ -332,7 +332,8 @@ const addPatientAllergy = asyncHandler(async (req, res) => {
     allergen,
     reaction,
     severity,
-    notes
+    notes,
+    dateIdentified: dateIdentified || Date.now() // Use provided date or current date as fallback
   });
 
   res.status(201).json({
@@ -427,7 +428,7 @@ const getPatientChronicConditions = asyncHandler(async (req, res) => {
 // @access  Private/Doctor
 const addPatientChronicCondition = asyncHandler(async (req, res) => {
   const { patientId } = req.params;
-  const { condition, diagnosisDate, severity, notes, managementPlan } = req.body;
+  const { condition, diagnosisDate, severity, status, treatingProvider, notes, managementPlan } = req.body;
 
   // Find patient
   const patient = await Patient.findById(patientId);
@@ -441,8 +442,10 @@ const addPatientChronicCondition = asyncHandler(async (req, res) => {
   const chronicCondition = await ChronicCondition.create({
     patient: patientId,
     condition,
-    diagnosisDate: diagnosisDate || Date.now(),
+    diagnosedDate: diagnosisDate || Date.now(), // Fix: changed field name to match model
+    status: status || 'Monitoring',
     severity,
+    treatingProvider: treatingProvider || req.user.name || 'Unknown',
     notes,
     managementPlan
   });
@@ -481,7 +484,7 @@ const getPatientImmunizations = asyncHandler(async (req, res) => {
 // @access  Private/Doctor
 const addPatientImmunization = asyncHandler(async (req, res) => {
   const { patientId } = req.params;
-  const { vaccine, date, administrator, batchNumber, nextDoseDate, notes } = req.body;
+  const { vaccine, date, administrator, facility, batchNumber, nextDoseDate, notes } = req.body;
 
   // Find patient
   const patient = await Patient.findById(patientId);
@@ -497,7 +500,8 @@ const addPatientImmunization = asyncHandler(async (req, res) => {
     vaccine,
     date: date || Date.now(),
     administrator,
-    batchNumber,
+    facility, // Include required facility field
+    batchNumber: batchNumber || '', // Use empty string if not provided
     nextDoseDate,
     notes
   });

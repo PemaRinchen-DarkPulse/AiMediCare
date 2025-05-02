@@ -685,16 +685,6 @@ const HealthRecords = () => {
         </div>
       </div>
       
-      {/* Accessibility controls */}
-      <div className="text-end mb-3">
-        <Button size="sm" color="secondary" className="me-2">
-          <i className="fas fa-text-height"></i> <span className="ms-1">A+</span>
-        </Button>
-        <Button size="sm" color="secondary">
-          <i className="fas fa-adjust"></i> <span className="ms-1">Contrast</span>
-        </Button>
-      </div>
-      
       {/* Tab navigation */}
       <HealthRecordsNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
       
