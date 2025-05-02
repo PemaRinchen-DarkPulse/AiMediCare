@@ -73,7 +73,7 @@ exports.getPatientAppointments = async (req, res) => {
 // Create a new appointment
 exports.createAppointment = async (req, res) => {
   try {
-    const { doctorId, date, time, type, reason } = req.body;
+    const { doctorId, date, time, type, reason, additionalNotes } = req.body;
     const patientId = req.user._id;
     
     // Verify the doctor exists and has role 'doctor'
@@ -93,6 +93,7 @@ exports.createAppointment = async (req, res) => {
       time,
       type,
       reason,
+      notes: additionalNotes, // Save additional notes to the notes field
       location: doctor.location // Add doctor's location from User model
     });
     

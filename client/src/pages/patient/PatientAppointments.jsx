@@ -91,6 +91,8 @@ const PatientAppointments = () => {
   const [selectedAppointmentType, setSelectedAppointmentType] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
+  const [reasonForVisit, setReasonForVisit] = useState('');
+  const [additionalNotes, setAdditionalNotes] = useState('');
   const [specialtyFilter, setSpecialtyFilter] = useState('all');
   const [locationFilter, setLocationFilter] = useState('all');
   const [availabilityFilter, setAvailabilityFilter] = useState('all');
@@ -972,12 +974,14 @@ const PatientAppointments = () => {
         
         <Formik
           initialValues={{
-            reasonForVisit: '',
-            additionalNotes: ''
+            reasonForVisit: reasonForVisit,
+            additionalNotes: additionalNotes
           }}
           validationSchema={validationSchema}
           onSubmit={(values) => {
             console.log('Form values:', values);
+            setReasonForVisit(values.reasonForVisit);
+            setAdditionalNotes(values.additionalNotes);
             setBookingStep(4);
           }}
         >
@@ -1120,7 +1124,8 @@ const PatientAppointments = () => {
                 date: selectedDate,
                 time: selectedTimeSlot.formattedTime,
                 type: selectedAppointmentType,
-                reason: document.querySelector('textarea[name="reasonForVisit"]')?.value || "General consultation"
+                reason: reasonForVisit || "General consultation",
+                additionalNotes: additionalNotes || ""
               };
               
               // Call API to create appointment
