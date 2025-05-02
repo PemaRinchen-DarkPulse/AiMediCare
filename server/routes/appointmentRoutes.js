@@ -12,6 +12,8 @@ router.patch('/:id', protect, appointmentController.updateAppointment);
 // Doctor routes
 router.get('/doctor', protect, appointmentController.getDoctorAppointments);
 router.post('/:id/respond', protect, appointmentController.doctorRespondToAppointment);
+router.patch('/:id/doctor', protect, appointmentController.doctorUpdateAppointment);
+router.post('/:id/complete', protect, appointmentController.completeAppointment);
 
 // Patient confirmation route
 router.post('/:id/confirm', protect, appointmentController.patientConfirmAppointment);

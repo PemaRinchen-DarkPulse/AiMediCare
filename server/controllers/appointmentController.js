@@ -274,6 +274,7 @@ exports.getDoctorAppointments = async (req, res) => {
         reason: appointment.reason,
         status: appointment.status,
         notes: appointment.notes,
+        clinicalNotes: appointment.clinicalNotes || '', // Return clinical notes as plain text
         location: appointment.location,
         room: appointment.room,
         createdAt: appointment.createdAt
@@ -439,6 +440,91 @@ exports.createDummyAppointments = async (req, res) => {
     res.status(500).json({
       status: 'error',
       message: 'Failed to create dummy appointments'
+    });
+  }
+};
+
+// Doctor updates an appointment (notes and status)
+exports.doctorUpdateAppointment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, notes } = req.body;
+    const doctorId = req.user._id;
+    
+    // Find appointment and check if it belongs to this doctor
+    const appointment = await Appointment.findOne({
+      _id: id,
+      doctorId
+    });
+    
+    if (!appointment) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Appointment not found or not authorized'
+      });
+    }
+    
+    // Update appointment
+    if (status) appointment.status = status;
+    if (notes) appointment.notes = notes;
+    
+    await appointment.save();
+    
+    res.status(200).json({
+      status: 'success',
+      message: 'Appointment updated successfully',
+      data: {
+        appointment
+      }
+    });
+  } catch (error) {
+    console.error('Error updating appointment:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to update appointment'
+    });
+  }
+};
+
+// Complete an appointment and save clinical notes in a single request
+exports.completeAppointment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { notes } = req.body;
+    const doctorId = req.user._id;
+    
+    // Find appointment and check if it belongs to this doctor
+    const appointment = await Appointment.findOne({
+      _id: id,
+      doctorId,
+      status: { $in: ['confirmed', 'doctor_accepted'] } // Only confirmed or accepted appointments can be completed
+    });
+    
+    if (!appointment) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Appointment not found, not authorized, or cannot be completed'
+      });
+    }
+    
+    // Update appointment with clinical notes as simple text
+    appointment.status = 'completed';
+    appointment.clinicalNotes = notes || ''; // Store clinical notes directly
+    
+    await appointment.save();
+    
+    res.status(200).json({
+      status: 'success',
+      message: 'Appointment completed successfully',
+      data: {
+        appointment
+      }
+    });
+  } catch (error) {
+    console.error('Error completing appointment:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to complete appointment'
     });
   }
 };

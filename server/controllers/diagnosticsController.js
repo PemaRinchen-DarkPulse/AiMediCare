@@ -168,9 +168,14 @@ const uploadTestResult = asyncHandler(async (req, res) => {
   diagnosticTest.technician = technician;
   diagnosticTest.resultNotes = notes;
 
-  // Save attachment URL if provided
+  // Save attachment information if file was uploaded
   if (req.file) {
-    diagnosticTest.attachmentUrl = req.file.path;
+    // Store the file path relative to the server root
+    const filePath = req.file.path.replace(/\\/g, '/'); // Normalize path for cross-platform compatibility
+    diagnosticTest.attachmentUrl = `/${filePath}`;
+    
+    // Also store the original filename for display purposes
+    diagnosticTest.attachmentName = req.file.originalname;
   }
 
   await diagnosticTest.save();
@@ -184,6 +189,7 @@ const uploadTestResult = asyncHandler(async (req, res) => {
     interpretation: diagnosticTest.interpretation,
     technician: diagnosticTest.technician,
     attachmentUrl: diagnosticTest.attachmentUrl,
+    attachmentName: diagnosticTest.attachmentName,
     notes: diagnosticTest.resultNotes
   };
 

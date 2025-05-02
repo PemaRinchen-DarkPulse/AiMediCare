@@ -37,6 +37,10 @@ const appointmentSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  clinicalNotes: {
+    type: String,
+    default: ''
+  },
   location: {
     type: String,
     default: ''

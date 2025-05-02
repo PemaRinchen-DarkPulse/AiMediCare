@@ -52,8 +52,29 @@ export const getTestResults = async () => {
 // Upload test results
 export const uploadTestResult = async (resultData) => {
   try {
-    const response = await axios.post(`${API_URL}/results`, resultData, {
-      headers: getAuthHeader()
+    // Create a FormData object to properly handle file uploads
+    const formData = new FormData();
+    
+    // Add all text fields to the form data
+    Object.keys(resultData).forEach(key => {
+      // Skip the file field, we'll handle it separately
+      if (key !== 'attachmentFile' || resultData[key] === null) {
+        formData.append(key, resultData[key]);
+      }
+    });
+    
+    // Add the file if it exists
+    if (resultData.attachmentFile) {
+      formData.append('attachmentFile', resultData.attachmentFile);
+    }
+    
+    // Send the request with the FormData and proper headers
+    // Note: Don't set Content-Type when sending FormData, axios will set it with the proper boundary
+    const response = await axios.post(`${API_URL}/results`, formData, {
+      headers: {
+        ...getAuthHeader(),
+        // Let axios set the content type automatically for multipart form data
+      }
     });
     return response.data;
   } catch (error) {

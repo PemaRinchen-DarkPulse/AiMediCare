@@ -199,9 +199,10 @@ const Diagnostics = () => {
     }
   };
 
-  const uploadTestResult = async (resultData) => {
+  // Renamed from uploadTestResult to uploadTestResult2 to avoid name collision with the imported service function
+  const uploadTestResult2 = async (resultData) => {
     try {
-      // Use our service to upload test results
+      // Use our service to upload test results - call the imported service function
       const result = await uploadTestResult(resultData);
       
       if (result.success) {
@@ -370,23 +371,64 @@ const Diagnostics = () => {
 
   const handleNewResultSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     
-    const result = await uploadTestResult(newResultForm);
-    
-    if (result.success) {
-      setIsUploadResultsModalOpen(false);
-      // Reset form
-      setNewResultForm({
-        requestId: '',
-        resultDate: new Date().toISOString().split('T')[0],
-        findings: '',
-        interpretation: '',
-        attachmentFile: null,
-        technician: '',
-        notes: ''
-      });
-    } else {
-      setError(result.error || 'Failed to upload test results');
+    try {
+      const result = await uploadTestResult2(newResultForm);
+      
+      if (result.success) {
+        setIsUploadResultsModalOpen(false);
+        
+        // Find the corresponding request
+        const request = diagnosticRequests.find(req => req.id === newResultForm.requestId);
+        
+        // Set the uploaded result and request as selected for AI analysis
+        setSelectedResult(result.data);
+        setSelectedRequest(request);
+        
+        // Show a loading notification
+        setError(null);
+        
+        // Reset form
+        setNewResultForm({
+          requestId: '',
+          resultDate: new Date().toISOString().split('T')[0],
+          findings: '',
+          interpretation: '',
+          attachmentFile: null,
+          technician: '',
+          notes: ''
+        });
+        
+        // Automatically trigger AI recommendations
+        setTimeout(() => {
+          generateAiSuggestions();
+        }, 500);
+        
+        // Show success message
+        setError(
+          <Alert color="success">
+            <FontAwesomeIcon icon={faCheck} className="me-2" />
+            Test results uploaded successfully. Generating AI recommendations...
+          </Alert>
+        );
+      } else {
+        setError(
+          <Alert color="danger">
+            <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
+            {result.error || 'Failed to upload test results'}
+          </Alert>
+        );
+      }
+    } catch (err) {
+      setError(
+        <Alert color="danger">
+          <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
+          {err.message || 'An error occurred while uploading test results'}
+        </Alert>
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -505,6 +547,15 @@ const Diagnostics = () => {
         </NavItem>
         <NavItem>
           <NavLink
+            className={classnames({ active: activeTab === 'upcoming' })}
+            onClick={() => setActiveTab('upcoming')}
+          >
+            <FontAwesomeIcon icon={faCalendarAlt} className="me-2" />
+            Upcoming Diagnostics
+          </NavLink>
+        </NavItem>
+        <NavItem>
+          <NavLink
             className={classnames({ active: activeTab === 'results' })}
             onClick={() => setActiveTab('results')}
           >
@@ -512,24 +563,15 @@ const Diagnostics = () => {
             Test Results
           </NavLink>
         </NavItem>
-        <NavItem>
-          <NavLink
-            className={classnames({ active: activeTab === 'analytics' })}
-            onClick={() => setActiveTab('analytics')}
-          >
-            <FontAwesomeIcon icon={faRobot} className="me-2" />
-            AI Diagnostics
-          </NavLink>
-        </NavItem>
       </Nav>
 
       {/* Tab content */}
       <TabContent activeTab={activeTab}>
-        {/* Test Requests Tab */}
+        {/* Test Requests Tab - Only showing pending requests */}
         <TabPane tabId="requests">
           <Card className="mb-4">
             <CardHeader className="d-flex justify-content-between align-items-center bg-light">
-              <h5 className="mb-0">Diagnostic Test Requests</h5>
+              <h5 className="mb-0">Pending Diagnostic Test Requests</h5>
               <Button color="primary" onClick={() => setIsNewRequestModalOpen(true)}>
                 <FontAwesomeIcon icon={faPlus} className="me-2" />
                 New Request
@@ -551,32 +593,11 @@ const Diagnostics = () => {
                   </InputGroup>
                 </Col>
                 <Col md={7} className="d-flex justify-content-end">
-                  <Dropdown isOpen={filterDropdownOpen} toggle={toggleFilterDropdown} className="me-2">
-                    <DropdownToggle caret color="secondary">
-                      <FontAwesomeIcon icon={faFilter} className="me-2" />
-                      Filter
-                    </DropdownToggle>
-                    <DropdownMenu>
-                      <DropdownItem header>Status</DropdownItem>
-                      <DropdownItem onClick={() => setStatusFilter('all')} active={statusFilter === 'all'}>All</DropdownItem>
-                      <DropdownItem onClick={() => setStatusFilter('pending')} active={statusFilter === 'pending'}>Pending</DropdownItem>
-                      <DropdownItem onClick={() => setStatusFilter('in-progress')} active={statusFilter === 'in-progress'}>In Progress</DropdownItem>
-                      <DropdownItem onClick={() => setStatusFilter('scheduled')} active={statusFilter === 'scheduled'}>Scheduled</DropdownItem>
-                      <DropdownItem onClick={() => setStatusFilter('completed')} active={statusFilter === 'completed'}>Completed</DropdownItem>
-                      <DropdownItem divider />
-                      <DropdownItem header>Date Range</DropdownItem>
-                      <DropdownItem onClick={() => setDateFilter('all')} active={dateFilter === 'all'}>All Time</DropdownItem>
-                      <DropdownItem onClick={() => setDateFilter('today')} active={dateFilter === 'today'}>Today</DropdownItem>
-                      <DropdownItem onClick={() => setDateFilter('week')} active={dateFilter === 'week'}>This Week</DropdownItem>
-                      <DropdownItem onClick={() => setDateFilter('month')} active={dateFilter === 'month'}>This Month</DropdownItem>
-                    </DropdownMenu>
-                  </Dropdown>
                   <Button color="secondary" onClick={() => {
                     setSearchTerm('');
-                    setStatusFilter('all');
-                    setTestTypeFilter('all');
                     setDateFilter('all');
                     setPatientFilter('all');
+                    setTestTypeFilter('all');
                   }}>
                     <FontAwesomeIcon icon={faSync} className="me-2" />
                     Reset
@@ -584,7 +605,7 @@ const Diagnostics = () => {
                 </Col>
               </Row>
 
-              {/* Requests Table */}
+              {/* Requests Table - Only showing pending requests */}
               {loading ? (
                 <div className="text-center p-5">
                   <Spinner color="primary" />
@@ -592,7 +613,7 @@ const Diagnostics = () => {
                 </div>
               ) : error ? (
                 <Alert color="danger">{error}</Alert>
-              ) : filteredRequests.length > 0 ? (
+              ) : (
                 <div className="table-responsive">
                   <Table hover bordered>
                     <thead>
@@ -607,28 +628,135 @@ const Diagnostics = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredRequests.map(request => (
-                        <tr key={request.id}>
-                          <td>{request.patientName}</td>
-                          <td>{request.testType}</td>
-                          <td>
-                            <PriorityIndicator priority={request.priority} />
-                          </td>
-                          <td>{new Date(request.requestDate).toLocaleDateString()}</td>
-                          <td>{request.requestedBy}</td>
-                          <td>
-                            <RequestStatusBadge status={request.status} />
-                          </td>
-                          <td>
-                            <Button 
-                              color="info" 
-                              size="sm" 
-                              className="me-2"
-                              onClick={() => handleViewDetails(request)}
-                            >
-                              <FontAwesomeIcon icon={faEye} />
-                            </Button>
-                            {request.status !== 'completed' && (
+                      {diagnosticRequests
+                        .filter(request => request.status === 'pending')
+                        .filter(request => 
+                          searchTerm ? 
+                            (request.patientName && request.patientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                            (request.testType && request.testType.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                            (request.requestedBy && request.requestedBy.toLowerCase().includes(searchTerm.toLowerCase()))
+                          : true
+                        )
+                        .map(request => (
+                          <tr key={request.id}>
+                            <td>{request.patientName}</td>
+                            <td>{request.testType}</td>
+                            <td>
+                              <PriorityIndicator priority={request.priority} />
+                            </td>
+                            <td>{new Date(request.requestDate).toLocaleDateString()}</td>
+                            <td>{request.requestedBy}</td>
+                            <td>
+                              <RequestStatusBadge status={request.status} />
+                            </td>
+                            <td>
+                              <Button 
+                                color="info" 
+                                size="sm" 
+                                className="me-2"
+                                onClick={() => handleViewDetails(request)}
+                              >
+                                <FontAwesomeIcon icon={faEye} />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </Table>
+                  {diagnosticRequests.filter(request => request.status === 'pending').length === 0 && (
+                    <Alert color="info">
+                      No pending diagnostic requests found.
+                    </Alert>
+                  )}
+                </div>
+              )}
+            </CardBody>
+          </Card>
+        </TabPane>
+        
+        {/* Upcoming Diagnostics Tab - Showing requests accepted by patients */}
+        <TabPane tabId="upcoming">
+          <Card className="mb-4">
+            <CardHeader className="d-flex justify-content-between align-items-center bg-light">
+              <h5 className="mb-0">Upcoming Diagnostic Tests</h5>
+            </CardHeader>
+            <CardBody>
+              {/* Search and Filter Bar */}
+              <Row className="mb-4">
+                <Col md={5}>
+                  <InputGroup>
+                    <InputGroupText>
+                      <FontAwesomeIcon icon={faSearch} />
+                    </InputGroupText>
+                    <Input 
+                      placeholder="Search by patient, test type, or doctor..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </InputGroup>
+                </Col>
+                <Col md={7} className="d-flex justify-content-end">
+                  <Button color="secondary" onClick={() => {
+                    setSearchTerm('');
+                    setDateFilter('all');
+                    setPatientFilter('all');
+                    setTestTypeFilter('all');
+                  }}>
+                    <FontAwesomeIcon icon={faSync} className="me-2" />
+                    Reset
+                  </Button>
+                </Col>
+              </Row>
+
+              {/* Upcoming Diagnostics Table - Showing requests accepted by patients */}
+              {loading ? (
+                <div className="text-center p-5">
+                  <Spinner color="primary" />
+                  <p className="mt-2">Loading upcoming diagnostics...</p>
+                </div>
+              ) : error ? (
+                <Alert color="danger">{error}</Alert>
+              ) : (
+                <div className="table-responsive">
+                  <Table hover bordered>
+                    <thead>
+                      <tr>
+                        <th>Patient</th>
+                        <th>Test Type</th>
+                        <th>Priority</th>
+                        <th>Request Date</th>
+                        <th>Requested By</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {diagnosticRequests
+                        .filter(request => request.status === 'accepted by patient')
+                        .filter(request => 
+                          searchTerm ? 
+                            (request.patientName && request.patientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                            (request.testType && request.testType.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                            (request.requestedBy && request.requestedBy.toLowerCase().includes(searchTerm.toLowerCase()))
+                          : true
+                        )
+                        .map(request => (
+                          <tr key={request.id}>
+                            <td>{request.patientName}</td>
+                            <td>{request.testType}</td>
+                            <td>
+                              <PriorityIndicator priority={request.priority} />
+                            </td>
+                            <td>{new Date(request.requestDate).toLocaleDateString()}</td>
+                            <td>{request.requestedBy}</td>
+                            <td>
+                              <Button 
+                                color="info" 
+                                size="sm" 
+                                className="me-2"
+                                onClick={() => handleViewDetails(request)}
+                              >
+                                <FontAwesomeIcon icon={faEye} />
+                              </Button>
                               <Button 
                                 color="success" 
                                 size="sm"
@@ -643,31 +771,52 @@ const Diagnostics = () => {
                               >
                                 <FontAwesomeIcon icon={faUpload} />
                               </Button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                          </tr>
+                        ))}
                     </tbody>
                   </Table>
+                  {diagnosticRequests.filter(request => request.status === 'accepted by patient').length === 0 && (
+                    <Alert color="info">
+                      No upcoming diagnostic tests found. Tests will appear here after patients accept the requests.
+                    </Alert>
+                  )}
                 </div>
-              ) : (
-                <Alert color="info">
-                  No diagnostic requests found with the current filters.
-                </Alert>
               )}
             </CardBody>
           </Card>
         </TabPane>
 
-        {/* Test Results Tab */}
+        {/* Test Results Tab - Showing only completed tests */}
         <TabPane tabId="results">
           <Card>
             <CardHeader className="bg-light">
-              <h5 className="mb-0">Diagnostic Test Results</h5>
+              <h5 className="mb-0">Completed Diagnostic Test Results</h5>
             </CardHeader>
             <CardBody>
-              {/* Search and Filter for results could be added here */}
-              {testResults.length > 0 ? (
+              {/* Search Bar */}
+              <Row className="mb-4">
+                <Col md={5}>
+                  <InputGroup>
+                    <InputGroupText>
+                      <FontAwesomeIcon icon={faSearch} />
+                    </InputGroupText>
+                    <Input 
+                      placeholder="Search by patient, test type, or findings..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </InputGroup>
+                </Col>
+              </Row>
+              
+              {/* Results Table - Only showing completed tests */}
+              {loading ? (
+                <div className="text-center p-5">
+                  <Spinner color="primary" />
+                  <p className="mt-2">Loading test results...</p>
+                </div>
+              ) : (
                 <div className="table-responsive">
                   <Table hover bordered>
                     <thead>
@@ -680,98 +829,61 @@ const Diagnostics = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {testResults.map(result => {
-                        const request = diagnosticRequests.find(req => req.id === result.requestId) || {};
-                        return (
-                          <tr key={result.id}>
-                            <td>{request.patientName || 'Unknown'}</td>
-                            <td>{request.testType || 'Unknown Test'}</td>
-                            <td>{new Date(result.resultDate).toLocaleDateString()}</td>
-                            <td>{result.findings?.substring(0, 50)}...</td>
-                            <td>
-                              <Button 
-                                color="info" 
-                                size="sm" 
-                                className="me-2"
-                                onClick={() => {
-                                  setSelectedResult(result);
-                                  setSelectedRequest(request);
-                                  setIsViewDetailsModalOpen(true);
-                                }}
-                              >
-                                <FontAwesomeIcon icon={faEye} />
-                              </Button>
-                              <Button 
-                                color="primary" 
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedResult(result);
-                                  setSelectedRequest(request);
-                                  generateAiSuggestions();
-                                }}
-                              >
-                                <FontAwesomeIcon icon={faRobot} />
-                              </Button>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                      {testResults
+                        .filter(result => {
+                          // Find the corresponding request to check its status
+                          const request = diagnosticRequests.find(req => req.id === result.requestId);
+                          return request && request.status === 'completed';
+                        })
+                        .filter(result => {
+                          // Apply search filter
+                          if (!searchTerm) return true;
+                          
+                          const request = diagnosticRequests.find(req => req.id === result.requestId) || {};
+                          return (
+                            (request.patientName && request.patientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                            (request.testType && request.testType.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                            (result.findings && result.findings.toLowerCase().includes(searchTerm.toLowerCase()))
+                          );
+                        })
+                        .map(result => {
+                          const request = diagnosticRequests.find(req => req.id === result.requestId) || {};
+                          return (
+                            <tr key={result.id}>
+                              <td>{request.patientName || 'Unknown'}</td>
+                              <td>{request.testType || 'Unknown Test'}</td>
+                              <td>{new Date(result.resultDate).toLocaleDateString()}</td>
+                              <td>{result.findings?.substring(0, 50)}...</td>
+                              <td>
+                                <Button 
+                                  color="info" 
+                                  size="sm" 
+                                  onClick={() => {
+                                    setSelectedResult(result);
+                                    setSelectedRequest(request);
+                                    setIsViewDetailsModalOpen(true);
+                                  }}
+                                >
+                                  <FontAwesomeIcon icon={faEye} />
+                                </Button>
+                              </td>
+                            </tr>
+                          );
+                        })}
                     </tbody>
                   </Table>
+                  {testResults.filter(result => {
+                    const request = diagnosticRequests.find(req => req.id === result.requestId);
+                    return request && request.status === 'completed';
+                  }).length === 0 && (
+                    <Alert color="info">
+                      No completed test results found. Results will appear here after tests are completed.
+                    </Alert>
+                  )}
                 </div>
-              ) : (
-                <Alert color="info">
-                  No test results found. Upload results for completed diagnostic tests.
-                </Alert>
               )}
             </CardBody>
           </Card>
-        </TabPane>
-
-        {/* AI Diagnostics Tab */}
-        <TabPane tabId="analytics">
-          <Row>
-            <Col md={12}>
-              <Card className="mb-4">
-                <CardHeader className="bg-light">
-                  <h5 className="mb-0">AI Diagnostic Support</h5>
-                </CardHeader>
-                <CardBody>
-                  <Alert color="info">
-                    <FontAwesomeIcon icon={faRobot} className="me-2" />
-                    Select a completed test result and click the AI button to receive diagnostic suggestions.
-                  </Alert>
-                  
-                  <p>
-                    The AI diagnostic support system analyzes test results and provides:
-                  </p>
-                  <ul>
-                    <li>Potential diagnoses with confidence levels</li>
-                    <li>Recommended follow-up tests</li>
-                    <li>Treatment suggestions based on clinical guidelines</li>
-                    <li>Comparative analysis with historical patient data</li>
-                  </ul>
-                  
-                  <div className="text-center mt-4">
-                    <Button 
-                      color="primary" 
-                      disabled={testResults.length === 0}
-                      onClick={() => {
-                        if (testResults.length > 0) {
-                          setSelectedResult(testResults[0]);
-                          setSelectedRequest(diagnosticRequests.find(req => req.id === testResults[0].requestId));
-                          generateAiSuggestions();
-                        }
-                      }}
-                    >
-                      <FontAwesomeIcon icon={faRobot} className="me-2" />
-                      Generate Sample AI Analysis
-                    </Button>
-                  </div>
-                </CardBody>
-              </Card>
-            </Col>
-          </Row>
         </TabPane>
       </TabContent>
 
@@ -874,12 +986,20 @@ const Diagnostics = () => {
       </Modal>
 
       {/* Upload Results Modal */}
-      <Modal isOpen={isUploadResultsModalOpen} toggle={() => setIsUploadResultsModalOpen(!isUploadResultsModalOpen)}>
+      <Modal isOpen={isUploadResultsModalOpen} toggle={() => setIsUploadResultsModalOpen(!isUploadResultsModalOpen)} size="lg">
         <ModalHeader toggle={() => setIsUploadResultsModalOpen(!isUploadResultsModalOpen)}>
           Upload Test Results
         </ModalHeader>
         <Form onSubmit={handleNewResultSubmit}>
           <ModalBody>
+            {/* Warning message if the selected test is not accepted by patient */}
+            {selectedRequest && selectedRequest.status !== 'accepted by patient' && (
+              <Alert color="warning" className="mb-3">
+                <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
+                Test results can only be uploaded for tests that have been accepted by the patient.
+              </Alert>
+            )}
+            
             <FormGroup>
               <Label for="requestId">Test Request</Label>
               <Input
@@ -893,7 +1013,7 @@ const Diagnostics = () => {
               >
                 <option value="">Select Test Request</option>
                 {diagnosticRequests
-                  .filter(req => req.status !== 'completed')
+                  .filter(req => req.status === 'accepted by patient')
                   .map(request => (
                     <option key={request.id} value={request.id}>
                       {request.patientName} - {request.testType}
@@ -925,6 +1045,7 @@ const Diagnostics = () => {
                 required
               />
             </FormGroup>
+            
             <FormGroup>
               <Label for="interpretation">Interpretation</Label>
               <Input
@@ -934,9 +1055,13 @@ const Diagnostics = () => {
                 placeholder="Clinical interpretation of the results"
                 value={newResultForm.interpretation}
                 onChange={handleNewResultChange}
-                rows="2"
+                rows="4"
               />
+              <small className="form-text text-muted">
+                You can manually enter your interpretation or use the AI to generate one based on the findings
+              </small>
             </FormGroup>
+            
             <FormGroup>
               <Label for="technician">Technician / Lab</Label>
               <Input
@@ -972,12 +1097,81 @@ const Diagnostics = () => {
                 rows="2"
               />
             </FormGroup>
+            
+            <FormGroup check className="mb-3">
+              <Input 
+                type="checkbox" 
+                name="useAiRecommendations" 
+                id="useAiRecommendations" 
+                defaultChecked={true}
+              />
+              <Label check for="useAiRecommendations" className="text-primary">
+                <FontAwesomeIcon icon={faRobot} className="me-2" />
+                Generate comprehensive AI diagnostic recommendations after upload
+              </Label>
+              <small className="form-text text-muted d-block">
+                AI will analyze the test results to provide possible diagnoses, confidence levels, and recommended follow-up tests
+              </small>
+            </FormGroup>
           </ModalBody>
-          <ModalFooter>
-            <Button color="secondary" onClick={() => setIsUploadResultsModalOpen(false)}>
-              Cancel
+          <ModalFooter className="d-flex justify-content-end gap-3">
+            <Button 
+              color="primary" 
+              outline
+              type="button"
+              onClick={() => {
+                if (newResultForm.findings) {
+                  // Mock AI interpretation generation
+                  setTimeout(() => {
+                    const testType = selectedRequest 
+                      ? selectedRequest.testType 
+                      : diagnosticRequests.find(req => req.id === newResultForm.requestId)?.testType || '';
+                      
+                    let aiGeneratedInterpretation = '';
+                    
+                    // Generate different interpretations based on test type
+                    if (testType.includes('Liver')) {
+                      aiGeneratedInterpretation = `Based on the values provided, liver function appears to show mild elevation in liver enzymes. This could indicate potential early stage hepatic stress. Recommend monitoring and possible follow-up testing in 3 months. Consider lifestyle modifications including reduced alcohol consumption and weight management if appropriate.`;
+                    } else if (testType.includes('Glucose')) {
+                      aiGeneratedInterpretation = `Blood glucose levels indicate potential impaired glucose tolerance. Consider HbA1c testing to rule out pre-diabetic condition. Recommend nutritional counseling and increased physical activity.`;
+                    } else if (testType.includes('Lipid')) {
+                      aiGeneratedInterpretation = `Lipid panel shows moderately elevated LDL cholesterol with normal HDL levels. Consider dietary modifications and reassessment in 6 months. If family history present, may consider earlier pharmacological intervention.`;
+                    } else {
+                      aiGeneratedInterpretation = `Analysis of the provided test results indicates values within normal physiological range, though some parameters are in the upper reference range. Recommend routine follow-up at next regular appointment.`;
+                    }
+                    
+                    setNewResultForm({
+                      ...newResultForm,
+                      interpretation: aiGeneratedInterpretation
+                    });
+                  }, 1000);
+                  
+                  // Show a loading message
+                  setNewResultForm({
+                    ...newResultForm,
+                    interpretation: "Generating AI interpretation..."
+                  });
+                } else {
+                  setError(
+                    <Alert color="warning">
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
+                      Please enter findings first to generate AI interpretation
+                    </Alert>
+                  );
+                }
+              }}
+            >
+              <FontAwesomeIcon icon={faRobot} className="me-2" />
+              Generate AI Interpretation
             </Button>
-            <Button color="primary" type="submit">
+            <Button 
+              color="primary" 
+              type="submit"
+              disabled={
+                selectedRequest && selectedRequest.status !== 'accepted by patient' || 
+                (!selectedRequest && !newResultForm.requestId)
+              }
+            >
               Upload Results
             </Button>
           </ModalFooter>
@@ -1032,15 +1226,21 @@ const Diagnostics = () => {
                       <h6 className="mt-3">Interpretation</h6>
                       <p>{selectedResult.interpretation || "No interpretation provided."}</p>
                       
-                      {selectedResult.attachmentUrl && (
-                        <div className="mt-3">
-                          <h6>Attachments</h6>
-                          <Button color="info" size="sm" onClick={() => window.open(selectedResult.attachmentUrl, '_blank')}>
-                            <FontAwesomeIcon icon={faFileMedical} className="me-2" />
-                            View Full Report
-                          </Button>
-                        </div>
-                      )}
+                      {/* File Attachment Section - Always shown */}
+                      <div className="mt-3">
+                        <h6>Attachments</h6>
+                        {selectedResult.attachmentUrl ? (
+                          <div className="d-flex flex-column">
+                            <Button color="info" size="sm" onClick={() => window.open(selectedResult.attachmentUrl, '_blank')} className="mb-2 align-self-start">
+                              <FontAwesomeIcon icon={faFileMedical} className="me-2" />
+                              View Full Report
+                            </Button>
+                            <small className="text-muted">File uploaded: {selectedResult.attachmentName || "diagnostic-report.pdf"}</small>
+                          </div>
+                        ) : (
+                          <p className="text-muted">No attachments uploaded for this test result.</p>
+                        )}
+                      </div>
                       
                       {selectedResult.technician && (
                         <p className="mt-3 text-muted">
@@ -1056,17 +1256,6 @@ const Diagnostics = () => {
                       )}
                     </CardBody>
                   </Card>
-                  
-                  <div className="d-flex justify-content-end">
-                    <Button 
-                      color="primary" 
-                      onClick={generateAiSuggestions}
-                      className="me-2"
-                    >
-                      <FontAwesomeIcon icon={faRobot} className="me-2" />
-                      Generate AI Suggestions
-                    </Button>
-                  </div>
                 </div>
               ) : selectedRequest.status !== 'completed' ? (
                 <div className="text-center p-4 bg-light rounded mt-4">
@@ -1083,10 +1272,17 @@ const Diagnostics = () => {
                       setIsViewDetailsModalOpen(false);
                       setIsUploadResultsModalOpen(true);
                     }}
+                    disabled={selectedRequest.status !== 'accepted by patient'}
                   >
                     <FontAwesomeIcon icon={faUpload} className="me-2" />
                     Upload Results
                   </Button>
+                  {selectedRequest.status !== 'accepted by patient' && (
+                    <p className="text-muted mt-2 small">
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="me-1" />
+                      Results can only be uploaded after the patient accepts the request
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="text-center p-4 bg-light rounded mt-4">

@@ -56,6 +56,9 @@ const diagnosticTestSchema = new mongoose.Schema(
     attachmentUrl: {
       type: String
     },
+    attachmentName: {
+      type: String
+    },
     resultNotes: {
       type: String
     }

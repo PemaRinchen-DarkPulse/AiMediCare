@@ -58,10 +58,12 @@ const AppointmentCard = ({
   };
 
   const appointmentDate = new Date(appointment.date);
+  const month = appointmentDate.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+  const day = appointmentDate.getDate();
   
   return (
-    <Card className={`appointment-card h-100 ${appointment.status === 'pending' ? 'border-warning' : ''}`}>
-      <CardBody>
+    <Card className={`appointment-card h-100 border-0 shadow-sm ${appointment.status === 'pending' ? 'border-start border-warning border-4' : ''}`}>
+      <CardBody className="p-0">
         {/* Status badge positioned at top right */}
         <div className="position-absolute top-0 end-0 mt-3 me-3">
           <Badge 
@@ -73,159 +75,161 @@ const AppointmentCard = ({
           </Badge>
         </div>
 
-        <Row className="align-items-center">
-          <Col xs={4} md={3} className="d-flex align-items-center justify-content-center">
-            <div className="text-center">
-              <div className="appointment-date-box mb-2">
-                <div className="appointment-month">
-                  {appointmentDate.toLocaleDateString('en-US', { month: 'short' })}
+        <div className="p-4">
+          <Row className="align-items-center">
+            <Col xs={4} md={3} className="d-flex align-items-center justify-content-center">
+              <div className="text-center">
+                <div className="appointment-date-box mb-2 bg-light rounded-3 p-3">
+                  <div className="appointment-month text-primary fw-bold">
+                    {month}
+                  </div>
+                  <div className="appointment-day display-6 fw-bold">
+                    {day}
+                  </div>
                 </div>
-                <div className="appointment-day">
-                  {appointmentDate.getDate()}
-                </div>
-              </div>
-              <div className="appointment-time">
-                {appointment.time}
-              </div>
-            </div>
-          </Col>
-          
-          <Col xs={8} md={9}>
-            <div className="patient-info mb-3">
-              <div className="me-3">
-                <UserAvatar 
-                  name={appointment.patientName}
-                  image={appointment.patientImage || ''}
-                  size="lg" /* Changed from "md" to "lg" to make profile picture bigger */
-                />
-              </div>
-              <div>
-                <h5 className="mb-0">{appointment.patientName}</h5>
-                <div className="d-flex align-items-center">
-                  <Badge 
-                    color={typeBadgeColor(appointment.type)} 
-                    pill
-                    className={`me-2 badge-${appointment.type === 'Video Call' ? 'video' : 
-                                          appointment.type === 'Phone Call' ? 'phone' : 'inperson'}`}
-                  >
-                    {typeIcon(appointment.type)} {appointment.type}
-                  </Badge>
-                </div>
-                <div className="mt-1 location-badge">
-                  {appointment.type === 'Video Call' || appointment.type === 'Phone Call' ? (
-                    <Badge color="info" className="location-badge px-2 py-1">
-                      <FaVideo size={12} className="me-1" /> 
-                      <span>Teleconsultation</span>
-                    </Badge>
-                  ) : (
-                    <Badge color="light" className="location-badge px-2 py-1 border">
-                      <FaClinicMedical size={12} className="me-1 text-primary" /> 
-                      <span>{appointment.location || 'Medical Center'}, Room {appointment.room || '304'}</span>
-                    </Badge>
-                  )}
+                <div className="appointment-time fw-bold text-secondary">
+                  {appointment.time}
                 </div>
               </div>
-            </div>
+            </Col>
             
-            <div className="appointment-actions d-flex mt-3">
-              
-              {appointment.status === 'pending' && (
-                <>
-                  <Button 
-                    color="success" 
-                    outline
-                    className="me-2"
-                    size="sm"
-                    onClick={() => onAcceptAppointment(appointment)}
-                  >
-                    <FaCheck className="me-1" /> Accept
-                  </Button>
-                  <Button 
-                    color="danger" 
-                    outline
-                    className="me-2"
-                    size="sm"
-                    onClick={() => onDeclineAppointment(appointment)}
-                  >
-                    <FaTimes className="me-1" /> Decline
-                  </Button>
-                  <Button 
-                    color="warning" 
-                    outline
-                    size="sm"
-                    onClick={() => onRescheduleRequest(appointment)}
-                  >
-                    <FaClock className="me-1" /> Reschedule
-                  </Button>
-                </>
-              )}
-              
-              {appointment.status === 'confirmed' && (
-                <>
-                  {appointment.type === 'Video Call' && (
-                    <Button 
-                      color="success" 
-                      outline
-                      className="me-2"
-                      size="sm"
+            <Col xs={8} md={9}>
+              <div className="patient-info mb-3 d-flex">
+                <div className="me-3">
+                  <UserAvatar 
+                    name={appointment.patientName}
+                    image={appointment.patientImage || ''}
+                    size="lg" 
+                    className="shadow-sm"
+                  />
+                </div>
+                <div>
+                  <h5 className="mb-1 fw-bold">{appointment.patientName}</h5>
+                  <div className="d-flex align-items-center mb-2">
+                    <Badge 
+                      color={typeBadgeColor(appointment.type)} 
+                      pill
+                      className={`me-2 badge-${appointment.type === 'Video Call' ? 'video' : 
+                                            appointment.type === 'Phone Call' ? 'phone' : 'inperson'}`}
                     >
-                      <FaVideo className="me-1" /> Join Call
-                    </Button>
-                  )}
+                      {typeIcon(appointment.type)} {appointment.type}
+                    </Badge>
+                  </div>
+                  <div className="mt-1">
+                    {appointment.type === 'Video Call' || appointment.type === 'Phone Call' ? (
+                      <Badge color="info" className="location-badge px-2 py-1 rounded-pill">
+                        <FaVideo size={12} className="me-1" /> 
+                        <span>Teleconsultation</span>
+                      </Badge>
+                    ) : (
+                      <Badge color="light" className="location-badge px-2 py-1 border rounded-pill">
+                        <FaClinicMedical size={12} className="me-1 text-primary" /> 
+                        <span>{appointment.location || 'Medical Center'}, Room {appointment.room || '304'}</span>
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </Col>
+          </Row>
+
+          <div className="appointment-details mt-3 mb-3 p-3 bg-light rounded-3">
+            <div className="detail-icon mb-2 d-flex align-items-center">
+              <FaNotesMedical size={16} className="text-primary me-2" />
+              <div className="detail-label fw-bold">Reason for Visit:</div>
+            </div>
+            <div className="detail-value fs-6 ps-4 pt-1">{appointment.reason}</div>
+          </div>
+          
+          <div className="appointment-actions d-flex mt-4 gap-2">
+            {appointment.status === 'pending' && (
+              <>
+                <Button 
+                  color="success" 
+                  outline
+                  className="rounded-pill px-3"
+                  size="sm"
+                  onClick={() => onAcceptAppointment(appointment)}
+                >
+                  <FaCheck className="me-1" /> Accept
+                </Button>
+                <Button 
+                  color="danger" 
+                  outline
+                  className="rounded-pill px-3"
+                  size="sm"
+                  onClick={() => onDeclineAppointment(appointment)}
+                >
+                  <FaTimes className="me-1" /> Decline
+                </Button>
+                <Button 
+                  color="warning" 
+                  outline
+                  size="sm"
+                  className="rounded-pill px-3"
+                  onClick={() => onRescheduleRequest(appointment)}
+                >
+                  <FaClock className="me-1" /> Reschedule
+                </Button>
+              </>
+            )}
+            
+            {appointment.status === 'confirmed' && (
+              <>
+                {appointment.type === 'Video Call' && (
                   <Button 
-                    color="secondary" 
-                    outline
-                    className="me-2"
+                    color="primary" 
+                    className="rounded-pill px-3"
                     size="sm"
-                    onClick={() => onRescheduleRequest(appointment)}
                   >
-                    <FaClock className="me-1" /> Reschedule
+                    <FaVideo className="me-1" /> Join Call
                   </Button>
-                  <Button 
-                    color="info" 
-                    outline
-                    size="sm"
-                    onClick={() => onOpenPrescriptionModal(appointment)}
-                  >
-                    <FaPrescription className="me-1" /> Prescribe
-                  </Button>
-                </>
-              )}
-              
-              {/* Only show Prescribe button for completed appointments */}
-              {appointment.status === 'completed' && (
+                )}
+                <Button 
+                  color="secondary" 
+                  outline
+                  className="rounded-pill px-3"
+                  size="sm"
+                  onClick={() => onRescheduleRequest(appointment)}
+                >
+                  <FaClock className="me-1" /> Reschedule
+                </Button>
                 <Button 
                   color="info" 
                   outline
                   size="sm"
+                  className="rounded-pill px-3"
                   onClick={() => onOpenPrescriptionModal(appointment)}
                 >
                   <FaPrescription className="me-1" /> Prescribe
                 </Button>
-              )}
-            </div>
-          </Col>
-          <div className="appointment-details mt-3 mb-0 p-4 bg-light text-dark rounded w-100">
-            <Col>
-              <div className="detail-icon mb-2 d-flex align-items-center">
-                <FaNotesMedical size={18} className="text-primary me-2" />
-                <div className="detail-label fw-bold">Reason for Visit:</div>
-              </div>
-              <div className="detail-value fs-6 ps-4 pt-1 mb-4">{appointment.reason}</div>
-            </Col>
-          </div>
-          
-          <div className="d-flex justify-content-end mt-4">
+              </>
+            )}
+            
+            {/* Only show Prescribe button for completed appointments */}
+            {appointment.status === 'completed' && (
+              <Button 
+                color="info" 
+                outline
+                size="sm"
+                className="rounded-pill px-3"
+                onClick={() => onOpenPrescriptionModal(appointment)}
+              >
+                <FaPrescription className="me-1" /> Prescribe
+              </Button>
+            )}
+
             <Button 
               color="primary" 
               outline 
               size="sm"
+              className="ms-auto rounded-pill px-3"
               onClick={() => onViewDetails(appointment)}
             >
               <FaInfoCircle className="me-1" /> View Details
             </Button>
           </div>
-        </Row>
+        </div>
       </CardBody>
     </Card>
   );
@@ -423,6 +427,7 @@ const AppointmentDetailView = ({ appointment, onClose, onAddNote, onCompleteAppo
   const [appointmentPrescriptions, setAppointmentPrescriptions] = useState([]);
   const [loadingPrescriptions, setLoadingPrescriptions] = useState(false);
   const [prescriptionError, setPrescriptionError] = useState(null);
+  const [formatDropdownOpen, setFormatDropdownOpen] = useState(false);
 
   useEffect(() => {
     // Check if browser supports SpeechRecognition
@@ -433,33 +438,23 @@ const AppointmentDetailView = ({ appointment, onClose, onAddNote, onCompleteAppo
   }, []);
 
   useEffect(() => {
+    // If appointment has clinicalNotes, use them for display
+    if (appointment.clinicalNotes) {
+      // Handle both string and object formats for backward compatibility
+      if (typeof appointment.clinicalNotes === 'string') {
+        setNotes(appointment.clinicalNotes);
+      } else if (appointment.clinicalNotes.content) {
+        // Legacy format where clinicalNotes was an object with content property
+        setNotes(appointment.clinicalNotes.content);
+      }
+    } else {
+      // Fallback to regular notes
+      setNotes(appointment.notes || '');
+    }
+    
     fetchPatientPrescriptions();
     fetchAppointmentPrescriptions();
-  }, [appointment.id]);
-
-  useEffect(() => {
-    if (recognition) {
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      
-      recognition.onresult = (event) => {
-        let transcript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          if (event.results[i].isFinal) {
-            transcript += event.results[i][0].transcript;
-          }
-        }
-        if (transcript) {
-          setNotes(prevNotes => prevNotes + ' ' + transcript);
-        }
-      };
-      
-      recognition.onerror = (event) => {
-        console.error('Speech recognition error', event.error);
-        setIsRecording(false);
-      };
-    }
-  }, [recognition]);
+  }, [appointment.id, appointment.clinicalNotes]);
 
   const fetchAppointmentPrescriptions = async () => {
     try {
@@ -589,6 +584,25 @@ const AppointmentDetailView = ({ appointment, onClose, onAddNote, onCompleteAppo
     setIsPrescriptionModalOpen(!isPrescriptionModalOpen);
   };
 
+  const applyFormat = (formatType) => {
+    let formattedNotes = '';
+    switch(formatType) {
+      case 'standard':
+        formattedNotes = `Subjective:\n\nObjective:\n\nAssessment:\n\nPlan:`;
+        break;
+      case 'followUp':
+        formattedNotes = `Follow-up Visit:\n\nReason for Visit:\n\nUpdates since last visit:\n\nAssessment:\n\nPlan:`;
+        break;
+      case 'consultation':
+        formattedNotes = `Specialist Consultation:\n\nReason for Referral:\n\nConsultant's Notes:\n\nRecommendations:`;
+        break;
+      default:
+        break;
+    }
+    setNotes(formattedNotes);
+    setFormatDropdownOpen(false);
+  };
+
   return (
     <div className="appointment-detail-view">
       <div className="d-flex justify-content-between align-items-start mb-4">
@@ -716,81 +730,6 @@ const AppointmentDetailView = ({ appointment, onClose, onAddNote, onCompleteAppo
             </Card>
           )}
 
-          {/* Prescription History Card */}
-          <Card className="mt-4 prescription-history-card border-primary border-left">
-            <CardBody>
-              <h5 className="mb-3 d-flex align-items-center">
-                <FaPrescriptionBottleAlt className="text-primary me-2" size={20} />
-                Prescription History
-              </h5>
-              {loadingPrescriptions ? (
-                <div className="text-center py-3">
-                  <Spinner size="sm" color="primary" />
-                  <p className="text-muted mt-2 mb-0">Loading prescriptions...</p>
-                </div>
-              ) : prescriptionError ? (
-                <Alert color="danger" className="mb-0" timeout={0}>
-                  <FaExclamationTriangle className="me-2" /> {prescriptionError}
-                </Alert>
-              ) : prescriptions.length === 0 ? (
-                <div className="text-center py-3">
-                  <FaPrescriptionBottleAlt size={24} className="text-muted mb-2" />
-                  <p className="text-muted mb-0">No prescriptions found for this patient</p>
-                </div>
-              ) : (
-                <div className="prescription-list">
-                  {prescriptions.map((prescription, idx) => (
-                    <div key={idx} className="prescription-item mb-3 p-3 border rounded bg-light">
-                      <div className="d-flex justify-content-between align-items-center mb-2">
-                        <h6 className="mb-0 d-flex align-items-center">
-                          <FaPrescriptionBottleAlt className="me-2 text-primary" /> 
-                          <span className="diagnosis-text">{prescription.diagnosis}</span>
-                        </h6>
-                        <Badge color="info" pill className="px-3 py-2">
-                          {new Date(prescription.issuedDate).toLocaleDateString()}
-                        </Badge>
-                      </div>
-                      <div className="prescription-medications">
-                        <div className="d-flex align-items-center mb-2">
-                          <FaMedkit className="text-success me-2" />
-                          <strong>Medications:</strong>
-                        </div>
-                        <Table size="sm" bordered responsive striped className="prescription-table">
-                          <thead className="bg-light">
-                            <tr>
-                              <th>Medication</th>
-                              <th>Dosage</th>
-                              <th>Frequency</th>
-                              <th>Duration</th>
-                              <th>Instructions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {prescription.medications.map((med, medIdx) => (
-                              <tr key={medIdx}>
-                                <td className="fw-bold">{med.name}</td>
-                                <td>{med.dosage}</td>
-                                <td>{med.frequency}</td>
-                                <td>{med.duration}</td>
-                                <td>{med.instructions || '—'}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </Table>
-                      </div>
-                      {prescription.notes && (
-                        <div className="mt-2 prescription-notes p-2 border-top">
-                          <strong>Doctor's Notes:</strong>
-                          <p className="mb-0 text-muted small mt-1">{prescription.notes}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardBody>
-          </Card>
-
           {/* Appointment-specific Prescription History Card */}
           <Card className="mt-4 appointment-prescription-history-card border-success border-left">
             <CardBody>
@@ -864,28 +803,199 @@ const AppointmentDetailView = ({ appointment, onClose, onAddNote, onCompleteAppo
         </Col>
 
         <Col md={6}>
+          {/* Recommended Medication Card */}
+          <Card className="mb-4 recommended-medication-card border-primary border-left">
+            <CardBody>
+              <h5 className="mb-3 d-flex align-items-center">
+                <FaMedkit className="text-primary me-2" size={20} />
+                Recommended Medications
+              </h5>
+              
+              <div className="recommended-medications-list">
+                {appointment.reason ? (
+                  <>
+                    {appointment.reason.toLowerCase().includes('diabetes') && (
+                      <div className="medication-recommendation p-3 border rounded mb-3 bg-light">
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <h6 className="mb-0 d-flex align-items-center">
+                            <FaPrescriptionBottleAlt className="me-2 text-primary" /> 
+                            <span>Metformin</span>
+                          </h6>
+                          <Badge color="info" pill className="px-3 py-2">First-line</Badge>
+                        </div>
+                        <p className="mb-2 small">
+                          <strong>Suggested dosage:</strong> 500mg twice daily with meals
+                        </p>
+                        <p className="mb-0 small text-muted">
+                          <strong>Note:</strong> Check kidney function before prescribing. Monitor HbA1c every 3 months.
+                        </p>
+                      </div>
+                    )}
+                    
+                    {appointment.reason.toLowerCase().includes('headache') && (
+                      <>
+                        <div className="medication-recommendation p-3 border rounded mb-3 bg-light">
+                          <div className="d-flex justify-content-between align-items-center mb-2">
+                            <h6 className="mb-0 d-flex align-items-center">
+                              <FaPrescriptionBottleAlt className="me-2 text-primary" /> 
+                              <span>Ibuprofen</span>
+                            </h6>
+                            <Badge color="success" pill className="px-3 py-2">First-line</Badge>
+                          </div>
+                          <p className="mb-2 small">
+                            <strong>Suggested dosage:</strong> 400mg every 6-8 hours as needed for pain
+                          </p>
+                          <p className="mb-0 small text-muted">
+                            <strong>Note:</strong> Avoid in patients with kidney disease, heart failure, or GI bleeding risk.
+                          </p>
+                        </div>
+                        <div className="medication-recommendation p-3 border rounded mb-3 bg-light">
+                          <div className="d-flex justify-content-between align-items-center mb-2">
+                            <h6 className="mb-0 d-flex align-items-center">
+                              <FaPrescriptionBottleAlt className="me-2 text-primary" /> 
+                              <span>Sumatriptan</span>
+                            </h6>
+                            <Badge color="info" pill className="px-3 py-2">For migraine</Badge>
+                          </div>
+                          <p className="mb-2 small">
+                            <strong>Suggested dosage:</strong> 50mg at onset of migraine, may repeat after 2 hours
+                          </p>
+                          <p className="mb-0 small text-muted">
+                            <strong>Note:</strong> Contraindicated in patients with cardiovascular disease.
+                          </p>
+                        </div>
+                      </>
+                    )}
+                    
+                    {appointment.reason.toLowerCase().includes('skin') || appointment.reason.toLowerCase().includes('rash') ? (
+                      <>
+                        <div className="medication-recommendation p-3 border rounded mb-3 bg-light">
+                          <div className="d-flex justify-content-between align-items-center mb-2">
+                            <h6 className="mb-0 d-flex align-items-center">
+                              <FaPrescriptionBottleAlt className="me-2 text-primary" /> 
+                              <span>Hydrocortisone cream</span>
+                            </h6>
+                            <Badge color="success" pill className="px-3 py-2">First-line</Badge>
+                          </div>
+                          <p className="mb-2 small">
+                            <strong>Suggested dosage:</strong> Apply thin layer to affected area 2-3 times daily
+                          </p>
+                          <p className="mb-0 small text-muted">
+                            <strong>Note:</strong> For mild to moderate inflammatory skin conditions. Avoid prolonged use on face.
+                          </p>
+                        </div>
+                        <div className="medication-recommendation p-3 border rounded mb-3 bg-light">
+                          <div className="d-flex justify-content-between align-items-center mb-2">
+                            <h6 className="mb-0 d-flex align-items-center">
+                              <FaPrescriptionBottleAlt className="me-2 text-primary" /> 
+                              <span>Cetirizine</span>
+                            </h6>
+                            <Badge color="info" pill className="px-3 py-2">For allergic reactions</Badge>
+                          </div>
+                          <p className="mb-2 small">
+                            <strong>Suggested dosage:</strong> 10mg once daily
+                          </p>
+                          <p className="mb-0 small text-muted">
+                            <strong>Note:</strong> May cause drowsiness. Consider loratadine for patients who need to drive.
+                          </p>
+                        </div>
+                      </>
+                    ) : appointment.reason.toLowerCase().includes('heart') || appointment.reason.toLowerCase().includes('palpitations') ? (
+                      <>
+                        <div className="medication-recommendation p-3 border rounded mb-3 bg-light">
+                          <div className="d-flex justify-content-between align-items-center mb-2">
+                            <h6 className="mb-0 d-flex align-items-center">
+                              <FaPrescriptionBottleAlt className="me-2 text-primary" /> 
+                              <span>Metoprolol</span>
+                            </h6>
+                            <Badge color="success" pill className="px-3 py-2">Beta-blocker</Badge>
+                          </div>
+                          <p className="mb-2 small">
+                            <strong>Suggested dosage:</strong> 25mg twice daily, titrate as needed
+                          </p>
+                          <p className="mb-0 small text-muted">
+                            <strong>Note:</strong> Monitor heart rate and blood pressure. Avoid in patients with asthma.
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-3">
+                        <FaMedkit size={24} className="text-muted mb-2" />
+                        <p className="text-muted mb-0">Select a condition from the clinical notes to see medication recommendations</p>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center py-3">
+                    <FaMedkit size={24} className="text-muted mb-2" />
+                    <p className="text-muted mb-0">No reason specified for this appointment</p>
+                  </div>
+                )}
+              </div>
+            </CardBody>
+          </Card>
+
+          {/* Clinical Notes Card - Moved below Recommended Medications */}
           <Card className="mb-4">
             <CardBody>
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <h5 className="mb-0">Clinical Notes</h5>
-                <div>
-                  {recognition && (
+                <div className="d-flex align-items-center">
+                  {recognition && appointment.status !== 'completed' && (
                     <Button 
                       color={isRecording ? "danger" : "secondary"} 
                       size="sm" 
-                      className="me-2"
                       onClick={toggleRecording}
+                      className="me-2"
                     >
                       <FaMicrophone className="me-1" /> {isRecording ? "Stop" : "Dictate"}
                     </Button>
                   )}
-                  <Button 
-                    color="info" 
-                    size="sm"
-                    onClick={handleAddAIAssistance}
-                  >
-                    <FaRobot className="me-1" /> AI Assist
-                  </Button>
+                  {appointment.status !== 'completed' && (
+                    <div className="dropdown">
+                      <Button
+                        color="light"
+                        size="sm"
+                        id="formatDropdown"
+                        className="dropdown-toggle"
+                        onClick={() => setFormatDropdownOpen(!formatDropdownOpen)}
+                      >
+                        <FaFileAlt className="me-1" /> Format
+                      </Button>
+                      <div className={`dropdown-menu ${formatDropdownOpen ? 'show' : ''}`} aria-labelledby="formatDropdown">
+                        <a 
+                          className="dropdown-item" 
+                          href="#" 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            applyFormat('standard');
+                          }}
+                        >
+                          Standard SOAP
+                        </a>
+                        <a 
+                          className="dropdown-item" 
+                          href="#" 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            applyFormat('followUp');
+                          }}
+                        >
+                          Follow-up Visit
+                        </a>
+                        <a 
+                          className="dropdown-item" 
+                          href="#" 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            applyFormat('consultation');
+                          }}
+                        >
+                          Specialist Consultation
+                        </a>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -898,89 +1008,56 @@ const AppointmentDetailView = ({ appointment, onClose, onAddNote, onCompleteAppo
               
               <Input
                 type="textarea"
-                rows={12}
+                rows={6}
                 className="clinical-notes-input mb-3"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Enter your clinical notes here..."
+                readOnly={appointment.status === 'completed'}
               />
-              
-              <div className="d-flex justify-content-between">
-                <Button 
-                  color="secondary" 
-                  outline 
-                  onClick={() => {
-                    const template = "Symptoms:\n- \n\nExamination:\n- \n\nDiagnosis:\n- \n\nTreatment Plan:\n- \n\nFollow-up:";
-                    setNotes(prevNotes => prevNotes + template);
-                  }}
-                >
-                  <FaFileAlt className="me-1" /> Template
-                </Button>
-                <Button 
-                  color="primary" 
-                  onClick={() => onAddNote(notes)}
-                >
-                  <FaNotesMedical className="me-1" /> Save Notes
-                </Button>
-              </div>
-            </CardBody>
-          </Card>
-          
-          <Card className="mb-4">
-            <CardBody>
-              <h5 className="mb-3">Appointment Actions</h5>
-              <div className="d-grid gap-2">
-                {appointment.type === 'Video Call' && appointment.status === 'confirmed' && (
-                  <Button color="success">
-                    <FaVideo className="me-1" /> Start Video Consultation
-                  </Button>
-                )}
-                {appointment.type === 'Phone Call' && appointment.status === 'confirmed' && (
-                  <Button color="info">
-                    <FaPhoneAlt className="me-1" /> Start Phone Call
-                  </Button>
-                )}
-                {appointment.status === 'confirmed' && (
-                  <Button color="primary" onClick={() => onCompleteAppointment(appointment.id)}>
-                    <FaCheck className="me-1" /> Mark as Completed
-                  </Button>
-                )}
-                {appointment.status === 'pending' && (
-                  <div className="d-flex">
-                    <Button 
-                      color="success" 
-                      className="me-2 flex-grow-1"
-                      onClick={() => onAcceptAppointment(appointment)}
-                    >
-                      <FaCheck className="me-1" /> Accept
-                    </Button>
-                    <Button 
-                      color="danger"
-                      className="flex-grow-1"
-                      onClick={() => onDeclineAppointment(appointment)}
-                    >
-                      <FaTimes className="me-1" /> Decline
-                    </Button>
-                  </div>
-                )}
-              </div>
             </CardBody>
           </Card>
 
-          {appointment.preVisitQuestionnaire && (
-            <Card>
+          {/* Only show Appointment Actions for non-completed appointments */}
+          {appointment.status !== 'completed' && (
+            <Card className="mb-4">
               <CardBody>
-                <h5 className="mb-3">Pre-Visit Questionnaire</h5>
-                <ListGroup flush>
-                  {Object.entries(appointment.preVisitQuestionnaire).map(([question, answer], idx) => (
-                    <ListGroupItem key={idx}>
-                      <div className="d-flex flex-column">
-                        <strong className="mb-1">{question}</strong>
-                        <div>{answer}</div>
-                      </div>
-                    </ListGroupItem>
-                  ))}
-                </ListGroup>
+                <h5 className="mb-3">Appointment Actions</h5>
+                <div className="d-grid gap-2">
+                  {appointment.type === 'Video Call' && appointment.status === 'confirmed' && (
+                    <Button color="success">
+                      <FaVideo className="me-1" /> Start Video Consultation
+                    </Button>
+                  )}
+                  {appointment.type === 'Phone Call' && appointment.status === 'confirmed' && (
+                    <Button color="info">
+                      <FaPhoneAlt className="me-1" /> Start Phone Call
+                    </Button>
+                  )}
+                  {appointment.status === 'confirmed' && (
+                    <Button color="primary" onClick={() => onCompleteAppointment(appointment.id)}>
+                      <FaCheck className="me-1" /> Mark as Completed
+                    </Button>
+                  )}
+                  {appointment.status === 'pending' && (
+                    <div className="d-flex">
+                      <Button 
+                        color="success" 
+                        className="me-2 flex-grow-1"
+                        onClick={() => onAcceptAppointment(appointment)}
+                      >
+                        <FaCheck className="me-1" /> Accept
+                      </Button>
+                      <Button 
+                        color="danger"
+                        className="flex-grow-1"
+                        onClick={() => onDeclineAppointment(appointment)}
+                      >
+                        <FaTimes className="me-1" /> Decline
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </CardBody>
             </Card>
           )}
@@ -1002,7 +1079,7 @@ const DoctorAppointments = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('upcoming'); // Changed default to upcoming
+  const [activeTab, setActiveTab] = useState('upcoming'); 
   const [appointments, setAppointments] = useState({
     pendingAppointments: [],
     acceptedAppointments: [],
@@ -1184,27 +1261,37 @@ const DoctorAppointments = () => {
         return;
       }
       
-      const response = await fetch(`http://localhost:5000/api/appointments/${appointmentId}`, {
-        method: 'PATCH',
+      // Get the notes from the selected appointment detail view
+      // This ensures we're getting the most up-to-date version that the doctor has been editing
+      const clinicalNotes = document.querySelector('.clinical-notes-input').value;
+      
+      console.log('Sending clinical notes to server:', clinicalNotes);
+      
+      // Use our API endpoint to complete the appointment with notes in a single request
+      const response = await fetch(`http://localhost:5000/api/appointments/${appointmentId}/complete`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ status: 'completed' })
+        body: JSON.stringify({ notes: clinicalNotes }) // Send the current text area content
       });
       
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to mark appointment as completed');
+        throw new Error(data.message || 'Failed to complete appointment');
       }
       
-      toast.success('Appointment marked as completed');
+      toast.success('Appointment completed and notes saved successfully');
       
       // Close detail view and refresh appointments
       setDetailView(false);
       setSelectedAppointment(null);
       fetchAppointments();
+      
+      // Switch to history tab
+      setActiveTab('past');
     } catch (error) {
       console.error('Error completing appointment:', error);
       toast.error(error.message || 'Failed to complete appointment');
@@ -1344,10 +1431,10 @@ const DoctorAppointments = () => {
 
   return (
     <Container fluid className="doctor-appointments-page py-4">
-      <h2 className="mb-4">Appointment Management</h2>
+      <h2 className="mb-4 fw-bold text-dark">Appointment Management</h2>
       
       {detailView ? (
-        <Card>
+        <Card className="shadow-sm border-0">
           <CardBody>
             <AppointmentDetailView 
               appointment={selectedAppointment}
@@ -1360,27 +1447,29 @@ const DoctorAppointments = () => {
           </CardBody>
         </Card>
       ) : (
-        <Card className="shadow-sm mb-4">
-          <CardBody>
-            <Nav tabs className="appointment-tabs">
+        <Card className="shadow-sm border-0 mb-4">
+          <CardBody className="p-0">
+            <Nav tabs className="appointment-tabs border-0 p-3 bg-light rounded-top">
               <NavItem>
                 <NavLink
-                  className={activeTab === 'upcoming' ? 'active' : ''}
+                  className={`${activeTab === 'upcoming' ? 'active text-primary fw-bold border-bottom border-primary border-3' : 'text-secondary'} border-0 px-4 py-2`}
                   onClick={() => setActiveTab('upcoming')}
                 >
-                  <FaCalendarAlt className="me-1" /> 
+                  <FaCalendarAlt className="me-2" /> 
                   Upcoming
-                  <Badge color="primary" pill className="ms-2">
-                    {appointments.acceptedAppointments.length + appointments.confirmedAppointments.length}
-                  </Badge>
+                  {(appointments.acceptedAppointments.length + appointments.confirmedAppointments.length) > 0 && (
+                    <Badge color="primary" pill className="ms-2">
+                      {appointments.acceptedAppointments.length + appointments.confirmedAppointments.length}
+                    </Badge>
+                  )}
                 </NavLink>
               </NavItem>
               <NavItem>
                 <NavLink
-                  className={activeTab === 'pending' ? 'active' : ''}
+                  className={`${activeTab === 'pending' ? 'active text-primary fw-bold border-bottom border-primary border-3' : 'text-secondary'} border-0 px-4 py-2`}
                   onClick={() => setActiveTab('pending')}
                 >
-                  <FaExclamationTriangle className="me-1" /> 
+                  <FaExclamationTriangle className="me-2" /> 
                   Pending Requests
                   {appointments.pendingAppointments.length > 0 && (
                     <Badge color="danger" pill className="ms-2">{appointments.pendingAppointments.length}</Badge>
@@ -1389,89 +1478,119 @@ const DoctorAppointments = () => {
               </NavItem>
               <NavItem>
                 <NavLink
-                  className={activeTab === 'past' ? 'active' : ''}
+                  className={`${activeTab === 'past' ? 'active text-primary fw-bold border-bottom border-primary border-3' : 'text-secondary'} border-0 px-4 py-2`}
                   onClick={() => setActiveTab('past')}
                 >
-                  <FaHistory className="me-1" /> 
-                  Past
+                  <FaHistory className="me-2" /> 
+                  History
                 </NavLink>
               </NavItem>
               <NavItem>
                 <NavLink
-                  className={activeTab === 'declined' ? 'active' : ''}
+                  className={`${activeTab === 'declined' ? 'active text-primary fw-bold border-bottom border-primary border-3' : 'text-secondary'} border-0 px-4 py-2`}
                   onClick={() => setActiveTab('declined')}
                 >
-                  <FaTimes className="me-1" /> 
+                  <FaTimes className="me-2" /> 
                   Declined
                 </NavLink>
               </NavItem>
             </Nav>
             
-            <TabContent activeTab={activeTab} className="pt-4">
-              <TabPane tabId="pending">
-                <Row>
-                  {appointments.pendingAppointments.map(appointment => (
-                    <Col md={6} key={appointment.id} className="mb-4">
-                      <AppointmentCard
-                        appointment={appointment}
-                        onViewDetails={handleViewAppointmentDetails}
-                        onAcceptAppointment={handleAcceptAppointment}
-                        onDeclineAppointment={handleDeclineAppointment}
-                        onRescheduleRequest={handleRescheduleRequest}
-                        onOpenPrescriptionModal={handleOpenPrescriptionModal}
-                      />
-                    </Col>
-                  ))}
-                </Row>
-              </TabPane>
-              <TabPane tabId="upcoming">
-                <Row>
-                  {[...appointments.acceptedAppointments, ...appointments.confirmedAppointments].map(appointment => (
-                    <Col md={6} key={appointment.id} className="mb-4">
-                      <AppointmentCard
-                        appointment={appointment}
-                        onViewDetails={handleViewAppointmentDetails}
-                        onAcceptAppointment={handleAcceptAppointment}
-                        onDeclineAppointment={handleDeclineAppointment}
-                        onRescheduleRequest={handleRescheduleRequest}
-                        onOpenPrescriptionModal={handleOpenPrescriptionModal}
-                      />
-                    </Col>
-                  ))}
-                </Row>
-              </TabPane>
-              <TabPane tabId="past">
-                <Row>
-                  {appointments.pastAppointments.map(appointment => (
-                    <Col md={6} key={appointment.id} className="mb-4">
-                      <AppointmentCard
-                        appointment={appointment}
-                        onViewDetails={handleViewAppointmentDetails}
-                        onOpenPrescriptionModal={handleOpenPrescriptionModal}
-                      />
-                    </Col>
-                  ))}
-                </Row>
-              </TabPane>
-              <TabPane tabId="declined">
-                <Row>
-                  {appointments.declinedAppointments.map(appointment => (
-                    <Col md={6} key={appointment.id} className="mb-4">
-                      <AppointmentCard
-                        appointment={appointment}
-                        onViewDetails={handleViewAppointmentDetails}
-                        onOpenPrescriptionModal={handleOpenPrescriptionModal}
-                      />
-                    </Col>
-                  ))}
-                </Row>
-              </TabPane>
-            </TabContent>
+            <div className="p-4">
+              <TabContent activeTab={activeTab}>
+                <TabPane tabId="pending">
+                  <Row>
+                    {appointments.pendingAppointments.length === 0 ? (
+                      <Col className="text-center py-5">
+                        <FaExclamationTriangle size={30} className="text-muted mb-3" />
+                        <p className="text-muted">No pending appointment requests</p>
+                      </Col>
+                    ) : (
+                      appointments.pendingAppointments.map(appointment => (
+                        <Col lg={6} key={appointment.id} className="mb-4">
+                          <AppointmentCard
+                            appointment={appointment}
+                            onViewDetails={handleViewAppointmentDetails}
+                            onAcceptAppointment={handleAcceptAppointment}
+                            onDeclineAppointment={handleDeclineAppointment}
+                            onRescheduleRequest={handleRescheduleRequest}
+                            onOpenPrescriptionModal={handleOpenPrescriptionModal}
+                          />
+                        </Col>
+                      ))
+                    )}
+                  </Row>
+                </TabPane>
+                <TabPane tabId="upcoming">
+                  <Row>
+                    {[...appointments.acceptedAppointments, ...appointments.confirmedAppointments].length === 0 ? (
+                      <Col className="text-center py-5">
+                        <FaCalendarAlt size={30} className="text-muted mb-3" />
+                        <p className="text-muted">No upcoming appointments</p>
+                      </Col>
+                    ) : (
+                      [...appointments.acceptedAppointments, ...appointments.confirmedAppointments].map(appointment => (
+                        <Col lg={6} key={appointment.id} className="mb-4">
+                          <AppointmentCard
+                            appointment={appointment}
+                            onViewDetails={handleViewAppointmentDetails}
+                            onAcceptAppointment={handleAcceptAppointment}
+                            onDeclineAppointment={handleDeclineAppointment}
+                            onRescheduleRequest={handleRescheduleRequest}
+                            onOpenPrescriptionModal={handleOpenPrescriptionModal}
+                          />
+                        </Col>
+                      ))
+                    )}
+                  </Row>
+                </TabPane>
+                <TabPane tabId="past">
+                  <Row>
+                    {appointments.pastAppointments.length === 0 ? (
+                      <Col className="text-center py-5">
+                        <FaHistory size={30} className="text-muted mb-3" />
+                        <p className="text-muted">No appointment history</p>
+                      </Col>
+                    ) : (
+                      appointments.pastAppointments.map(appointment => (
+                        <Col lg={6} key={appointment.id} className="mb-4">
+                          <AppointmentCard
+                            appointment={appointment}
+                            onViewDetails={handleViewAppointmentDetails}
+                            onOpenPrescriptionModal={handleOpenPrescriptionModal}
+                          />
+                        </Col>
+                      ))
+                    )}
+                  </Row>
+                </TabPane>
+                <TabPane tabId="declined">
+                  <Row>
+                    {appointments.declinedAppointments.length === 0 ? (
+                      <Col className="text-center py-5">
+                        <FaTimes size={30} className="text-muted mb-3" />
+                        <p className="text-muted">No declined appointments</p>
+                      </Col>
+                    ) : (
+                      appointments.declinedAppointments.map(appointment => (
+                        <Col lg={6} key={appointment.id} className="mb-4">
+                          <AppointmentCard
+                            appointment={appointment}
+                            onViewDetails={handleViewAppointmentDetails}
+                            onOpenPrescriptionModal={handleOpenPrescriptionModal}
+                          />
+                        </Col>
+                      ))
+                    )}
+                  </Row>
+                </TabPane>
+              </TabContent>
+            </div>
           </CardBody>
         </Card>
       )}
 
-      {/* Add the PrescriptionModal component here */}
+      {/* Modal components remain unchanged */}
       {currentPrescriptionAppointment && (
         <PrescriptionModal
           isOpen={isPrescriptionModalOpen}
@@ -1481,7 +1600,7 @@ const DoctorAppointments = () => {
         />
       )}
 
-      {/* Modal for accepting/declining appointments */}
+      {/* Response Modal */}
       <Modal isOpen={responseModal.isOpen} toggle={() => setResponseModal({...responseModal, isOpen: !responseModal.isOpen})}>
         <ModalHeader toggle={() => setResponseModal({...responseModal, isOpen: !responseModal.isOpen})}>
           {responseModal.action === 'accept' ? 'Accept Appointment' : 'Decline Appointment'}
@@ -1526,7 +1645,7 @@ const DoctorAppointments = () => {
         </ModalFooter>
       </Modal>
 
-      {/* Modal for rescheduling appointments */}
+      {/* Reschedule Modal */}
       <Modal isOpen={rescheduleModal.isOpen} toggle={() => setRescheduleModal({...rescheduleModal, isOpen: !rescheduleModal.isOpen})}>
         <ModalHeader toggle={() => setRescheduleModal({...rescheduleModal, isOpen: !rescheduleModal.isOpen})}>
           Reschedule Appointment

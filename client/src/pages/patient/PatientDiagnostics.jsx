@@ -444,17 +444,23 @@ const PatientDiagnostics = () => {
                         <>
                           <h6 className="mt-3">Interpretation</h6>
                           <p>{selectedTest.interpretation}</p>
+                          
+                          {/* File Attachment Section - Always shown */}
+                          <div className="mt-3">
+                            <h6>Attachments</h6>
+                            {selectedTest.attachmentUrl ? (
+                              <div className="d-flex flex-column">
+                                <Button color="info" size="sm" onClick={() => window.open(selectedTest.attachmentUrl, '_blank')} className="mb-2 align-self-start">
+                                  <FaFileDownload className="me-2" />
+                                  Download Report
+                                </Button>
+                                <small className="text-muted">File uploaded: {selectedTest.attachmentName || "diagnostic-report.pdf"}</small>
+                              </div>
+                            ) : (
+                              <p className="text-muted">No attachments uploaded for this test result.</p>
+                            )}
+                          </div>
                         </>
-                      )}
-                      
-                      {selectedTest.attachmentUrl && (
-                        <div className="mt-3">
-                          <h6>Attachments</h6>
-                          <Button color="info" size="sm" onClick={() => window.open(selectedTest.attachmentUrl, '_blank')}>
-                            <FaFileDownload className="me-2" />
-                            Download Report
-                          </Button>
-                        </div>
                       )}
                       
                       {selectedTest.technician && (
