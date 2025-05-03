@@ -14,11 +14,13 @@ import {
   FaCalendarAlt, FaClock, FaVideo, FaPhone, FaClinicMedical, 
   FaFilter, FaStar, FaLanguage, FaUserMd, FaHospital,
   FaCreditCard, FaCheck, FaArrowLeft, FaClipboardList,
-  FaHistory, FaSpinner, FaCheckCircle, FaTimes
+  FaHistory, FaSpinner, FaCheckCircle, FaTimes, FaRobot
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import ClockTimePicker from '../../components/forms/ClockTimePicker';
 import UserAvatar from '../../components/UserAvatar';
+import { generateTriageQuestions } from '../../services/aiService';
+import { createTriageQuestionnaire } from '../../services/triageService';
 import './PatientAppointments.css';
 
 const SearchableDropdown = ({ options, value, onChange, placeholder, id, label }) => {
@@ -109,6 +111,12 @@ const PatientAppointments = () => {
   const [specialties, setSpecialties] = useState([]);
   const [locations, setLocations] = useState([]);
   const [error, setError] = useState(null);
+  
+  // Move the state from renderReasonInput to the top level to fix the Hook order issue
+  const [triageQuestions, setTriageQuestions] = useState([]);
+  const [triageAnswers, setTriageAnswers] = useState({});
+  const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
+  const [generationError, setGenerationError] = useState(null);
 
   useEffect(() => {
     fetchProviders();
@@ -499,61 +507,7 @@ const PatientAppointments = () => {
     }
   };
 
-  const generateMockApplicationTracking = () => {
-    console.warn('Using mock application tracking data');
-    const now = new Date();
-    
-    setApplicationTracking([
-      {
-        id: 201,
-        providerId: 2,
-        providerName: 'Dr. Michael Chen',
-        providerImage: 'https://randomuser.me/api/portraits/men/32.jpg',
-        specialty: 'Cardiology',
-        date: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
-        time: '2:00 PM',
-        type: 'In-Person Visit',
-        reason: 'Chest pain evaluation',
-        status: 'pending',
-        submittedOn: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-        currentStep: 'Doctor Review',
-        medicalReviewStatus: 'In Progress',
-        estimatedCompletionTime: '24-48 hours'
-      },
-      {
-        id: 202,
-        providerId: 4,
-        providerName: 'Dr. James Wilson',
-        providerImage: '',
-        specialty: 'Psychiatry',
-        date: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
-        time: '10:30 AM',
-        type: 'Video Call',
-        reason: 'Follow-up consultation',
-        status: 'doctor_accepted',
-        submittedOn: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-        currentStep: 'Patient Confirmation',
-        medicalReviewStatus: 'Approved',
-        estimatedCompletionTime: 'Waiting for your confirmation'
-      },
-      {
-        id: 203,
-        providerId: 3,
-        providerName: 'Dr. Amina Patel',
-        providerImage: '',
-        specialty: 'Dermatology',
-        date: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
-        time: '1:15 PM',
-        type: 'In-Person Visit',
-        reason: 'Skin condition follow-up',
-        status: 'declined',
-        submittedOn: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000), // 4 days ago
-        currentStep: 'Declined by Doctor',
-        medicalReviewStatus: 'Declined',
-        estimatedCompletionTime: 'N/A'
-      }
-    ]);
-  };
+
 
   const toggleTab = (tab) => {
     if (activeTab !== tab) {
@@ -936,7 +890,7 @@ const PatientAppointments = () => {
                   </div>
                 )
               ) : (
-                <Alert color="info">
+                <Alert color="info" timeout={0}>
                   Please select a date first
                 </Alert>
               )}
@@ -968,6 +922,34 @@ const PatientAppointments = () => {
         .max(500, 'Description is too long')
     });
     
+    // Handles generating triage questions when input changes
+    const generateQuestionsFromInput = async (reason, notes) => {
+      if (!reason || reason.length < 10) return;
+      
+      try {
+        setIsGeneratingQuestions(true);
+        setGenerationError(null);
+        
+        const generatedQuestions = await generateTriageQuestions(reason, notes);
+        console.log('Generated AI triage questions:', generatedQuestions);
+        setTriageQuestions(generatedQuestions);
+        
+      } catch (error) {
+        console.error('Error generating triage questions:', error);
+        setGenerationError('Failed to generate pre-visit questions. Please continue with your appointment, and we will assess your condition during the visit.');
+      } finally {
+        setIsGeneratingQuestions(false);
+      }
+    };
+
+    // Handle the triage question answers
+    const handleTriageAnswerChange = (questionId, value) => {
+      setTriageAnswers(prev => ({
+        ...prev,
+        [questionId]: value
+      }));
+    };
+
     return (
       <div className="reason-input">
         <h4 className="mb-4">Tell us about your visit</h4>
@@ -982,54 +964,201 @@ const PatientAppointments = () => {
             console.log('Form values:', values);
             setReasonForVisit(values.reasonForVisit);
             setAdditionalNotes(values.additionalNotes);
+            
+            // Store the final questions and answers for passing to next step
+            const triageData = {
+              questions: triageQuestions,
+              answers: triageAnswers,
+            };
+            console.log('Triage data for appointment:', triageData);
+            
             setBookingStep(4);
           }}
         >
-          {({ isValid, dirty, handleSubmit }) => (
-            <Form>
-              <FormGroup>
-                <Label for="reasonForVisit">Reason for visit</Label>
-                <Field
-                  as={Input}
-                  type="textarea"
-                  name="reasonForVisit"
-                  id="reasonForVisit"
-                  placeholder="Describe why you're scheduling this appointment"
-                  rows="3"
-                />
-                <ErrorMessage name="reasonForVisit" component="div" className="text-danger" />
-              </FormGroup>
+          {({ isValid, dirty, handleSubmit, values, setFieldValue }) => {
+            // Use effect to generate questions when input changes substantially
+            useEffect(() => {
+              const delayTimer = setTimeout(() => {
+                if (values.reasonForVisit && values.reasonForVisit.length >= 10) {
+                  generateQuestionsFromInput(values.reasonForVisit, values.additionalNotes);
+                }
+              }, 1000); // 1-second delay to avoid too many API calls
               
-              <FormGroup>
-                <Label for="additionalNotes">Additional notes (optional)</Label>
-                <Field
-                  as={Input}
-                  type="textarea"
-                  name="additionalNotes"
-                  id="additionalNotes"
-                  placeholder="Add any other information you'd like your provider to know"
-                  rows="2"
-                />
-              </FormGroup>
-              
-              <div className="booking-actions mt-4 d-flex justify-content-between">
-                <Button color="secondary" onClick={() => setBookingStep(2)}>
-                  Back
-                </Button>
-                <Button 
-                  color="primary"
-                  onClick={() => {
-                    if (isValid && dirty) {
-                      handleSubmit();
-                    }
-                  }}
-                  disabled={!isValid || !dirty}
-                >
-                  Next
-                </Button>
-              </div>
-            </Form>
-          )}
+              return () => clearTimeout(delayTimer);
+            }, [values.reasonForVisit, values.additionalNotes]);
+            
+            return (
+              <Form>
+                <FormGroup>
+                  <Label for="reasonForVisit">Reason for visit</Label>
+                  <Field
+                    as={Input}
+                    type="textarea"
+                    name="reasonForVisit"
+                    id="reasonForVisit"
+                    placeholder="Describe why you're scheduling this appointment"
+                    rows="3"
+                  />
+                  <ErrorMessage name="reasonForVisit" component="div" className="text-danger" />
+                </FormGroup>
+                
+                <FormGroup>
+                  <Label for="additionalNotes">Additional notes (optional)</Label>
+                  <Field
+                    as={Input}
+                    type="textarea"
+                    name="additionalNotes"
+                    id="additionalNotes"
+                    placeholder="Add any other information you'd like your provider to know"
+                    rows="2"
+                  />
+                </FormGroup>
+
+                {isGeneratingQuestions && (
+                  <div className="text-center py-3">
+                    <Spinner size="sm" color="primary" className="me-2" />
+                    <span className="text-muted">Generating personalized pre-visit questions...</span>
+                  </div>
+                )}
+
+                {generationError && (
+                  <Alert color="warning" timeout={0}>
+                    <div className="d-flex align-items-center">
+                      <FaRobot className="me-2 text-warning" size={20} />
+                      <div>{generationError}</div>
+                    </div>
+                  </Alert>
+                )}
+
+                {!isGeneratingQuestions && triageQuestions.length > 0 && (
+                  <div className="triage-questions mt-4">
+                    <Alert color="info" timeout={0}>
+                      <div className="d-flex align-items-center">
+                        <FaRobot className="me-2" size={20} />
+                        <div>
+                          <strong>Pre-visit Questionnaire:</strong> Please answer these questions to help your provider prepare for your visit.
+                        </div>
+                      </div>
+                    </Alert>
+
+                    <div className="questions-container">
+                      {triageQuestions.map((question) => (
+                        <FormGroup key={question.id} className="mb-4 p-3 border rounded">
+                          <Label for={`triage-${question.id}`} className="fw-bold">
+                            {question.question}
+                            {question.required && <span className="text-danger">*</span>}
+                          </Label>
+
+                          {question.type === 'multiple_choice' && (
+                            <div className="radio-options mt-2">
+                              {question.options.map((option, idx) => (
+                                <div key={idx} className="form-check">
+                                  <Input
+                                    type="radio"
+                                    id={`triage-${question.id}-${idx}`}
+                                    name={`triage-${question.id}`}
+                                    value={option}
+                                    checked={triageAnswers[question.id] === option}
+                                    onChange={() => handleTriageAnswerChange(question.id, option)}
+                                    required={question.required}
+                                  />
+                                  <Label for={`triage-${question.id}-${idx}`} className="form-check-label">
+                                    {option}
+                                  </Label>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {question.type === 'severity_scale' && (
+                            <div className="mt-2">
+                              <div className="severity-scale">
+                                {Array.from({length: (question.max - question.min) + 1}, (_, i) => question.min + i).map(num => (
+                                  <Label key={num} className="severity-option">
+                                    <Input
+                                      type="radio"
+                                      name={`triage-${question.id}`}
+                                      value={num.toString()}
+                                      checked={triageAnswers[question.id] === num.toString()}
+                                      onChange={() => handleTriageAnswerChange(question.id, num.toString())}
+                                      required={question.required}
+                                    />
+                                    {num}
+                                  </Label>
+                                ))}
+                              </div>
+                              <div className="severity-labels">
+                                <span>{question.minLabel || 'Min'}</span>
+                                <span>{question.maxLabel || 'Max'}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {question.type === 'yes_no' && (
+                            <div className="radio-options mt-2">
+                              <div className="form-check form-check-inline">
+                                <Input
+                                  type="radio"
+                                  id={`triage-${question.id}-yes`}
+                                  name={`triage-${question.id}`}
+                                  value="Yes"
+                                  checked={triageAnswers[question.id] === "Yes"}
+                                  onChange={() => handleTriageAnswerChange(question.id, "Yes")}
+                                  required={question.required}
+                                />
+                                <Label for={`triage-${question.id}-yes`} className="form-check-label">Yes</Label>
+                              </div>
+                              <div className="form-check form-check-inline">
+                                <Input
+                                  type="radio"
+                                  id={`triage-${question.id}-no`}
+                                  name={`triage-${question.id}`}
+                                  value="No"
+                                  checked={triageAnswers[question.id] === "No"}
+                                  onChange={() => handleTriageAnswerChange(question.id, "No")}
+                                  required={question.required}
+                                />
+                                <Label for={`triage-${question.id}-no`} className="form-check-label">No</Label>
+                              </div>
+                            </div>
+                          )}
+
+                          {question.type === 'text' && (
+                            <Input
+                              type="textarea"
+                              id={`triage-${question.id}`}
+                              value={triageAnswers[question.id] || ''}
+                              onChange={(e) => handleTriageAnswerChange(question.id, e.target.value)}
+                              placeholder="Your answer"
+                              rows="2"
+                              required={question.required}
+                            />
+                          )}
+                        </FormGroup>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="booking-actions mt-4 d-flex justify-content-between">
+                  <Button color="secondary" onClick={() => setBookingStep(2)}>
+                    Back
+                  </Button>
+                  <Button 
+                    color="primary"
+                    onClick={() => {
+                      if (isValid) {
+                        handleSubmit();
+                      }
+                    }}
+                    disabled={!isValid}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </Form>
+            );
+          }}
         </Formik>
       </div>
     );
@@ -1103,7 +1232,7 @@ const PatientAppointments = () => {
         
         <div className="cancellation-policy mb-4">
           <h5>Cancellation Policy</h5>
-          <Alert color="info">
+          <Alert color="info" timeout={0}>
             <small>
               You may cancel or reschedule your appointment up to 24 hours before your scheduled time without incurring any fees. 
               Late cancellations or no-shows may result in a fee of $25.
@@ -1128,50 +1257,108 @@ const PatientAppointments = () => {
                 additionalNotes: additionalNotes || ""
               };
               
-              // Call API to create appointment
-              setIsLoading(true);
-              const result = await createAppointment(appointmentData);
-              setIsLoading(false);
-              
-              if (result.success) {
-                // Create tracking record for this appointment
-                const newApplication = {
-                  id: result.data.appointment._id || Math.floor(Math.random() * 1000) + 300,
-                  providerId: selectedProvider.id,
-                  providerName: selectedProvider.name,
-                  providerImage: selectedProvider.image,
-                  specialty: selectedProvider.specialty,
-                  date: selectedDate,
-                  time: selectedTimeSlot.formattedTime,
-                  type: selectedAppointmentType,
-                  reason: appointmentData.reason,
-                  status: 'pending',
-                  submittedOn: new Date(),
-                  currentStep: 'Doctor Review',
-                  medicalReviewStatus: 'In Progress',
-                  estimatedCompletionTime: '24-48 hours'
-                };
+              try {
+                // Call API to create appointment
+                setIsLoading(true);
+                const result = await createAppointment(appointmentData);
                 
-                // Add the new application to tracking
-                setApplicationTracking(prev => [...prev, newApplication]);
-                
-                // Show success message
-                toast.success('Appointment request submitted successfully!');
-                
-                // Refresh data in the background without awaiting
-                fetchAppointments();
-                fetchApplicationTracking();
-                
-                // Force redirect to upcoming tab without waiting
-                setActiveTab('upcoming');
-                setIsBooking(false);
-                
-                // Reset booking state 
-                setBookingStep(0);
-                setSelectedProvider(null);
-                setSelectedAppointmentType(null);
-                setSelectedDate(null);
-                setSelectedTimeSlot(null);
+                if (result.success) {
+                  // Safely get the appointment ID from the result with multiple fallback options
+                  let appointmentId;
+                  
+                  // Check different possible response structures
+                  if (result.data?.appointment?._id) {
+                    appointmentId = result.data.appointment._id;
+                  } else if (result.data?._id) {
+                    appointmentId = result.data._id;
+                  } else if (result.data?.id) {
+                    appointmentId = result.data.id;
+                  } else if (result.data?.appointment?.id) {
+                    appointmentId = result.data.appointment.id;
+                  } else {
+                    // Generate a fallback ID if none is returned from server
+                    appointmentId = `temp_${Math.floor(Math.random() * 1000) + 300}`;
+                    console.warn("No appointment ID returned from server, using temporary ID:", appointmentId);
+                  }
+                  
+                  console.log("Created appointment with ID:", appointmentId);
+                  
+                  // Create tracking record for this appointment
+                  const newApplication = {
+                    id: appointmentId,
+                    providerId: selectedProvider.id,
+                    providerName: selectedProvider.name,
+                    providerImage: selectedProvider.image,
+                    specialty: selectedProvider.specialty,
+                    date: selectedDate,
+                    time: selectedTimeSlot.formattedTime,
+                    type: selectedAppointmentType,
+                    reason: appointmentData.reason,
+                    status: 'pending',
+                    submittedOn: new Date(),
+                    currentStep: 'Doctor Review',
+                    medicalReviewStatus: 'In Progress',
+                    estimatedCompletionTime: '24-48 hours'
+                  };
+                  
+                  // If we have triage questions, save them to the database
+                  if (triageQuestions.length > 0 && appointmentId) {
+                    try {
+                      // Prepare data for creating triage questionnaire
+                      const triageData = {
+                        appointmentId: appointmentId,
+                        questions: triageQuestions,
+                        generatedFromReason: reasonForVisit,
+                        generatedFromNotes: additionalNotes || ""
+                      };
+                      
+                      console.log("Saving triage questionnaire to database:", triageData);
+                      
+                      // Save the questionnaire to the database
+                      const triageResult = await createTriageQuestionnaire(triageData);
+                      console.log("Triage questionnaire saved successfully:", triageResult);
+                      toast.success('Pre-visit questionnaire created. Please complete it before your appointment.');
+                      
+                    } catch (error) {
+                      console.error("Error saving triage questionnaire:", error);
+                      toast.error('Failed to create pre-visit questionnaire. You can still proceed with your appointment.');
+                    }
+                  } else {
+                    console.log("No triage questions to save or missing appointmentId");
+                  }
+                  
+                  // Add the new application to tracking
+                  setApplicationTracking(prev => [...prev, newApplication]);
+                  
+                  // Show success message
+                  toast.success('Appointment request submitted successfully!');
+                  
+                  // Refresh data in the background without awaiting
+                  fetchAppointments();
+                  fetchApplicationTracking();
+                  
+                  // Force redirect to upcoming tab without waiting
+                  setActiveTab('upcoming');
+                  setIsBooking(false);
+                  
+                  // Reset booking state 
+                  setBookingStep(0);
+                  setSelectedProvider(null);
+                  setSelectedAppointmentType(null);
+                  setSelectedDate(null);
+                  setSelectedTimeSlot(null);
+                  setReasonForVisit('');
+                  setAdditionalNotes('');
+                  setTriageQuestions([]);
+                  setTriageAnswers({});
+                } else {
+                  toast.error(result.error || 'Failed to create appointment');
+                }
+              } catch (error) {
+                console.error('Error during appointment booking:', error);
+                toast.error('Something went wrong while booking your appointment. Please try again.');
+              } finally {
+                setIsLoading(false);
               }
             }}
           >
@@ -1450,7 +1637,7 @@ const PatientAppointments = () => {
                   selectedApplication.status === 'pending' ? 'info' : 
                   selectedApplication.status === 'doctor_accepted' ? 'warning' : 
                   selectedApplication.status === 'declined' ? 'danger' : 'success'
-                }>
+                } timeout={0}>
                   <small>
                     <strong>Note:</strong> {
                       selectedApplication.status === 'pending' ? 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import './ClockTimePicker.css';
 
@@ -13,14 +13,8 @@ const ClockTimePicker = ({ onChange, initialTime, availableSlots }) => {
   // Minutes to display (in steps of 5)
   const clockMinutes = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
   
-  useEffect(() => {
-    // Format the time for display - we no longer set displayTime directly here
-    // as we'll use the formatted parts separately in the JSX
-    const formattedHour = selectedHour % 12 === 0 ? 12 : selectedHour % 12;
-    const ampm = selectedHour >= 12 ? 'PM' : 'AM';
-    const formattedMinute = String(selectedMinute).padStart(2, '0');
-    
-    // Call the onChange handler with the new time
+  // Memoize the time change handler to avoid infinite loops
+  const handleTimeChange = useCallback(() => {
     const date = new Date();
     date.setHours(selectedHour);
     date.setMinutes(selectedMinute);
@@ -29,6 +23,12 @@ const ClockTimePicker = ({ onChange, initialTime, availableSlots }) => {
       onChange(date);
     }
   }, [selectedHour, selectedMinute, onChange]);
+  
+  useEffect(() => {
+    handleTimeChange();
+    // Don't include onChange in the dependency array to avoid infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedHour, selectedMinute]);
   
   const handleHourSelect = (hour) => {
     setSelectedHour(hour);

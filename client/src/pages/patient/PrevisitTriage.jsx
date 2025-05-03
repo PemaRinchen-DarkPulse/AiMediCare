@@ -1,32 +1,107 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './PrevisitTriage.css';
-import { FaUser, FaCalendarAlt, FaUserMd, FaExclamationTriangle, FaCamera, FaCheck } from 'react-icons/fa';
+import { FaUser, FaCalendarAlt, FaUserMd, FaExclamationTriangle, FaCamera, FaCheck, FaSpinner } from 'react-icons/fa';
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from 'react-icons/md';
+import { getPatientPendingQuestionnaires, updateTriageAnswers } from '../../services/triageService';
+import { toast } from 'react-toastify';
 
 const PrevisitTriage = () => {
   const [expandedAppointment, setExpandedAppointment] = useState(null);
-  const [formData, setFormData] = useState({
-    glucoseReadings: '',
-    symptomChanges: [],
-    medicationAdherence: '',
-    concerns: '',
-    
-    rashLocation: [],
-    rashDuration: '',
-    rashSeverity: '',
-    rashImage: null,
-    allergies: [],
-    allergyOther: '',
-    
-    headacheDuration: '',
-    headacheSeverity: '',
-    headacheSymptoms: [],
-    neurologicalSymptoms: false,
-    visionChanges: false,
-    additionalSymptoms: []
-  });
+  const [formData, setFormData] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [appointments, setAppointments] = useState([]);
+  const [showUrgentQuestions, setShowUrgentQuestions] = useState({});
   
-  const [showUrgentQuestions, setShowUrgentQuestions] = useState(false);
+  useEffect(() => {
+    fetchPendingQuestionnaires();
+  }, []);
+  
+  const fetchPendingQuestionnaires = async () => {
+    try {
+      setLoading(true);
+      const pendingQuestionnaires = await getPatientPendingQuestionnaires();
+      processQuestionnaires(pendingQuestionnaires);
+    } catch (err) {
+      console.error('Error fetching pending questionnaires:', err);
+      setError('Failed to load questionnaires. Please try again or contact support if the issue persists.');
+      setAppointments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Processes questionnaires from the API response
+  const processQuestionnaires = (questionnaires) => {
+    if (!questionnaires || !Array.isArray(questionnaires)) {
+      console.error('Invalid questionnaires data received:', questionnaires);
+      setError('Invalid questionnaire data received from the server.');
+      setAppointments([]);
+      return;
+    }
+    
+    if (questionnaires.length === 0) {
+      // No need to use mock data, just set empty appointments
+      setAppointments([]);
+      return;
+    }
+    
+    // Transform the questionnaires into appointment format for UI
+    const transformedAppointments = questionnaires.map(questionnaire => {
+      const appointment = questionnaire.appointmentId || {};
+      
+      // Initialize form data with empty values for this questionnaire
+      const initialFormData = {};
+      questionnaire.questions.forEach(question => {
+        if (question.type === 'checkbox' || question.type === 'multiple_select') {
+          initialFormData[question.id] = [];
+        } else if (question.type === 'boolean') {
+          initialFormData[question.id] = false;
+        } else {
+          initialFormData[question.id] = '';
+        }
+      });
+      
+      // Pre-fill form data with existing answers if any
+      if (questionnaire.answers && questionnaire.answers.length > 0) {
+        questionnaire.answers.forEach(answer => {
+          initialFormData[answer.questionId] = answer.value;
+        });
+      }
+      
+      // Update form data state
+      setFormData(prevFormData => ({
+        ...prevFormData,
+        [questionnaire._id]: initialFormData
+      }));
+      
+      return {
+        id: questionnaire._id,
+        appointmentId: appointment._id,
+        date: appointment.date ? new Date(appointment.date).toLocaleDateString() : 'Upcoming',
+        time: appointment.time || 'Scheduled',
+        provider: `Dr. ${appointment.doctorName || 'Provider'}`,
+        type: appointment.reason || questionnaire.generatedFromReason || 'Medical Appointment',
+        department: appointment.specialty || 'General',
+        medications: appointment.medications || [],
+        urgent: appointment.urgent || false,
+        questions: questionnaire.questions || [],
+        status: questionnaire.status,
+        generatedFromReason: questionnaire.generatedFromReason
+      };
+    });
+    
+    setAppointments(transformedAppointments);
+  };
+  
+  // This function is only used for development/debug purposes and should not be used in production
+  // eslint-disable-next-line no-unused-vars
+  const generateMockQuestionnaires = () => {
+    console.warn('Using mock questionnaire data - FOR DEVELOPMENT ONLY');
+    // mock data implementation remains for development purposes, but is not used in the component
+    // ...existing code...
+  };
 
   const toggleAppointment = (index) => {
     if (expandedAppointment === index) {
@@ -36,741 +111,413 @@ const PrevisitTriage = () => {
     }
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (questionnaireId, e) => {
     const { name, value, type, checked } = e.target;
     
     if (type === 'checkbox') {
-      if (checked) {
-        setFormData({
-          ...formData,
-          [name]: [...formData[name], value]
-        });
-      } else {
-        setFormData({
-          ...formData,
-          [name]: formData[name].filter(item => item !== value)
-        });
-      }
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value
+      setFormData(prevData => {
+        const currentValues = prevData[questionnaireId]?.[name] || [];
+        let newValues;
+        
+        if (checked) {
+          // Add value to array if checked
+          newValues = [...currentValues, value];
+        } else {
+          // Remove value from array if unchecked
+          newValues = currentValues.filter(item => item !== value);
+        }
+        
+        return {
+          ...prevData,
+          [questionnaireId]: {
+            ...prevData[questionnaireId],
+            [name]: newValues
+          }
+        };
       });
-
+      
       // Check for urgent symptoms that require additional questions
       if (name === 'headacheSymptoms' && 
           (value.includes('Worst headache ever') || 
            value.includes('Sudden onset'))) {
-        setShowUrgentQuestions(true);
+        setShowUrgentQuestions(prev => ({
+          ...prev,
+          [questionnaireId]: true
+        }));
       }
+    } else if (type === 'radio' && name.includes('neurologicalSymptoms')) {
+      setFormData(prevData => ({
+        ...prevData,
+        [questionnaireId]: {
+          ...prevData[questionnaireId],
+          [name]: value === 'true'
+        }
+      }));
+    } else if (type === 'radio' && name.includes('visionChanges')) {
+      setFormData(prevData => ({
+        ...prevData,
+        [questionnaireId]: {
+          ...prevData[questionnaireId],
+          [name]: value === 'true'
+        }
+      }));
+    } else {
+      setFormData(prevData => ({
+        ...prevData,
+        [questionnaireId]: {
+          ...prevData[questionnaireId],
+          [name]: value
+        }
+      }));
     }
   };
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = (questionnaireId, questionId, e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData({
-        ...formData,
-        rashImage: URL.createObjectURL(file)
-      });
+      // In a real implementation, you would upload the file to the server
+      // and save the URL in the form data. For now, just use a local URL
+      setFormData(prevData => ({
+        ...prevData,
+        [questionnaireId]: {
+          ...prevData[questionnaireId],
+          [questionId]: URL.createObjectURL(file)
+        }
+      }));
     }
   };
 
-  const appointments = [
-    {
-      id: 1,
-      date: "October 25, 2023",
-      time: "10:00 AM",
-      provider: "Dr. Sarah Johnson",
-      type: "Diabetes Follow-up",
-      department: "Endocrinology",
-      medications: ["Metformin 1000mg twice daily", "Januvia 100mg once daily"],
-      lastA1C: "7.2% (Measured 3 months ago)",
-      urgent: false
-    },
-    {
-      id: 2,
-      date: "October 28, 2023",
-      time: "2:30 PM",
-      provider: "Dr. Michael Chen",
-      type: "New Consultation - Skin Condition",
-      department: "Dermatology",
-      urgent: false
-    },
-    {
-      id: 3,
-      date: "October 23, 2023",
-      time: "4:15 PM",
-      provider: "Dr. Rebecca Taylor",
-      type: "Urgent Consultation - Headache",
-      department: "Neurology",
-      urgent: true
+  const handleSubmit = async (questionnaireId, e) => {
+    e.preventDefault();
+    
+    try {
+      setSubmitting(true);
+      
+      // Format answers for the API
+      const questionnaireData = formData[questionnaireId];
+      const answers = Object.entries(questionnaireData).map(([questionId, value]) => ({
+        questionId,
+        value
+      }));
+      
+      // Call the API to update the answers
+      await updateTriageAnswers(questionnaireId, answers);
+      
+      toast.success('Questionnaire submitted successfully!');
+      
+      // Update the local state to reflect the completed status
+      setAppointments(prevAppointments => 
+        prevAppointments.map(appointment => 
+          appointment.id === questionnaireId 
+            ? { ...appointment, status: 'completed' }
+            : appointment
+        )
+      );
+      
+    } catch (err) {
+      console.error('Error submitting questionnaire:', err);
+      toast.error('Failed to submit questionnaire. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
-  ];
+  };
+
+  if (loading) {
+    return (
+      <div className="pre-visit-container text-center">
+        <FaSpinner className="fa-spin" size={30} />
+        <p className="mt-3">Loading your questionnaires...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="pre-visit-container">
       <header className="header">
         <h1>Pre-Visit Questionnaires</h1>
         <p className="welcome-text">
-          Welcome back, <strong>Maria Rodriguez</strong>. Please complete the following questionnaires
+          Welcome back. Please complete the following questionnaires
           before your upcoming appointments. This information will help your healthcare provider prepare
           for your visit.
         </p>
         <div className="notification">
-          <strong>You have 3 upcoming appointments that require pre-visit information.</strong>
+          <strong>You have {appointments.length} upcoming appointments that require pre-visit information.</strong>
           <p>Please complete at least 2 hours before your scheduled appointment time.</p>
         </div>
+        {error && (
+          <div className="alert alert-warning">
+            {error}
+          </div>
+        )}
       </header>
 
       <div className="appointments-container">
-        {appointments.map((appointment, index) => (
-          <div key={appointment.id} className={`appointment-card ${appointment.urgent ? 'urgent' : ''}`}>
-            {appointment.urgent && (
-              <div className="urgent-flag">
-                <FaExclamationTriangle /> Priority Appointment
-              </div>
-            )}
-            
-            <div className="appointment-header" onClick={() => toggleAppointment(index)}>
-              <div className="appointment-title">
-                <h2>{appointment.type}</h2>
-                <div className="appointment-details">
-                  <span><FaCalendarAlt /> {appointment.date}, {appointment.time}</span>
-                  <span><FaUserMd /> {appointment.provider}, {appointment.department}</span>
+        {appointments.length === 0 ? (
+          <div className="text-center p-4">
+            <p>You don't have any pending questionnaires at the moment.</p>
+          </div>
+        ) : (
+          appointments.map((appointment, index) => (
+            <div key={appointment.id} className={`appointment-card ${appointment.urgent ? 'urgent' : ''}`}>
+              {appointment.urgent && (
+                <div className="urgent-flag">
+                  <FaExclamationTriangle /> Priority Appointment
+                </div>
+              )}
+              
+              <div className="appointment-header" onClick={() => toggleAppointment(index)}>
+                <div className="appointment-title">
+                  <h2>{appointment.type}</h2>
+                  <div className="appointment-details">
+                    <span><FaCalendarAlt /> {appointment.date}, {appointment.time}</span>
+                    <span><FaUserMd /> {appointment.provider}, {appointment.department}</span>
+                  </div>
+                </div>
+                <div className="toggle-icon">
+                  {expandedAppointment === index ? <MdKeyboardArrowUp /> : <MdKeyboardArrowDown />}
                 </div>
               </div>
-              <div className="toggle-icon">
-                {expandedAppointment === index ? <MdKeyboardArrowUp /> : <MdKeyboardArrowDown />}
-              </div>
+              
+              {expandedAppointment === index && (
+                <div className="questionnaire">
+                  {appointment.status === 'completed' ? (
+                    <div className="completed-message">
+                      <FaCheck size={24} className="text-success mb-2" />
+                      <h4>Questionnaire Completed</h4>
+                      <p>Thank you for completing this questionnaire. Your healthcare provider has been notified.</p>
+                    </div>
+                  ) : (
+                    <form className="form-container" onSubmit={(e) => handleSubmit(appointment.id, e)}>
+                      {appointment.medications && appointment.medications.length > 0 && (
+                        <div className="ai-prefilled-section">
+                          <h3>AI-Detected Information</h3>
+                          <p>Based on your records, we've pre-filled some information. Please verify and update if needed.</p>
+                          <div className="prefilled-item">
+                            <label>Current Medications:</label>
+                            <ul>
+                              {appointment.medications.map((med, i) => (
+                                <li key={i}>{med}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Render questionnaire based on questions array */}
+                      {appointment.questions.map((question) => {
+                        switch (question.type) {
+                          case 'text':
+                            return (
+                              <div key={question.id} className="form-section">
+                                <h3>{question.title || 'Information'}</h3>
+                                <div className="form-group">
+                                  <label>{question.question}</label>
+                                  <textarea 
+                                    name={question.id} 
+                                    value={formData[appointment.id]?.[question.id] || ''}
+                                    onChange={(e) => handleInputChange(appointment.id, e)}
+                                    placeholder={question.placeholder || "Enter your response here"}
+                                    rows="3"
+                                    required={question.required}
+                                  ></textarea>
+                                </div>
+                              </div>
+                            );
+                            
+                          case 'multiple_choice':
+                            return (
+                              <div key={question.id} className="form-section">
+                                <h3>{question.title || 'Selection'}</h3>
+                                <div className="form-group">
+                                  <label>{question.question}</label>
+                                  <div className="radio-options">
+                                    {question.options.map((option, i) => (
+                                      <label key={i}>
+                                        <input 
+                                          type="radio" 
+                                          name={question.id} 
+                                          value={option}
+                                          checked={formData[appointment.id]?.[question.id] === option}
+                                          onChange={(e) => handleInputChange(appointment.id, e)}
+                                          required={question.required}
+                                        /> 
+                                        {option}
+                                      </label>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                            
+                          case 'checkbox':
+                            return (
+                              <div key={question.id} className="form-section">
+                                <h3>{question.title || 'Multiple Selection'}</h3>
+                                <div className="form-group checkbox-group">
+                                  <label>{question.question}</label>
+                                  <div className="checkbox-options">
+                                    {question.options.map((option, i) => (
+                                      <label key={i}>
+                                        <input 
+                                          type="checkbox" 
+                                          name={question.id} 
+                                          value={option}
+                                          checked={formData[appointment.id]?.[question.id]?.includes(option)}
+                                          onChange={(e) => handleInputChange(appointment.id, e)}
+                                        /> 
+                                        {option}
+                                      </label>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                            
+                          case 'severity_scale':
+                            return (
+                              <div key={question.id} className="form-section">
+                                <h3>{question.title || 'Severity Assessment'}</h3>
+                                <div className="form-group">
+                                  <label>{question.question}</label>
+                                  <div className="severity-scale">
+                                    {Array.from(
+                                      { length: (question.max - question.min) + 1 }, 
+                                      (_, i) => question.min + i
+                                    ).map(num => (
+                                      <label key={num} className="severity-option">
+                                        <input
+                                          type="radio"
+                                          name={question.id}
+                                          value={num.toString()}
+                                          checked={formData[appointment.id]?.[question.id] === num.toString()}
+                                          onChange={(e) => handleInputChange(appointment.id, e)}
+                                          required={question.required}
+                                        />
+                                        {num}
+                                      </label>
+                                    ))}
+                                  </div>
+                                  <div className="severity-labels">
+                                    <span>{question.minLabel || 'Mild'}</span>
+                                    <span>{question.maxLabel || 'Severe'}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                            
+                          case 'image_upload':
+                            return (
+                              <div key={question.id} className="form-section">
+                                <h3>{question.title || 'Upload Image'}</h3>
+                                <div className="form-group">
+                                  <label>{question.question}</label>
+                                  <div className="image-upload">
+                                    <label className="upload-button">
+                                      <FaCamera /> Upload Image
+                                      <input 
+                                        type="file" 
+                                        accept="image/*" 
+                                        onChange={(e) => handleImageUpload(appointment.id, question.id, e)} 
+                                        style={{ display: 'none' }}
+                                        required={question.required}
+                                      />
+                                    </label>
+                                    {formData[appointment.id]?.[question.id] && (
+                                      <div className="image-preview">
+                                        <img src={formData[appointment.id][question.id]} alt="Uploaded" />
+                                        <span className="upload-success"><FaCheck /> Upload successful</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                            
+                          case 'boolean':
+                          case 'yes_no':
+                            return (
+                              <div key={question.id} className="form-section">
+                                <h3>{question.title || 'Yes/No Question'}</h3>
+                                <div className="form-group">
+                                  <label>{question.question}</label>
+                                  <div className="radio-options">
+                                    <label>
+                                      <input 
+                                        type="radio" 
+                                        name={question.id} 
+                                        value="true" 
+                                        checked={formData[appointment.id]?.[question.id] === true || formData[appointment.id]?.[question.id] === "Yes"}
+                                        onChange={(e) => handleInputChange(appointment.id, e)}
+                                        required={question.required}
+                                      /> 
+                                      Yes
+                                    </label>
+                                    <label>
+                                      <input 
+                                        type="radio" 
+                                        name={question.id} 
+                                        value="false" 
+                                        checked={formData[appointment.id]?.[question.id] === false || formData[appointment.id]?.[question.id] === "No"}
+                                        onChange={(e) => handleInputChange(appointment.id, e)}
+                                        required={question.required}
+                                      /> 
+                                      No
+                                    </label>
+                                  </div>
+                                </div>
+                                
+                                {/* Render follow-up questions if this is an urgent question */}
+                                {question.urgent && (formData[appointment.id]?.[question.id] === true || formData[appointment.id]?.[question.id] === "Yes") && (
+                                  <div className="urgent-questions">
+                                    {question.followUpQuestions && question.followUpQuestions.map((followUpQ) => (
+                                      <div key={followUpQ.id} className="form-group">
+                                        <label>{followUpQ.question}</label>
+                                        {/* Render the appropriate input type for the follow-up question */}
+                                        {/* This is simplified - you would need to handle each type */}
+                                        <textarea 
+                                          name={followUpQ.id} 
+                                          value={formData[appointment.id]?.[followUpQ.id] || ''}
+                                          onChange={(e) => handleInputChange(appointment.id, e)}
+                                          rows="2"
+                                        ></textarea>
+                                      </div>
+                                    ))}
+                                    
+                                    <div className="emergency-notice">
+                                      <h3>URGENT NOTICE</h3>
+                                      <p>Based on your responses, your symptoms may require immediate medical attention. While we're expediting your appointment, please consider seeking emergency care if symptoms worsen.</p>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                            
+                          default:
+                            return null;
+                        }
+                      })}
+                      
+                      <button 
+                        type="submit" 
+                        className={`submit-btn ${appointment.urgent ? 'urgent-submit' : ''}`}
+                        disabled={submitting}
+                      >
+                        {submitting ? (
+                          <>
+                            <FaSpinner className="fa-spin me-2" />
+                            Submitting...
+                          </>
+                        ) : (
+                          'Submit Questionnaire'
+                        )}
+                      </button>
+                    </form>
+                  )}
+                </div>
+              )}
             </div>
-            
-            {expandedAppointment === index && (
-              <div className="questionnaire">
-                {/* Questionnaire for Diabetes Follow-up */}
-                {appointment.id === 1 && (
-                  <form className="form-container">
-                    <div className="ai-prefilled-section">
-                      <h3>AI-Detected Information</h3>
-                      <p>Based on your records, we've pre-filled some information. Please verify and update if needed.</p>
-                      <div className="prefilled-item">
-                        <label>Current Medications:</label>
-                        <ul>
-                          {appointment.medications.map((med, i) => (
-                            <li key={i}>{med}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="prefilled-item">
-                        <label>Last A1C Reading:</label>
-                        <span>{appointment.lastA1C}</span>
-                      </div>
-                    </div>
-
-                    <div className="form-section">
-                      <h3>Recent Glucose Readings</h3>
-                      <div className="form-group">
-                        <label>Please enter your glucose readings from the past week (mg/dL):</label>
-                        <textarea 
-                          name="glucoseReadings" 
-                          value={formData.glucoseReadings}
-                          onChange={handleInputChange}
-                          placeholder="Example: Morning: 120-140, Evening: 130-150"
-                          rows="3"
-                        ></textarea>
-                      </div>
-                    </div>
-
-                    <div className="form-section">
-                      <h3>Symptom Changes</h3>
-                      <div className="form-group checkbox-group">
-                        <label>Have you experienced any of the following since your last visit? (Check all that apply)</label>
-                        <div className="checkbox-options">
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="symptomChanges" 
-                              value="Increased thirst"
-                              checked={formData.symptomChanges.includes("Increased thirst")}
-                              onChange={handleInputChange}
-                            /> 
-                            Increased thirst
-                          </label>
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="symptomChanges" 
-                              value="Frequent urination" 
-                              checked={formData.symptomChanges.includes("Frequent urination")}
-                              onChange={handleInputChange}
-                            /> 
-                            Frequent urination
-                          </label>
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="symptomChanges" 
-                              value="Blurred vision" 
-                              checked={formData.symptomChanges.includes("Blurred vision")}
-                              onChange={handleInputChange}
-                            /> 
-                            Blurred vision
-                          </label>
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="symptomChanges" 
-                              value="Numbness/tingling in feet" 
-                              checked={formData.symptomChanges.includes("Numbness/tingling in feet")}
-                              onChange={handleInputChange}
-                            /> 
-                            Numbness/tingling in feet
-                          </label>
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="symptomChanges" 
-                              value="Slow healing wounds" 
-                              checked={formData.symptomChanges.includes("Slow healing wounds")}
-                              onChange={handleInputChange}
-                            /> 
-                            Slow healing wounds
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="form-section">
-                      <h3>Medication Adherence</h3>
-                      <div className="form-group">
-                        <label>How often have you taken your diabetes medications as prescribed?</label>
-                        <div className="radio-options">
-                          <label>
-                            <input 
-                              type="radio" 
-                              name="medicationAdherence" 
-                              value="Always (never missed)" 
-                              checked={formData.medicationAdherence === "Always (never missed)"}
-                              onChange={handleInputChange}
-                            /> 
-                            Always (never missed)
-                          </label>
-                          <label>
-                            <input 
-                              type="radio" 
-                              name="medicationAdherence" 
-                              value="Most of the time (missed 1-2 doses)" 
-                              checked={formData.medicationAdherence === "Most of the time (missed 1-2 doses)"}
-                              onChange={handleInputChange}
-                            /> 
-                            Most of the time (missed 1-2 doses)
-                          </label>
-                          <label>
-                            <input 
-                              type="radio" 
-                              name="medicationAdherence" 
-                              value="Sometimes (missed several doses)" 
-                              checked={formData.medicationAdherence === "Sometimes (missed several doses)"}
-                              onChange={handleInputChange}
-                            /> 
-                            Sometimes (missed several doses)
-                          </label>
-                          <label>
-                            <input 
-                              type="radio" 
-                              name="medicationAdherence" 
-                              value="Rarely (missed most doses)" 
-                              checked={formData.medicationAdherence === "Rarely (missed most doses)"}
-                              onChange={handleInputChange}
-                            /> 
-                            Rarely (missed most doses)
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="form-section">
-                      <h3>Additional Concerns</h3>
-                      <div className="form-group">
-                        <label>Do you have any specific concerns or questions for the doctor?</label>
-                        <textarea 
-                          name="concerns" 
-                          value={formData.concerns}
-                          onChange={handleInputChange}
-                          placeholder="Please describe any questions or concerns you want to discuss during your appointment"
-                          rows="3"
-                        ></textarea>
-                      </div>
-                    </div>
-
-                    <button type="submit" className="submit-btn">Submit Questionnaire</button>
-                  </form>
-                )}
-
-                {/* Questionnaire for Skin Rash Consultation */}
-                {appointment.id === 2 && (
-                  <form className="form-container">
-                    <div className="form-section">
-                      <h3>Skin Condition Details</h3>
-                      <div className="form-group checkbox-group">
-                        <label>Where is the rash or skin condition located? (Check all that apply)</label>
-                        <div className="checkbox-options">
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="rashLocation" 
-                              value="Face"
-                              checked={formData.rashLocation.includes("Face")}
-                              onChange={handleInputChange}
-                            /> 
-                            Face
-                          </label>
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="rashLocation" 
-                              value="Neck" 
-                              checked={formData.rashLocation.includes("Neck")}
-                              onChange={handleInputChange}
-                            /> 
-                            Neck
-                          </label>
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="rashLocation" 
-                              value="Arms" 
-                              checked={formData.rashLocation.includes("Arms")}
-                              onChange={handleInputChange}
-                            /> 
-                            Arms
-                          </label>
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="rashLocation" 
-                              value="Legs" 
-                              checked={formData.rashLocation.includes("Legs")}
-                              onChange={handleInputChange}
-                            /> 
-                            Legs
-                          </label>
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="rashLocation" 
-                              value="Torso" 
-                              checked={formData.rashLocation.includes("Torso")}
-                              onChange={handleInputChange}
-                            /> 
-                            Torso
-                          </label>
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="rashLocation" 
-                              value="Hands/Feet" 
-                              checked={formData.rashLocation.includes("Hands/Feet")}
-                              onChange={handleInputChange}
-                            /> 
-                            Hands/Feet
-                          </label>
-                        </div>
-                      </div>
-
-                      <div className="form-group">
-                        <label>How long have you had this skin condition?</label>
-                        <select 
-                          name="rashDuration"
-                          value={formData.rashDuration}
-                          onChange={handleInputChange}
-                        >
-                          <option value="">Please select</option>
-                          <option value="Less than 24 hours">Less than 24 hours</option>
-                          <option value="1-3 days">1-3 days</option>
-                          <option value="4-7 days">4-7 days</option>
-                          <option value="1-2 weeks">1-2 weeks</option>
-                          <option value="More than 2 weeks">More than 2 weeks</option>
-                        </select>
-                      </div>
-
-                      <div className="form-group">
-                        <label>How severe are your symptoms? (1 = mild, 10 = severe)</label>
-                        <div className="severity-scale">
-                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-                            <label key={num} className="severity-option">
-                              <input
-                                type="radio"
-                                name="rashSeverity"
-                                value={num.toString()}
-                                checked={formData.rashSeverity === num.toString()}
-                                onChange={handleInputChange}
-                              />
-                              {num}
-                            </label>
-                          ))}
-                        </div>
-                        <div className="severity-labels">
-                          <span>Mild</span>
-                          <span>Severe</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="form-section">
-                      <h3>Upload Image</h3>
-                      <div className="form-group">
-                        <label>Please upload a clear image of the affected area (optional)</label>
-                        <div className="image-upload">
-                          <label className="upload-button">
-                            <FaCamera /> Upload Image
-                            <input 
-                              type="file" 
-                              accept="image/*" 
-                              onChange={handleImageUpload} 
-                              style={{ display: 'none' }}
-                            />
-                          </label>
-                          {formData.rashImage && (
-                            <div className="image-preview">
-                              <img src={formData.rashImage} alt="Uploaded skin condition" />
-                              <span className="upload-success"><FaCheck /> Upload successful</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="form-section">
-                      <h3>Potential Triggers</h3>
-                      <div className="form-group checkbox-group">
-                        <label>Do you have any known allergies or sensitivities? (Check all that apply)</label>
-                        <div className="checkbox-options">
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="allergies" 
-                              value="Food allergies"
-                              checked={formData.allergies.includes("Food allergies")}
-                              onChange={handleInputChange}
-                            /> 
-                            Food allergies
-                          </label>
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="allergies" 
-                              value="Medication allergies" 
-                              checked={formData.allergies.includes("Medication allergies")}
-                              onChange={handleInputChange}
-                            /> 
-                            Medication allergies
-                          </label>
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="allergies" 
-                              value="Seasonal allergies" 
-                              checked={formData.allergies.includes("Seasonal allergies")}
-                              onChange={handleInputChange}
-                            /> 
-                            Seasonal allergies
-                          </label>
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="allergies" 
-                              value="Contact dermatitis" 
-                              checked={formData.allergies.includes("Contact dermatitis")}
-                              onChange={handleInputChange}
-                            /> 
-                            Contact dermatitis (soaps, detergents, metals)
-                          </label>
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="allergies" 
-                              value="Other" 
-                              checked={formData.allergies.includes("Other")}
-                              onChange={handleInputChange}
-                            /> 
-                            Other
-                          </label>
-                        </div>
-
-                        {formData.allergies.includes("Other") && (
-                          <div className="form-group">
-                            <label>Please specify other allergies:</label>
-                            <input
-                              type="text"
-                              name="allergyOther"
-                              value={formData.allergyOther}
-                              onChange={handleInputChange}
-                              placeholder="Please describe other allergies"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <button type="submit" className="submit-btn">Submit Questionnaire</button>
-                  </form>
-                )}
-
-                {/* Questionnaire for Urgent Headache Consultation */}
-                {appointment.id === 3 && (
-                  <form className="form-container">
-                    <div className="urgent-notice">
-                      <FaExclamationTriangle /> 
-                      <div>
-                        <h3>Urgent Appointment Notice</h3>
-                        <p>This information will be immediately forwarded to your provider. If you experience severe symptoms, please seek emergency care.</p>
-                      </div>
-                    </div>
-
-                    <div className="form-section">
-                      <h3>Headache Assessment</h3>
-                      <div className="form-group">
-                        <label>How long have you been experiencing this headache?</label>
-                        <select 
-                          name="headacheDuration"
-                          value={formData.headacheDuration}
-                          onChange={handleInputChange}
-                        >
-                          <option value="">Please select</option>
-                          <option value="Less than 24 hours">Less than 24 hours</option>
-                          <option value="1-3 days">1-3 days</option>
-                          <option value="4-7 days">4-7 days</option>
-                          <option value="1-2 weeks">1-2 weeks</option>
-                          <option value="More than 2 weeks">More than 2 weeks</option>
-                          <option value="Recurring for months">Recurring for months</option>
-                        </select>
-                      </div>
-
-                      <div className="form-group">
-                        <label>How severe is your headache? (1 = mild, 10 = worst pain imaginable)</label>
-                        <div className="severity-scale">
-                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-                            <label key={num} className="severity-option">
-                              <input
-                                type="radio"
-                                name="headacheSeverity"
-                                value={num.toString()}
-                                checked={formData.headacheSeverity === num.toString()}
-                                onChange={handleInputChange}
-                              />
-                              {num}
-                            </label>
-                          ))}
-                        </div>
-                        <div className="severity-labels">
-                          <span>Mild</span>
-                          <span>Severe</span>
-                        </div>
-                      </div>
-
-                      <div className="form-group checkbox-group">
-                        <label>Select all that apply to your headache:</label>
-                        <div className="checkbox-options">
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="headacheSymptoms" 
-                              value="Pulsating/throbbing"
-                              checked={formData.headacheSymptoms.includes("Pulsating/throbbing")}
-                              onChange={handleInputChange}
-                            /> 
-                            Pulsating/throbbing
-                          </label>
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="headacheSymptoms" 
-                              value="One-sided pain" 
-                              checked={formData.headacheSymptoms.includes("One-sided pain")}
-                              onChange={handleInputChange}
-                            /> 
-                            One-sided pain
-                          </label>
-                          <label className="urgent-option">
-                            <input 
-                              type="checkbox" 
-                              name="headacheSymptoms" 
-                              value="Worst headache ever" 
-                              checked={formData.headacheSymptoms.includes("Worst headache ever")}
-                              onChange={handleInputChange}
-                            /> 
-                            Worst headache ever experienced
-                          </label>
-                          <label className="urgent-option">
-                            <input 
-                              type="checkbox" 
-                              name="headacheSymptoms" 
-                              value="Sudden onset" 
-                              checked={formData.headacheSymptoms.includes("Sudden onset")}
-                              onChange={handleInputChange}
-                            /> 
-                            Sudden onset (seconds to minutes)
-                          </label>
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="headacheSymptoms" 
-                              value="Sensitivity to light" 
-                              checked={formData.headacheSymptoms.includes("Sensitivity to light")}
-                              onChange={handleInputChange}
-                            /> 
-                            Sensitivity to light
-                          </label>
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="headacheSymptoms" 
-                              value="Sensitivity to sound" 
-                              checked={formData.headacheSymptoms.includes("Sensitivity to sound")}
-                              onChange={handleInputChange}
-                            /> 
-                            Sensitivity to sound
-                          </label>
-                          <label>
-                            <input 
-                              type="checkbox" 
-                              name="headacheSymptoms" 
-                              value="Nausea/vomiting" 
-                              checked={formData.headacheSymptoms.includes("Nausea/vomiting")}
-                              onChange={handleInputChange}
-                            /> 
-                            Nausea/vomiting
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-
-                    {showUrgentQuestions && (
-                      <div className="form-section urgent-section">
-                        <div className="urgent-alert">
-                          <FaExclamationTriangle />
-                          <span>Based on your responses, we need additional information. These symptoms may require immediate attention.</span>
-                        </div>
-                        
-                        <h3>Additional Questions</h3>
-                        <div className="form-group">
-                          <label>Have you experienced any neurological symptoms like confusion, difficulty speaking, or weakness on one side of the body?</label>
-                          <div className="radio-options">
-                            <label>
-                              <input 
-                                type="radio" 
-                                name="neurologicalSymptoms" 
-                                value="true" 
-                                checked={formData.neurologicalSymptoms === true}
-                                onChange={() => setFormData({...formData, neurologicalSymptoms: true})}
-                              /> 
-                              Yes
-                            </label>
-                            <label>
-                              <input 
-                                type="radio" 
-                                name="neurologicalSymptoms" 
-                                value="false" 
-                                checked={formData.neurologicalSymptoms === false}
-                                onChange={() => setFormData({...formData, neurologicalSymptoms: false})}
-                              /> 
-                              No
-                            </label>
-                          </div>
-                        </div>
-
-                        <div className="form-group">
-                          <label>Have you noticed any changes in your vision (blurred vision, double vision, vision loss)?</label>
-                          <div className="radio-options">
-                            <label>
-                              <input 
-                                type="radio" 
-                                name="visionChanges" 
-                                value="true" 
-                                checked={formData.visionChanges === true}
-                                onChange={() => setFormData({...formData, visionChanges: true})}
-                              /> 
-                              Yes
-                            </label>
-                            <label>
-                              <input 
-                                type="radio" 
-                                name="visionChanges" 
-                                value="false" 
-                                checked={formData.visionChanges === false}
-                                onChange={() => setFormData({...formData, visionChanges: false})}
-                              /> 
-                              No
-                            </label>
-                          </div>
-                        </div>
-
-                        <div className="form-group checkbox-group">
-                          <label>Have you experienced any of these additional symptoms? (Check all that apply)</label>
-                          <div className="checkbox-options">
-                            <label>
-                              <input 
-                                type="checkbox" 
-                                name="additionalSymptoms" 
-                                value="Fever"
-                                checked={formData.additionalSymptoms.includes("Fever")}
-                                onChange={handleInputChange}
-                              /> 
-                              Fever
-                            </label>
-                            <label>
-                              <input 
-                                type="checkbox" 
-                                name="additionalSymptoms" 
-                                value="Stiff neck" 
-                                checked={formData.additionalSymptoms.includes("Stiff neck")}
-                                onChange={handleInputChange}
-                              /> 
-                              Stiff neck
-                            </label>
-                            <label>
-                              <input 
-                                type="checkbox" 
-                                name="additionalSymptoms" 
-                                value="Seizures" 
-                                checked={formData.additionalSymptoms.includes("Seizures")}
-                                onChange={handleInputChange}
-                              /> 
-                              Seizures
-                            </label>
-                            <label>
-                              <input 
-                                type="checkbox" 
-                                name="additionalSymptoms" 
-                                value="Loss of consciousness" 
-                                checked={formData.additionalSymptoms.includes("Loss of consciousness")}
-                                onChange={handleInputChange}
-                              /> 
-                              Loss of consciousness
-                            </label>
-                          </div>
-                        </div>
-                        
-                        {(formData.neurologicalSymptoms || 
-                          formData.visionChanges || 
-                          formData.additionalSymptoms.length > 0) && (
-                          <div className="emergency-notice">
-                            <h3>URGENT NOTICE</h3>
-                            <p>Based on your responses, your symptoms may require immediate medical attention. While we're expediting your telemedicine appointment, please consider seeking emergency care if symptoms worsen.</p>
-                            <p>Your responses have been flagged for immediate provider review.</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    <button type="submit" className="submit-btn urgent-submit">Submit Urgent Questionnaire</button>
-                  </form>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
