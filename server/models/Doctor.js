@@ -47,6 +47,7 @@ const doctorSchema = new mongoose.Schema({
   }],
   practiceLocation: String,
   consultationFee: Number,
+  accountHolder: String,
   bankName: String,
   accountNumber: String,
   routingNumber: String,

@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const Patient = require('../models/Patient');
-const EmergencyContact = require('../models/EmergencyContact');
+// Removed EmergencyContact import as it no longer exists
 const Allergy = require('../models/Allergy');
 const ChronicCondition = require('../models/ChronicCondition');
 
@@ -274,8 +274,7 @@ exports.getTeleconsultationPreferences = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const patient = await Patient.findOne({ user: userId })
-      .populate('emergencyContact', 'name phone relationship');
+    const patient = await Patient.findOne({ user: userId });
 
     if (!patient) {
       return res.status(404).json({
@@ -342,25 +341,13 @@ exports.updateTeleconsultationPreferences = async (req, res) => {
 
     patient.teleconsultationPreferences = teleconsultationPrefs;
 
-    // Update or create emergency contact if provided
-    let updatedEmergencyContact = patient.emergencyContact;
+    // Update emergency contact directly in the patient document
     if (emergencyContact && (emergencyContact.name || emergencyContact.phone || emergencyContact.relationship)) {
-      // If patient already has an emergency contact, update it
-      if (patient.emergencyContact) {
-        updatedEmergencyContact = await EmergencyContact.findByIdAndUpdate(
-          patient.emergencyContact,
-          emergencyContact,
-          { new: true }
-        );
-      } else {
-        // Create a new emergency contact
-        const newEmergencyContact = new EmergencyContact({
-          patient: patient._id,
-          ...emergencyContact
-        });
-        updatedEmergencyContact = await newEmergencyContact.save();
-        patient.emergencyContact = updatedEmergencyContact._id;
-      }
+      patient.emergencyContact = {
+        name: emergencyContact.name || patient.emergencyContact?.name || '',
+        phone: emergencyContact.phone || patient.emergencyContact?.phone || '',
+        relationship: emergencyContact.relationship || patient.emergencyContact?.relationship || ''
+      };
     }
 
     await patient.save();
@@ -371,7 +358,7 @@ exports.updateTeleconsultationPreferences = async (req, res) => {
       data: {
         preferredPlatform: teleconsultationPrefs.preferredPlatform,
         isEnabled: teleconsultationPrefs.isEnabled,
-        emergencyContact: updatedEmergencyContact || null
+        emergencyContact: patient.emergencyContact || null
       }
     });
   } catch (error) {

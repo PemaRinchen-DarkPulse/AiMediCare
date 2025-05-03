@@ -2,7 +2,7 @@ const asyncHandler = require('express-async-handler');
 const Patient = require('../models/Patient');
 // We'll need to create these models
 const HealthRecord = require('../models/HealthRecord');
-const EmergencyContact = require('../models/EmergencyContact');
+// Removed EmergencyContact import as it no longer exists
 const Allergy = require('../models/Allergy');
 const ChronicCondition = require('../models/ChronicCondition');
 const Prescription = require('../models/Prescription'); // Changed from Medication to Prescription
@@ -52,11 +52,10 @@ const getEmergencyContacts = asyncHandler(async (req, res) => {
     throw new Error('Patient profile not found');
   }
 
-  const emergencyContacts = await EmergencyContact.find({ patient: patient._id });
-
+  // Return emergency contact directly from the patient model
   res.status(200).json({
     success: true,
-    data: emergencyContacts
+    data: patient.emergencyContact ? [patient.emergencyContact] : []
   });
 });
 
@@ -248,6 +247,50 @@ const getImmunizations = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Add vital record
+// @route   POST /api/patient/vitals
+// @access  Private
+const addVitalRecord = asyncHandler(async (req, res) => {
+  const { vitalType, value, systolic, diastolic, unit, notes, date } = req.body;
+
+  // Find patient ID associated with the logged-in user
+  const patient = await Patient.findOne({ user: req.user._id });
+  
+  if (!patient) {
+    res.status(404);
+    throw new Error('Patient profile not found');
+  }
+
+  // Validate inputs based on vital type
+  if (vitalType === 'bloodPressure') {
+    if (!systolic || !diastolic) {
+      res.status(400);
+      throw new Error('Systolic and diastolic values are required for blood pressure');
+    }
+  } else if (!value) {
+    res.status(400);
+    throw new Error('Value is required for this vital type');
+  }
+
+  // Create vital record
+  const vitalRecord = await VitalRecord.create({
+    patient: patient._id,
+    vitalType,
+    value: value || null,
+    systolic: systolic || null,
+    diastolic: diastolic || null,
+    unit: unit || '',
+    notes: notes || '',
+    date: date || new Date(),
+    recordedBy: 'Patient'
+  });
+
+  res.status(201).json({
+    success: true,
+    data: vitalRecord
+  });
+});
+
 module.exports = {
   getPatientProfile,
   getEmergencyContacts,
@@ -256,5 +299,6 @@ module.exports = {
   getChronicConditions,
   getMedications,
   getVitalsHistory,
-  getImmunizations
+  getImmunizations,
+  addVitalRecord
 };

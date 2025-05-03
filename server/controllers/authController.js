@@ -16,6 +16,8 @@ const signToken = (id) => {
 // Register a new user with email verification
 exports.register = async (req, res) => {
   try {
+    console.log('Registration request received:', req.body);
+    
     const { 
       name, email, password, role, dateOfBirth, gender, phoneNumber,
       // Address fields
@@ -23,20 +25,20 @@ exports.register = async (req, res) => {
       
       // Doctor specific fields
       medicalLicenseNumber, licenseExpiryDate, issuingAuthority, specialization,
-      yearsExperience, hospitalAffiliation, practiceLocation, consultationFee,
+      yearsExperience, hospitalAffiliation, hospitalName, hospitalAddress, 
+      practiceLocation, consultationFee, accountHolder,
       bankName, accountNumber, routingNumber,
       // Clinic details
       clinicName, clinicPhone, clinicWebsite, 
       clinicStreet, clinicCity, clinicState, clinicZipCode, clinicCountry,
-      // Hospital affiliations
-      hospitalName, hospitalRole, hospitalStartYear, hospitalCurrent, hospitalEndYear,
       
       // Patient specific fields
       emergencyContactName, emergencyContactPhone, emergencyContactRelationship,
       insuranceProvider, policyNumber, groupNumber,
       
       // Pharmacist specific fields
-      licenseNumber, pharmacyName, pharmacyAddress, pharmacyPhone
+      licenseNumber, pharmacyName, pharmacyAddress, pharmacyPhone,
+      weekdayHours, weekendHours, customHours
     } = req.body;
 
     // Check if user already exists
@@ -73,39 +75,46 @@ exports.register = async (req, res) => {
     // Generate verification token
     const verificationToken = newUser.generateVerificationToken();
     
+    console.log('Saving new user:', newUser);
+    
     // Save user to get the _id
     await newUser.save();
     
     // Based on role, create and save role-specific data
     try {
       if (role?.toLowerCase() === 'doctor' && medicalLicenseNumber) {
+        console.log('Creating doctor profile');
         const doctorProfile = new Doctor({
           user: newUser._id,
           medicalLicenseNumber,
           licenseExpiryDate,
           issuingAuthority,
           specialty: specialization,
-          yearsExperience,
-          experience: yearsExperience, // Save in both fields for compatibility
-          hospitalName: hospitalName || hospitalAffiliation, // Use hospitalName if available, otherwise use hospitalAffiliation
-
-          clinicAddress: {
-              street: clinicStreet || streetAddress,
-              city: clinicCity || city,
-              state: clinicState || stateProvince,
-              zipCode: clinicZipCode || zipCode,
-              country: clinicCountry || country
-            }
-        ,
-          practiceLocation,
-          consultationFee,
+          specialization,
+          yearsExperience: Number(yearsExperience) || 0,
+          experience: Number(yearsExperience) || 0,
+          hospitalName: hospitalName || hospitalAffiliation,
+          hospitalAddress,
+          practiceLocation: practiceLocation || hospitalAddress,
+          consultationFee: Number(consultationFee) || 0,
+          accountHolder,
           bankName,
           accountNumber,
-          routingNumber
+          routingNumber,
+          clinicAddress: {
+            street: clinicStreet || streetAddress,
+            city: clinicCity || city,
+            state: clinicState || stateProvince,
+            zipCode: clinicZipCode || zipCode,
+            country: clinicCountry || country
+          }
         });
+        console.log('Doctor profile created:', doctorProfile);
         await doctorProfile.save();
+        console.log('Doctor profile saved successfully');
       } 
       else if (role?.toLowerCase() === 'patient') {
+        console.log('Creating patient profile');
         const patientProfile = new Patient({
           user: newUser._id,
           emergencyContact: {
@@ -119,25 +128,38 @@ exports.register = async (req, res) => {
             groupNumber
           }
         });
+        console.log('Patient profile created:', patientProfile);
         await patientProfile.save();
+        console.log('Patient profile saved successfully');
       } 
       else if (role?.toLowerCase() === 'pharmacist' && licenseNumber) {
+        console.log('Creating pharmacist profile');
         const pharmacistProfile = new Pharmacist({
           user: newUser._id,
           licenseNumber,
+          licenseExpiryDate,
           issuingAuthority,
-          yearsExperience,
+          yearsExperience: Number(yearsExperience) || 0,
           pharmacyName,
           pharmacyAddress,
           pharmacyPhone,
+          accountHolder,
           bankName,
           accountNumber,
-          routingNumber
+          routingNumber,
+          operationalHours: {
+            weekday: weekdayHours,
+            weekend: weekendHours,
+            custom: customHours
+          }
         });
+        console.log('Pharmacist profile created:', pharmacistProfile);
         await pharmacistProfile.save();
+        console.log('Pharmacist profile saved successfully');
       }
     } catch (profileError) {
       // If there's an error saving the profile, delete the user and throw error
+      console.error('Error saving profile:', profileError);
       await User.findByIdAndDelete(newUser._id);
       throw new Error(`Error saving ${role} profile: ${profileError.message}`);
     }

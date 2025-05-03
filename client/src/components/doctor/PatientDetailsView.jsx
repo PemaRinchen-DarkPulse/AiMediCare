@@ -70,6 +70,7 @@ const PatientDetailsView = ({ patientId }) => {
     systolic: '',
     diastolic: '',
     value: '',
+    unit: 'mmHg', // Adding unit field with default value
     notes: '',
     date: new Date().toISOString().split('T')[0]
   });
@@ -78,7 +79,8 @@ const PatientDetailsView = ({ patientId }) => {
     allergen: '',
     reaction: '',
     severity: 'Mild',
-    notes: ''
+    notes: '',
+    dateIdentified: new Date().toISOString().split('T')[0]
   });
   
   const [medicalHistoryForm, setMedicalHistoryForm] = useState({
@@ -91,8 +93,10 @@ const PatientDetailsView = ({ patientId }) => {
   
   const [chronicConditionForm, setChronicConditionForm] = useState({
     condition: '',
-    diagnosisDate: new Date().toISOString().split('T')[0],
+    diagnosedDate: new Date().toISOString().split('T')[0],
     severity: 'Mild',
+    status: 'Monitoring',
+    treatingProvider: '',
     managementPlan: '',
     notes: ''
   });
@@ -101,6 +105,7 @@ const PatientDetailsView = ({ patientId }) => {
     vaccine: '',
     date: new Date().toISOString().split('T')[0],
     administrator: '',
+    facility: '',
     batchNumber: '',
     nextDoseDate: '',
     notes: ''
@@ -206,6 +211,7 @@ const PatientDetailsView = ({ patientId }) => {
         systolic: '',
         diastolic: '',
         value: '',
+        unit: 'mmHg', // Ensure unit is included in the reset
         notes: '',
         date: new Date().toISOString().split('T')[0]
       });
@@ -229,7 +235,8 @@ const PatientDetailsView = ({ patientId }) => {
         allergen: '',
         reaction: '',
         severity: 'Mild',
-        notes: ''
+        notes: '',
+        dateIdentified: new Date().toISOString().split('T')[0]
       });
     } catch (err) {
       console.error('Error adding allergy record:', err);
@@ -272,8 +279,10 @@ const PatientDetailsView = ({ patientId }) => {
       // Reset form
       setChronicConditionForm({
         condition: '',
-        diagnosisDate: new Date().toISOString().split('T')[0],
+        diagnosedDate: new Date().toISOString().split('T')[0],
         severity: 'Mild',
+        status: 'Monitoring',
+        treatingProvider: '',
         managementPlan: '',
         notes: ''
       });
@@ -297,6 +306,7 @@ const PatientDetailsView = ({ patientId }) => {
         vaccine: '',
         date: new Date().toISOString().split('T')[0],
         administrator: '',
+        facility: '',
         batchNumber: '',
         nextDoseDate: '',
         notes: ''
@@ -509,7 +519,111 @@ const PatientDetailsView = ({ patientId }) => {
                           {vitalsData.weight.slice(0, 5).map((record, index) => (
                             <TableRow key={index}>
                               <TableCell>{formatDate(record.date)}</TableCell>
-                              <TableCell>{record.value} kg</TableCell>
+                              <TableCell>{record.value} {record.unit || 'kg'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Paper>
+                </Grid>
+              )}
+
+              {vitalsData.bloodSugar && vitalsData.bloodSugar.length > 0 && (
+                <Grid item xs={12} md={6}>
+                  <Paper sx={{ p: 2 }}>
+                    <Typography variant="subtitle1" gutterBottom>Blood Sugar</Typography>
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Date</TableCell>
+                            <TableCell>Reading</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {vitalsData.bloodSugar.slice(0, 5).map((record, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{formatDate(record.date)}</TableCell>
+                              <TableCell>{record.value} {record.unit || 'mg/dL'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Paper>
+                </Grid>
+              )}
+
+              {vitalsData.cholesterol && vitalsData.cholesterol.length > 0 && (
+                <Grid item xs={12} md={6}>
+                  <Paper sx={{ p: 2 }}>
+                    <Typography variant="subtitle1" gutterBottom>Cholesterol</Typography>
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Date</TableCell>
+                            <TableCell>Reading</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {vitalsData.cholesterol.slice(0, 5).map((record, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{formatDate(record.date)}</TableCell>
+                              <TableCell>{record.value} {record.unit || 'mg/dL'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Paper>
+                </Grid>
+              )}
+
+              {vitalsData.temperature && vitalsData.temperature.length > 0 && (
+                <Grid item xs={12} md={6}>
+                  <Paper sx={{ p: 2 }}>
+                    <Typography variant="subtitle1" gutterBottom>Temperature</Typography>
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Date</TableCell>
+                            <TableCell>Reading</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {vitalsData.temperature.slice(0, 5).map((record, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{formatDate(record.date)}</TableCell>
+                              <TableCell>{record.value} {record.unit || '°C'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Paper>
+                </Grid>
+              )}
+
+              {vitalsData.oxygenSaturation && vitalsData.oxygenSaturation.length > 0 && (
+                <Grid item xs={12} md={6}>
+                  <Paper sx={{ p: 2 }}>
+                    <Typography variant="subtitle1" gutterBottom>Oxygen Saturation</Typography>
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Date</TableCell>
+                            <TableCell>Reading</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {vitalsData.oxygenSaturation.slice(0, 5).map((record, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{formatDate(record.date)}</TableCell>
+                              <TableCell>{record.value}{record.unit || '%'}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
@@ -521,7 +635,11 @@ const PatientDetailsView = ({ patientId }) => {
               
               {(!vitalsData.bloodPressure || vitalsData.bloodPressure.length === 0) &&
                (!vitalsData.heartRate || vitalsData.heartRate.length === 0) &&
-               (!vitalsData.weight || vitalsData.weight.length === 0) && (
+               (!vitalsData.weight || vitalsData.weight.length === 0) &&
+               (!vitalsData.bloodSugar || vitalsData.bloodSugar.length === 0) &&
+               (!vitalsData.cholesterol || vitalsData.cholesterol.length === 0) &&
+               (!vitalsData.temperature || vitalsData.temperature.length === 0) &&
+               (!vitalsData.oxygenSaturation || vitalsData.oxygenSaturation.length === 0) && (
                 <Grid item xs={12}>
                   <Alert severity="info">No vital records found for this patient.</Alert>
                 </Grid>
@@ -637,6 +755,8 @@ const PatientDetailsView = ({ patientId }) => {
                     <TableCell>Condition</TableCell>
                     <TableCell>Diagnosis Date</TableCell>
                     <TableCell>Severity</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Treating Provider</TableCell>
                     <TableCell>Management Plan</TableCell>
                     <TableCell>Notes</TableCell>
                   </TableRow>
@@ -645,8 +765,10 @@ const PatientDetailsView = ({ patientId }) => {
                   {chronicConditions.map((condition) => (
                     <TableRow key={condition._id}>
                       <TableCell>{condition.condition}</TableCell>
-                      <TableCell>{formatDate(condition.diagnosisDate)}</TableCell>
+                      <TableCell>{formatDate(condition.diagnosedDate)}</TableCell>
                       <TableCell>{condition.severity}</TableCell>
+                      <TableCell>{condition.status}</TableCell>
+                      <TableCell>{condition.treatingProvider}</TableCell>
                       <TableCell>{condition.managementPlan}</TableCell>
                       <TableCell>{condition.notes}</TableCell>
                     </TableRow>
@@ -680,6 +802,7 @@ const PatientDetailsView = ({ patientId }) => {
                     <TableCell>Vaccine</TableCell>
                     <TableCell>Date</TableCell>
                     <TableCell>Administrator</TableCell>
+                    <TableCell>Facility</TableCell>
                     <TableCell>Batch Number</TableCell>
                     <TableCell>Next Dose Due</TableCell>
                     <TableCell>Notes</TableCell>
@@ -691,6 +814,7 @@ const PatientDetailsView = ({ patientId }) => {
                       <TableCell>{immunization.vaccine}</TableCell>
                       <TableCell>{formatDate(immunization.date)}</TableCell>
                       <TableCell>{immunization.administrator}</TableCell>
+                      <TableCell>{immunization.facility}</TableCell>
                       <TableCell>{immunization.batchNumber}</TableCell>
                       <TableCell>{immunization.nextDoseDate ? formatDate(immunization.nextDoseDate) : 'N/A'}</TableCell>
                       <TableCell>{immunization.notes}</TableCell>
@@ -718,13 +842,86 @@ const PatientDetailsView = ({ patientId }) => {
                     name="vitalType"
                     value={vitalForm.vitalType}
                     label="Vital Type"
-                    onChange={handleVitalFormChange}
+                    onChange={(e) => {
+                      const vitalType = e.target.value;
+                      // Update unit based on vital type
+                      let unit = '';
+                      switch(vitalType) {
+                        case 'bloodPressure':
+                          unit = 'mmHg';
+                          break;
+                        case 'heartRate':
+                          unit = 'bpm';
+                          break;
+                        case 'bloodSugar':
+                          unit = 'mg/dL';
+                          break;
+                        case 'weight':
+                          unit = 'kg';
+                          break;
+                        case 'cholesterol':
+                          unit = 'mg/dL';
+                          break;
+                        case 'temperature':
+                          unit = '°C';
+                          break;
+                        case 'oxygenSaturation':
+                          unit = '%';
+                          break;
+                        default:
+                          unit = '';
+                      }
+                      setVitalForm(prev => ({ 
+                        ...prev, 
+                        vitalType, 
+                        unit 
+                      }));
+                    }}
                   >
                     <MenuItem value="bloodPressure">Blood Pressure</MenuItem>
                     <MenuItem value="heartRate">Heart Rate</MenuItem>
                     <MenuItem value="bloodSugar">Blood Sugar</MenuItem>
                     <MenuItem value="weight">Weight</MenuItem>
                     <MenuItem value="cholesterol">Cholesterol</MenuItem>
+                    <MenuItem value="temperature">Temperature</MenuItem>
+                    <MenuItem value="oxygenSaturation">Oxygen Saturation</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              
+              {/* Unit field */}
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Unit</InputLabel>
+                  <Select
+                    name="unit"
+                    value={vitalForm.unit}
+                    label="Unit"
+                    onChange={handleVitalFormChange}
+                    required
+                  >
+                    {vitalForm.vitalType === 'bloodPressure' && <MenuItem value="mmHg">mmHg</MenuItem>}
+                    {vitalForm.vitalType === 'heartRate' && <MenuItem value="bpm">bpm</MenuItem>}
+                    {vitalForm.vitalType === 'bloodSugar' && (
+                      <>
+                        <MenuItem value="mg/dL">mg/dL</MenuItem>
+                        <MenuItem value="mmol/L">mmol/L</MenuItem>
+                      </>
+                    )}
+                    {vitalForm.vitalType === 'weight' && (
+                      <>
+                        <MenuItem value="kg">kg</MenuItem>
+                        <MenuItem value="lbs">lbs</MenuItem>
+                      </>
+                    )}
+                    {vitalForm.vitalType === 'cholesterol' && <MenuItem value="mg/dL">mg/dL</MenuItem>}
+                    {vitalForm.vitalType === 'temperature' && (
+                      <>
+                        <MenuItem value="°C">°C</MenuItem>
+                        <MenuItem value="°F">°F</MenuItem>
+                      </>
+                    )}
+                    {vitalForm.vitalType === 'oxygenSaturation' && <MenuItem value="%">%</MenuItem>}
                   </Select>
                 </FormControl>
               </Grid>
@@ -859,6 +1056,18 @@ const PatientDetailsView = ({ patientId }) => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
+                  name="dateIdentified"
+                  label="Date Identified"
+                  type="date"
+                  value={allergyForm.dateIdentified}
+                  onChange={handleAllergyFormChange}
+                  required
+                />
+              </Grid>
+              
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
                   name="notes"
                   label="Notes"
                   multiline
@@ -982,10 +1191,10 @@ const PatientDetailsView = ({ patientId }) => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  name="diagnosisDate"
+                  name="diagnosedDate"
                   label="Diagnosis Date"
                   type="date"
-                  value={chronicConditionForm.diagnosisDate}
+                  value={chronicConditionForm.diagnosedDate}
                   onChange={handleChronicConditionFormChange}
                   required
                 />
@@ -1005,6 +1214,27 @@ const PatientDetailsView = ({ patientId }) => {
                     <MenuItem value="Severe">Severe</MenuItem>
                   </Select>
                 </FormControl>
+              </Grid>
+              
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="status"
+                  label="Status"
+                  value={chronicConditionForm.status}
+                  onChange={handleChronicConditionFormChange}
+                  required
+                />
+              </Grid>
+              
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="treatingProvider"
+                  label="Treating Provider"
+                  value={chronicConditionForm.treatingProvider}
+                  onChange={handleChronicConditionFormChange}
+                />
               </Grid>
               
               <Grid item xs={12}>
@@ -1080,6 +1310,18 @@ const PatientDetailsView = ({ patientId }) => {
                   label="Administrator"
                   value={immunizationForm.administrator}
                   onChange={handleImmunizationFormChange}
+                  required
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  name="facility"
+                  label="Facility"
+                  value={immunizationForm.facility}
+                  onChange={handleImmunizationFormChange}
+                  required
                 />
               </Grid>
               
