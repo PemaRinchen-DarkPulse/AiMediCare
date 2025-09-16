@@ -225,15 +225,15 @@ const PatientSettings = () => {
 
   if (loading && !profileData.name) {
     return (
-      <div className="text-center my-5">
+      <Container className="my-5 text-center">
         <Spinner color="primary" />
         <p className="mt-3">Loading settings...</p>
-      </div>
+      </Container>
     );
   }
 
   return (
-    <div>
+    <Container className="my-5">
       <h2 className="mb-4">Patient Settings</h2>
       
       {error && (
@@ -338,7 +338,7 @@ const PatientSettings = () => {
           </Card>
         </Col>
       </Row>
-    </div>
+    </Container>
   );
 };
 

@@ -1,13 +1,11 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { 
   FaTachometerAlt, FaCalendarCheck, FaFileMedical, FaPills, 
   FaNotesMedical, FaEnvelope, FaFileInvoiceDollar, FaCog 
 } from "react-icons/fa";
 
 const SideBarList = ({ isOpen }) => {
-  const location = useLocation();
-  
   const menuItems = [
     { icon: <FaTachometerAlt />, label: "Dashboard", path: "/patient/dashboard" },
     { icon: <FaCalendarCheck />, label: "Appointments", path: "/patient/appointments" },
@@ -19,22 +17,26 @@ const SideBarList = ({ isOpen }) => {
   ];
 
   return (
-    <ul className="sidebar-menu">
+    <ul style={{ padding: 0, margin: 0, listStyleType: "none" }}>
       {menuItems.map((item, index) => (
-        <li key={index} className="sidebar-menu-item">
+        <li key={index}>
           <Link
             to={item.path}
-            className={`sidebar-menu-link ${location.pathname === item.path ? 'active' : ''}`}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              padding: "0.5rem 1rem",
+              color: "#212529",
+              textDecoration: "none",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis"
+            }}
           >
-            <div className="sidebar-menu-icon">
+            <div style={{ marginRight: isOpen ? "10px" : "0", width: "24px" }}>
               {item.icon}
             </div>
-            <span className="sidebar-menu-text">{item.label}</span>
-            {!isOpen && (
-              <div className="sidebar-tooltip">
-                {item.label}
-              </div>
-            )}
+            {isOpen && <span>{item.label}</span>}
           </Link>
         </li>
       ))}

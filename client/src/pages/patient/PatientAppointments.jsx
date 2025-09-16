@@ -2,9 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Container, Row, Col, Card, CardBody, CardTitle, Badge, 
   Nav, NavItem, NavLink, TabContent, TabPane, Button,
-  Form, FormGroup, Label, Input, FormFeedback,
+  Progress, Form, FormGroup, Label, Input, FormFeedback,
   Spinner, InputGroup, ListGroup, ListGroupItem, Alert
 } from 'reactstrap';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 import { Formik, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'react-toastify';
@@ -15,8 +17,70 @@ import {
   FaHistory, FaSpinner, FaCheckCircle, FaTimes
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import ClockTimePicker from '../../components/forms/ClockTimePicker';
 import UserAvatar from '../../components/UserAvatar';
 import './PatientAppointments.css';
+
+const SearchableDropdown = ({ options, value, onChange, placeholder, id, label }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const dropdownRef = useRef(null);
+  
+  const filteredOptions = options.filter(option => 
+    option.label.toLowerCase().includes(search.toLowerCase())
+  );
+  
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+  
+  return (
+    <div className="searchable-dropdown" ref={dropdownRef}>
+      <Label for={id}>{label}</Label>
+      <div className="dropdown-container">
+        <Input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onClick={() => setIsOpen(true)}
+          placeholder={placeholder}
+          id={id}
+        />
+        
+        {isOpen && (
+          <div className="dropdown-menu show w-100">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((option, index) => (
+                <div 
+                  key={option.value} 
+                  className={`dropdown-item ${value === option.value ? 'active' : ''}`}
+                  onClick={() => {
+                    onChange(option.value);
+                    setSearch(option.label);
+                    setIsOpen(false);
+                  }}
+                >
+                  {option.label}
+                </div>
+              ))
+            ) : (
+              <div className="dropdown-item disabled">No results found</div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const PatientAppointments = () => {
   const navigate = useNavigate();
@@ -28,6 +92,12 @@ const PatientAppointments = () => {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
   const [reasonForVisit, setReasonForVisit] = useState('');
   const [additionalNotes, setAdditionalNotes] = useState('');
+  const [specialtyFilter, setSpecialtyFilter] = useState('all');
+  const [locationFilter, setLocationFilter] = useState('all');
+  const [availabilityFilter, setAvailabilityFilter] = useState('all');
+  const [consultationTypeFilter, setConsultationTypeFilter] = useState('all');
+  const [specialtySearchQuery, setSpecialtySearchQuery] = useState('');
+  const [locationSearchQuery, setLocationSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [providers, setProviders] = useState([]);
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
@@ -35,7 +105,13 @@ const PatientAppointments = () => {
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
   const [applicationTracking, setApplicationTracking] = useState([]);
   const [selectedApplication, setSelectedApplication] = useState(null);
+  const [specialties, setSpecialties] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [error, setError] = useState(null);
+  
+  // Move the state from renderReasonInput to the top level to fix the Hook order issue
+  const [triageQuestions, setTriageQuestions] = useState([]);
+  const [triageAnswers, setTriageAnswers] = useState({});
 
   useEffect(() => {
     fetchProviders();
@@ -73,6 +149,12 @@ const PatientAppointments = () => {
         
         console.log("Processed doctors:", processedDoctors); // Debug logging
         setProviders(processedDoctors);
+        
+        const uniqueSpecialties = [...new Set(processedDoctors.map(doctor => doctor.specialty))];
+        const uniqueLocations = [...new Set(processedDoctors.map(doctor => doctor.location))];
+        
+        setSpecialties(uniqueSpecialties);
+        setLocations(uniqueLocations);
       } else {
         throw new Error(data.message || 'Failed to fetch providers');
       }
@@ -278,10 +360,8 @@ const PatientAppointments = () => {
       if (!token) {
         toast.error('Please log in to book an appointment');
         navigate('/login');
-        return { success: false, error: 'Authentication required' };
+        return { success: false };
       }
-      
-      console.log('Sending appointment data to server:', appointmentData);
       
       const response = await fetch('http://localhost:5000/api/appointments', {
         method: 'POST',
@@ -293,22 +373,17 @@ const PatientAppointments = () => {
       });
       
       const data = await response.json();
-      console.log('Server response:', data);
       
       if (!response.ok) {
-        throw new Error(data.message || `HTTP error! status: ${response.status}`);
+        throw new Error(data.message || 'Failed to book appointment');
       }
       
-      if (data.status === 'success' || data.success) {
-        console.log('Appointment created successfully:', data);
-        return { success: true, data };
-      } else {
-        throw new Error(data.message || 'Unexpected response format from server');
-      }
+      toast.success('Appointment booked successfully!');
+      return { success: true, data };
     } catch (error) {
       console.error('Error booking appointment:', error);
-      const errorMessage = error.message || 'Failed to book appointment. Please try again.';
-      return { success: false, error: errorMessage };
+      toast.error(error.message || 'Failed to book appointment');
+      return { success: false, error };
     } finally {
       setIsLoading(false);
     }
@@ -372,6 +447,8 @@ const PatientAppointments = () => {
     setSelectedAppointmentType(null);
     setSelectedDate(null);
     setSelectedTimeSlot(null);
+    setReasonForVisit('');
+    setAdditionalNotes('');
     setActiveTab('booking');
   };
 
@@ -382,6 +459,325 @@ const PatientAppointments = () => {
       formattedTime: selectedTime.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'})
     };
     setSelectedTimeSlot(newTimeSlot);
+  };
+
+  const renderSimpleBookingForm = () => {
+    const validationSchema = Yup.object().shape({
+      providerId: Yup.string().required('Please select a healthcare provider'),
+      appointmentType: Yup.string().required('Please select an appointment type'),
+      date: Yup.date().required('Please select a date').min(new Date(), 'Date cannot be in the past'),
+      time: Yup.string().required('Please select a time'),
+      reasonForVisit: Yup.string()
+        .required('Please provide a reason for your visit')
+        .min(10, 'Please describe your reason in more detail')
+        .max(500, 'Description is too long'),
+      additionalNotes: Yup.string().max(500, 'Notes are too long')
+    });
+
+    const appointmentTypes = [
+      { value: 'Video Call', label: 'Video Call - Virtual appointment via secure video' },
+      { value: 'Phone Call', label: 'Phone Call - Talk with your provider over the phone' },
+      { value: 'In-Person Visit', label: 'In-Person Visit - Visit the medical facility' }
+    ];
+
+    const isProviderAvailable = (date) => {
+      if (!selectedProvider) return true; // If no provider selected, don't show warning
+      
+      // If provider doesn't have availableDates array or it's empty, assume they're generally available
+      if (!selectedProvider.availableDates || selectedProvider.availableDates.length === 0) {
+        return true;
+      }
+      
+      // Compare dates by normalizing to YYYY-MM-DD format to avoid timezone issues
+      const selectedDateString = date.toISOString().split('T')[0];
+      return selectedProvider.availableDates.some(availableDate => {
+        // Ensure availableDate is a Date object
+        const dateObj = availableDate instanceof Date ? availableDate : new Date(availableDate);
+        const availableDateString = dateObj.toISOString().split('T')[0];
+        return availableDateString === selectedDateString;
+      });
+    };
+
+    return (
+      <div className="simple-booking-form">
+        <h4 className="mb-4">Book Your Appointment</h4>
+        
+        <Formik
+          initialValues={{
+            providerId: selectedProvider?.id || '',
+            appointmentType: selectedAppointmentType || '',
+            date: selectedDate ? selectedDate.toISOString().split('T')[0] : '',
+            time: selectedTimeSlot?.formattedTime || '',
+            reasonForVisit: reasonForVisit || '',
+            additionalNotes: additionalNotes || ''
+          }}
+          validationSchema={validationSchema}
+          onSubmit={async (values, { setSubmitting }) => {
+            try {
+              setSubmitting(true);
+              setIsLoading(true);
+
+              // Find the selected provider
+              const provider = providers.find(p => p.id === values.providerId);
+              
+              // Create appointment data
+              const appointmentData = {
+                doctorId: values.providerId,
+                date: new Date(values.date),
+                time: values.time,
+                type: values.appointmentType,
+                reason: values.reasonForVisit,
+                additionalNotes: values.additionalNotes
+              };
+
+              // Call API to create appointment
+              const result = await createAppointment(appointmentData);
+              
+              if (result.success) {
+                // Get appointment ID
+                let appointmentId;
+                if (result.data?.appointment?._id) {
+                  appointmentId = result.data.appointment._id;
+                } else if (result.data?._id) {
+                  appointmentId = result.data._id;
+                } else if (result.data?.id) {
+                  appointmentId = result.data.id;
+                } else {
+                  appointmentId = `temp_${Math.floor(Math.random() * 1000) + 300}`;
+                }
+
+                // Create tracking record
+                const newApplication = {
+                  id: appointmentId,
+                  providerId: provider.id,
+                  providerName: provider.name,
+                  providerImage: provider.image,
+                  specialty: provider.specialty,
+                  date: new Date(values.date),
+                  time: values.time,
+                  type: values.appointmentType,
+                  reason: values.reasonForVisit,
+                  status: 'pending',
+                  submittedOn: new Date(),
+                  currentStep: 'Doctor Review',
+                  medicalReviewStatus: 'In Progress',
+                  estimatedCompletionTime: '24-48 hours'
+                };
+
+                // Add to tracking
+                setApplicationTracking(prev => [...prev, newApplication]);
+
+                // Success message
+                toast.success('Appointment request submitted successfully!');
+
+                // Refresh data
+                fetchAppointments();
+                fetchApplicationTracking();
+
+                // Reset form and go back to appointments
+                setActiveTab('upcoming');
+                setIsBooking(false);
+                setSelectedProvider(null);
+                setSelectedAppointmentType(null);
+                setSelectedDate(null);
+                setSelectedTimeSlot(null);
+                setReasonForVisit('');
+                setAdditionalNotes('');
+              } else {
+                toast.error(result.error || 'Failed to create appointment');
+              }
+            } catch (error) {
+              console.error('Error booking appointment:', error);
+              toast.error('Something went wrong. Please try again.');
+            } finally {
+              setSubmitting(false);
+              setIsLoading(false);
+            }
+          }}
+        >
+          {({ values, setFieldValue, isSubmitting, isValid, handleSubmit }) => (
+            <Form onSubmit={handleSubmit}>
+              <Row>
+                <Col md={6}>
+                  <FormGroup>
+                    <Label for="providerId">Healthcare Provider *</Label>
+                    <Field
+                      as={Input}
+                      type="select"
+                      name="providerId"
+                      id="providerId"
+                      onChange={(e) => {
+                        const provider = providers.find(p => p.id === e.target.value);
+                        setFieldValue('providerId', e.target.value);
+                        setSelectedProvider(provider);
+                      }}
+                    >
+                      <option value="">Select a provider...</option>
+                      {providers.map(provider => (
+                        <option key={provider.id} value={provider.id}>
+                          {provider.name} - {provider.specialty}
+                        </option>
+                      ))}
+                    </Field>
+                    <ErrorMessage name="providerId" component="div" className="text-danger" />
+                  </FormGroup>
+                </Col>
+
+                <Col md={6}>
+                  <FormGroup>
+                    <Label for="appointmentType">Appointment Type *</Label>
+                    <Field
+                      as={Input}
+                      type="select"
+                      name="appointmentType"
+                      id="appointmentType"
+                      onChange={(e) => {
+                        setFieldValue('appointmentType', e.target.value);
+                        setSelectedAppointmentType(e.target.value);
+                      }}
+                    >
+                      <option value="">Select appointment type...</option>
+                      {appointmentTypes.map(type => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </Field>
+                    <ErrorMessage name="appointmentType" component="div" className="text-danger" />
+                  </FormGroup>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col md={6}>
+                  <FormGroup>
+                    <Label for="date">Preferred Date *</Label>
+                    <Field
+                      as={Input}
+                      type="date"
+                      name="date"
+                      id="date"
+                      min={new Date().toISOString().split('T')[0]}
+                      onChange={(e) => {
+                        setFieldValue('date', e.target.value);
+                        setSelectedDate(new Date(e.target.value));
+                        setFieldValue('time', ''); // Reset time when date changes
+                      }}
+                    />
+                    <ErrorMessage name="date" component="div" className="text-danger" />
+                    {selectedProvider && values.date && selectedProvider.availableDates && selectedProvider.availableDates.length > 0 && !isProviderAvailable(new Date(values.date)) && (
+                      <small className="text-warning">
+                        <strong>Note:</strong> {selectedProvider.name} may not be available on this date. They will contact you to reschedule if needed.
+                      </small>
+                    )}
+                  </FormGroup>
+                </Col>
+
+                <Col md={6}>
+                  <FormGroup>
+                    <Label for="time">Preferred Time *</Label>
+                    <Field
+                      as={Input}
+                      type="time"
+                      name="time"
+                      id="time"
+                      min="09:00"
+                      max="17:00"
+                      onChange={(e) => {
+                        setFieldValue('time', e.target.value);
+                        setSelectedTimeSlot({ formattedTime: e.target.value });
+                      }}
+                    />
+                    <ErrorMessage name="time" component="div" className="text-danger" />
+                    <small className="text-muted">Available hours: 9:00 AM - 5:00 PM</small>
+                  </FormGroup>
+                </Col>
+              </Row>
+
+              <FormGroup>
+                <Label for="reasonForVisit">Reason for Visit *</Label>
+                <Field
+                  as={Input}
+                  type="textarea"
+                  name="reasonForVisit"
+                  id="reasonForVisit"
+                  placeholder="Please describe the reason for your appointment"
+                  rows="3"
+                  onChange={(e) => {
+                    setFieldValue('reasonForVisit', e.target.value);
+                    setReasonForVisit(e.target.value);
+                  }}
+                />
+                <ErrorMessage name="reasonForVisit" component="div" className="text-danger" />
+              </FormGroup>
+
+              <FormGroup>
+                <Label for="additionalNotes">Additional Notes (Optional)</Label>
+                <Field
+                  as={Input}
+                  type="textarea"
+                  name="additionalNotes"
+                  id="additionalNotes"
+                  placeholder="Any additional information you'd like your provider to know"
+                  rows="2"
+                  onChange={(e) => {
+                    setFieldValue('additionalNotes', e.target.value);
+                    setAdditionalNotes(e.target.value);
+                  }}
+                />
+                <ErrorMessage name="additionalNotes" component="div" className="text-danger" />
+              </FormGroup>
+
+              {/* Selected Provider Preview */}
+              {selectedProvider && (
+                <Alert color="info" className="mt-3" fade={false}>
+                  <div className="d-flex align-items-center">
+                    <UserAvatar 
+                      name={selectedProvider.name} 
+                      image={selectedProvider.image} 
+                      size="sm"
+                      className="me-3"
+                    />
+                    <div>
+                      <strong>{selectedProvider.name}</strong>
+                      <div className="text-muted">{selectedProvider.specialty}</div>
+                      <div className="text-muted">{selectedProvider.location}</div>
+                    </div>
+                  </div>
+                </Alert>
+              )}
+
+              <div className="booking-actions mt-4 d-flex justify-content-between">
+                <Button 
+                  type="button"
+                  color="secondary" 
+                  onClick={() => { 
+                    setIsBooking(false); 
+                    setActiveTab('upcoming'); 
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  color="primary"
+                  disabled={!isValid || isSubmitting || isLoading}
+                >
+                  {isSubmitting || isLoading ? (
+                    <>
+                      <Spinner size="sm" className="me-2" />
+                      Submitting...
+                    </>
+                  ) : (
+                    'Submit Appointment Request'
+                  )}
+                </Button>
+              </div>
+            </Form>
+          )}
+        </Formik>
+      </div>
+    );
   };
 
   const renderAppointmentList = (appointments) => {
@@ -648,7 +1044,7 @@ const PatientAppointments = () => {
                   selectedApplication.status === 'pending' ? 'info' : 
                   selectedApplication.status === 'doctor_accepted' ? 'warning' : 
                   selectedApplication.status === 'declined' ? 'danger' : 'success'
-                } timeout={0}>
+                } fade={false}>
                   <small>
                     <strong>Note:</strong> {
                       selectedApplication.status === 'pending' ? 
@@ -767,314 +1163,28 @@ const PatientAppointments = () => {
   };
 
   const renderBookingContent = () => {
-    const validationSchema = Yup.object().shape({
-      provider: Yup.string().required('Please select a healthcare provider'),
-      appointmentType: Yup.string().required('Please select an appointment type'),
-      date: Yup.date().required('Please select a date').min(new Date(), 'Date must be in the future'),
-      time: Yup.string().required('Please select a time'),
-      reasonForVisit: Yup.string()
-        .required('Please provide a reason for your visit')
-        .min(10, 'Please describe your reason in more detail')
-        .max(500, 'Description is too long')
-    });
-
-    const appointmentTypes = [
-      { value: 'Video Call', label: 'Video Call', icon: FaVideo },
-      { value: 'Phone Call', label: 'Phone Call', icon: FaPhone },
-      { value: 'In-Person Visit', label: 'In-Person Visit', icon: FaClinicMedical }
-    ];
-
     return (
-      <Container className="d-flex justify-content-center">
-        <div style={{ width: '100%', maxWidth: '800px' }}>
-          <Card className="mb-4 shadow-sm border-0">
-            <CardBody className="p-4 position-relative">
-              <div className="d-flex justify-content-between align-items-center mb-4">
-                <div className="d-flex align-items-center">
-                  <Button color="link" className="p-0 me-3" onClick={() => { setIsBooking(false); setActiveTab('upcoming'); }}>
-                    <FaArrowLeft size={16} />
-                  </Button>
-                  <h3 className="mb-0">Book an Appointment</h3>
-                </div>
-              </div>
-
-              <Formik
-                initialValues={{
-                  provider: selectedProvider?.id || '',
-                  appointmentType: selectedAppointmentType || '',
-                  date: selectedDate || '',
-                  time: selectedTimeSlot?.formattedTime || '',
-                  reasonForVisit: reasonForVisit || '',
-                  additionalNotes: additionalNotes || ''
-                }}
-                validationSchema={validationSchema}
-                onSubmit={async (values, { setSubmitting, resetForm }) => {
-                  try {
-                    setSubmitting(true);
-                    setIsLoading(true);
-
-                    // Find the selected provider
-                    const provider = providers.find(p => p.id === values.provider);
-                    
-                    const appointmentData = {
-                      doctorId: values.provider,
-                      date: new Date(values.date),
-                      time: values.time,
-                      type: values.appointmentType,
-                      reason: values.reasonForVisit,
-                      additionalNotes: values.additionalNotes
-                    };
-
-                    console.log('Submitting appointment data:', appointmentData);
-                    const result = await createAppointment(appointmentData);
-
-                    if (result.success) {
-                      let appointmentId = result.data?.appointment?._id || result.data?._id || result.data?.id || `temp_${Math.floor(Math.random() * 1000) + 300}`;
-
-                      const newApplication = {
-                        id: appointmentId,
-                        providerId: provider.id,
-                        providerName: provider.name,
-                        providerImage: provider.image,
-                        specialty: provider.specialty,
-                        date: new Date(values.date),
-                        time: values.time,
-                        type: values.appointmentType,
-                        reason: values.reasonForVisit,
-                        status: 'pending',
-                        submittedOn: new Date(),
-                        currentStep: 'Doctor Review',
-                        medicalReviewStatus: 'In Progress',
-                        estimatedCompletionTime: '24-48 hours'
-                      };
-
-                      setApplicationTracking(prev => [...prev, newApplication]);
-                      
-                      // Show detailed success messages
-                      toast.success(`🎉 Appointment request submitted successfully!
-                      
-📅 Date: ${new Date(values.date).toLocaleDateString()}
-🕐 Time: ${values.time}
-👨‍⚕️ Provider: ${provider.name}
-📋 Type: ${values.appointmentType}`, {
-                        position: "top-right",
-                        autoClose: 6000,
-                        hideProgressBar: false,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        draggable: true,
-                      });
-                      
-                      // Additional confirmation messages
-                      setTimeout(() => {
-                        toast.info('📧 You will receive an email confirmation shortly', {
-                          position: "top-right",
-                          autoClose: 4000,
-                        });
-                      }, 1000);
-                      
-                      setTimeout(() => {
-                        toast.info('📋 Track your appointment status in the "Track Applications" tab', {
-                          position: "top-right",
-                          autoClose: 5000,
-                        });
-                      }, 2000);
-
-                      // Reset form and navigate back
-                      resetForm();
-                      setActiveTab('upcoming');
-                      setIsBooking(false);
-                      setSelectedProvider(null);
-                      setSelectedAppointmentType(null);
-                      setSelectedDate(null);
-                      setSelectedTimeSlot(null);
-                      setReasonForVisit('');
-                      setAdditionalNotes('');
-
-                      // Refresh data
-                      fetchAppointments();
-                      fetchApplicationTracking();
-                    } else {
-                      toast.error(result.error || 'Failed to create appointment');
-                    }
-                  } catch (error) {
-                    console.error('Error booking appointment:', error);
-                    toast.error('Something went wrong while booking your appointment. Please try again.');
-                  } finally {
-                    setSubmitting(false);
-                    setIsLoading(false);
-                  }
-                }}
-              >
-            {({ values, setFieldValue, isSubmitting, isValid, dirty }) => (
-              <Form>
-                {isSubmitting && (
-                  <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75" style={{ zIndex: 1000 }}>
-                    <div className="text-center">
-                      <Spinner color="primary" size="lg" />
-                      <p className="mt-2 mb-0">Submitting your appointment request...</p>
-                    </div>
-                  </div>
-                )}
-                
-                <Row>
-                  <Col md={6}>
-                    <FormGroup>
-                      <Label for="provider">Select Healthcare Provider *</Label>
-                      <Field
-                        as={Input}
-                        type="select"
-                        name="provider"
-                        id="provider"
-                        onChange={(e) => {
-                          const providerId = e.target.value;
-                          const provider = providers.find(p => p.id === providerId);
-                          setFieldValue('provider', providerId);
-                          setSelectedProvider(provider);
-                        }}
-                      >
-                        <option value="">Choose a provider...</option>
-                        {providers.map(provider => (
-                          <option key={provider.id} value={provider.id}>
-                            {provider.name} - {provider.specialty}
-                          </option>
-                        ))}
-                      </Field>
-                      <ErrorMessage name="provider" component="div" className="text-danger" />
-                    </FormGroup>
-                  </Col>
-                  <Col md={6}>
-                    <FormGroup>
-                      <Label for="appointmentType">Appointment Type *</Label>
-                      <Field
-                        as={Input}
-                        type="select"
-                        name="appointmentType"
-                        id="appointmentType"
-                        onChange={(e) => {
-                          setFieldValue('appointmentType', e.target.value);
-                          setSelectedAppointmentType(e.target.value);
-                        }}
-                      >
-                        <option value="">Choose appointment type...</option>
-                        {appointmentTypes.map(type => (
-                          <option key={type.value} value={type.value}>
-                            {type.label}
-                          </option>
-                        ))}
-                      </Field>
-                      <ErrorMessage name="appointmentType" component="div" className="text-danger" />
-                    </FormGroup>
-                  </Col>
-                </Row>
-
-                <Row>
-                  <Col md={6}>
-                    <FormGroup>
-                      <Label for="date">Preferred Date *</Label>
-                      <Field
-                        as={Input}
-                        type="date"
-                        name="date"
-                        id="date"
-                        min={new Date().toISOString().split('T')[0]}
-                        onChange={(e) => {
-                          setFieldValue('date', e.target.value);
-                          setSelectedDate(new Date(e.target.value));
-                        }}
-                      />
-                      <ErrorMessage name="date" component="div" className="text-danger" />
-                    </FormGroup>
-                  </Col>
-                  <Col md={6}>
-                    <FormGroup>
-                      <Label for="time">Preferred Time *</Label>
-                      <Field
-                        as={Input}
-                        type="time"
-                        name="time"
-                        id="time"
-                        onChange={(e) => {
-                          setFieldValue('time', e.target.value);
-                          setSelectedTimeSlot({ formattedTime: e.target.value });
-                        }}
-                      />
-                      <ErrorMessage name="time" component="div" className="text-danger" />
-                    </FormGroup>
-                  </Col>
-                </Row>
-
-                <FormGroup>
-                  <Label for="reasonForVisit">Reason for Visit *</Label>
-                  <Field
-                    as={Input}
-                    type="textarea"
-                    name="reasonForVisit"
-                    id="reasonForVisit"
-                    placeholder="Describe why you're scheduling this appointment"
-                    rows="3"
-                    onChange={(e) => {
-                      setFieldValue('reasonForVisit', e.target.value);
-                      setReasonForVisit(e.target.value);
-                    }}
-                  />
-                  <ErrorMessage name="reasonForVisit" component="div" className="text-danger" />
-                </FormGroup>
-
-                <FormGroup>
-                  <Label for="additionalNotes">Additional Notes (Optional)</Label>
-                  <Field
-                    as={Input}
-                    type="textarea"
-                    name="additionalNotes"
-                    id="additionalNotes"
-                    placeholder="Add any other information you'd like your provider to know"
-                    rows="2"
-                    onChange={(e) => {
-                      setFieldValue('additionalNotes', e.target.value);
-                      setAdditionalNotes(e.target.value);
-                    }}
-                  />
-                </FormGroup>
-
-                {/* Confirmation Info */}
-                <Alert color="info" className="mb-4" fade={false}>
-                  <small>
-                    <FaCheck className="me-2" />
-                    <strong>What happens next:</strong> Your appointment request will be reviewed by the selected provider. 
-                    You'll receive an email confirmation once it's approved (usually within 24-48 hours).
-                  </small>
-                </Alert>
-
-                <div className="d-flex justify-content-between mt-4">
-                  <Button 
-                    color="secondary" 
-                    onClick={() => { 
-                      setIsBooking(false); 
-                      setActiveTab('upcoming'); 
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    color="primary" 
-                    type="submit"
-                    disabled={!isValid || isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <><Spinner size="sm" className="me-2" /> Submitting...</>
-                    ) : (
-                      'Submit Appointment Request'
-                    )}
-                  </Button>
-                </div>
-              </Form>
-            )}
-          </Formik>
+      <Card className="mb-4">
+        <CardBody>
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <div className="d-flex align-items-center">
+              <Button color="link" className="p-0 me-3" onClick={() => { setIsBooking(false); setActiveTab('upcoming'); }}>
+                <FaArrowLeft size={16} />
+              </Button>
+              <h3 className="mb-0">Book an Appointment</h3>
+            </div>
+          </div>
+          
+          {isLoading ? (
+            <div className="text-center py-4">
+              <Spinner color="primary" />
+              <p className="mt-2">Loading healthcare providers...</p>
+            </div>
+          ) : (
+            renderSimpleBookingForm()
+          )}
         </CardBody>
       </Card>
-        </div>
-      </Container>
     );
   };
 
@@ -1177,4 +1287,5 @@ const PatientAppointments = () => {
     </div>
   );
 };
+
 export default PatientAppointments;

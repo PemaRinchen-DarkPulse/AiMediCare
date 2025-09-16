@@ -9,7 +9,7 @@ import {
   FaCalendarAlt, FaUserInjured, FaNotesMedical, FaVideo, FaPhoneAlt,
   FaClinicMedical, FaCheck, FaTimes, FaClock, FaFilter, FaSearch,
   FaPrescription, FaFileAlt, FaInfoCircle, FaSyncAlt, FaPen,
-  FaExclamationTriangle, FaMicrophone, FaRobot, FaHistory, FaSave, FaPrescriptionBottleAlt, FaMedkit
+  FaExclamationTriangle, FaMicrophone, FaHistory, FaSave, FaPrescriptionBottleAlt, FaMedkit
 } from 'react-icons/fa';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";

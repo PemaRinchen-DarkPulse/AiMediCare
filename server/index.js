@@ -13,7 +13,7 @@ const diagnosticsRoutes = require('./routes/diagnosticsRoutes');
 const medicineRecommendationsRoutes = require('./routes/medicineRecommendationsRoutes');
 const doctorSettingsRoutes = require('./routes/doctorSettingsRoutes');
 const patientSettingsRoutes = require('./routes/patientSettingsRoutes');
-const triageRoutes = require('./routes/triageRoutes');
+const previsitTriageRoutes = require('./routes/previsitTriageRoutes');
 
 // Create Express app
 const app = express();
@@ -49,7 +49,7 @@ app.use('/api/diagnostics', diagnosticsRoutes);
 app.use('/api/medicine-recommendations', medicineRecommendationsRoutes);
 app.use('/api/settings', doctorSettingsRoutes);
 app.use('/api/patient/settings', patientSettingsRoutes);
-app.use('/api/triage', triageRoutes);
+app.use('/api/previsit-triage', previsitTriageRoutes);
 
 // Test route
 app.use('/', (req, res) => {

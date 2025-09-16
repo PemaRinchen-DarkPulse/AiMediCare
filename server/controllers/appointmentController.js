@@ -1,5 +1,6 @@
 const Appointment = require('../models/Appointment');
 const User = require('../models/User');
+const PrevisitTriage = require('../models/PrevisitTriage');
 const aiServiceClient = require('../utils/aiServiceClient');
 
 // Get all appointments for a patient
@@ -100,29 +101,11 @@ exports.createAppointment = async (req, res) => {
     
     await newAppointment.save();
     
-    // Notify AI service about appointment creation for triage generation
-    if (reason && reason.trim().length > 0) {
-      try {
-        console.log('Notifying AI service about new appointment for triage generation...');
-        
-        const aiNotificationResult = await aiServiceClient.notifyAppointmentCreated({
-          appointmentId: newAppointment._id.toString(),
-          reason: reason,
-          notes: additionalNotes || '',
-          patientId: patientId.toString(),
-          doctorId: doctorId.toString()
-        });
-        
-        if (aiNotificationResult.success) {
-          console.log('AI service notified successfully for triage generation');
-        } else {
-          console.warn('AI service notification failed:', aiNotificationResult.error);
-        }
-      } catch (aiError) {
-        console.error('Error notifying AI service:', aiError);
-        // Don't fail the appointment creation if AI service is down
-      }
-    }
+    // Generate AI-powered triage summary asynchronously
+    generateTriageForAppointment(newAppointment._id, patientId, doctorId, reason, additionalNotes)
+      .catch(error => {
+        console.error('Error generating triage for appointment:', newAppointment._id, error);
+      });
     
     res.status(201).json({
       status: 'success',
@@ -136,6 +119,76 @@ exports.createAppointment = async (req, res) => {
     res.status(500).json({
       status: 'error',
       message: 'Failed to create appointment'
+    });
+  }
+};
+
+// Generate questionnaire for an existing appointment
+exports.generateQuestionnaireForAppointment = async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+    
+    // Find the appointment
+    const appointment = await Appointment.findById(appointmentId);
+    if (!appointment) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Appointment not found'
+      });
+    }
+    
+    // Check if user has access to this appointment
+    const hasAccess = userRole === 'admin' || 
+                     userRole === 'doctor' && appointment.doctorId.toString() === userId.toString() ||
+                     userRole === 'patient' && appointment.patientId.toString() === userId.toString();
+    
+    if (!hasAccess) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Access denied'
+      });
+    }
+    
+    // Check if questionnaire already exists
+    const existingTriage = await PrevisitTriage.findOne({ appointmentId });
+    if (existingTriage && existingTriage.questions && existingTriage.questions.length > 0) {
+      return res.status(200).json({
+        status: 'success',
+        message: 'Questionnaire already exists',
+        data: {
+          questionnaire: existingTriage
+        }
+      });
+    }
+    
+    // Generate questionnaire
+    await generateTriageForAppointment(
+      appointmentId, 
+      appointment.patientId, 
+      appointment.doctorId, 
+      appointment.reason, 
+      appointment.notes
+    );
+    
+    // Fetch the updated questionnaire
+    const questionnaire = await PrevisitTriage.findOne({ appointmentId })
+      .populate('appointmentId patientId doctorId');
+    
+    res.status(200).json({
+      status: 'success',
+      message: 'Questionnaire generated successfully',
+      data: {
+        questionnaire
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error generating questionnaire for appointment:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to generate questionnaire'
     });
   }
 };
@@ -554,3 +607,75 @@ exports.completeAppointment = async (req, res) => {
     });
   }
 };
+
+/**
+ * Generate AI-powered pre-visit questionnaire for an appointment
+ * This function runs asynchronously after appointment creation
+ * @param {string} appointmentId - MongoDB ObjectId of the appointment
+ * @param {string} patientId - MongoDB ObjectId of the patient
+ * @param {string} doctorId - MongoDB ObjectId of the doctor
+ * @param {string} reasonForVisit - Patient's reason for visit
+ * @param {string} additionalNotes - Additional notes from patient
+ */
+async function generateTriageForAppointment(appointmentId, patientId, doctorId, reasonForVisit, additionalNotes = '') {
+  try {
+    console.log(`Generating questionnaire for appointment: ${appointmentId}`);
+    
+    // Check if triage already exists for this appointment
+    const existingTriage = await PrevisitTriage.findOne({ appointmentId });
+    if (existingTriage) {
+      console.log(`Questionnaire already exists for appointment: ${appointmentId}`);
+      return;
+    }
+    
+    // Create initial triage record
+    const triage = new PrevisitTriage({
+      appointmentId,
+      patientId,
+      doctorId,
+      reasonForVisit,
+      additionalNotes: additionalNotes || '',
+      status: 'pending'
+    });
+    
+    await triage.save();
+    console.log(`Created initial triage record: ${triage._id}`);
+    
+    // Generate AI summary
+    const aiResult = await aiServiceClient.generateQuestionnaire(reasonForVisit, additionalNotes);
+    
+    if (aiResult.success) {
+      // Update triage with AI-generated questionnaire data
+      await triage.updateQuestionnaireData(aiResult.questionnaire);
+      
+      // Update status to 'generated' since questions are now available
+      triage.status = 'generated';
+      await triage.save();
+      
+      console.log(`Questionnaire generated successfully for appointment: ${appointmentId}`);
+      console.log(`AI Generated: ${aiResult.isAIGenerated ? 'Yes' : 'No (Fallback)'}`);
+      
+      if (aiResult.warning) {
+        await triage.addError(aiResult.warning, 'AI Service Warning');
+      }
+      
+    } else {
+      // AI failed, but we should still have fallback data
+      await triage.addError(aiResult.error || 'AI service failed', 'AI Generation Failed');
+      console.error(`Failed to generate questionnaire for appointment: ${appointmentId}`, aiResult.error);
+    }
+    
+  } catch (error) {
+    console.error(`Error in generateTriageForAppointment for ${appointmentId}:`, error);
+    
+    // Try to update the triage record with error information
+    try {
+      const triage = await PrevisitTriage.findOne({ appointmentId });
+      if (triage) {
+        await triage.addError(error.message, 'Triage Generation Error');
+      }
+    } catch (updateError) {
+      console.error('Failed to update triage with error:', updateError);
+    }
+  }
+}

@@ -1,38 +1,38 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { 
   FaTachometerAlt, FaCalendarCheck, FaFileMedical, FaPills, 
   FaNotesMedical, FaEnvelope, FaFileInvoiceDollar, FaCog 
 } from "react-icons/fa";
 
 const DoctorSideBar = ({ isOpen }) => {
-  const location = useLocation();
-  
   const menuItems = [
     { icon: <FaTachometerAlt />, label: "Dashboard", path: "/doctor/dashboard" },
-    { icon: <FaCalendarCheck />, label: "Appointments", path: "/doctor/appointments" },
+    { icon: <FaCalendarCheck />, label: "Appointmenst", path: "/doctor/appointments" },
     { icon: <FaFileMedical />, label: "Patients", path: "/doctor/patients" },
     { icon: <FaPills />, label: "Diagnostics", path: "/doctor/diagnostics" },
-    { icon: <FaCog />, label: "Settings", path: "/doctor/settings" },
+    { icon: <FaNotesMedical />, label: "Settings", path: "/doctor/settings" },
   ];
 
   return (
-    <ul className="sidebar-menu">
+    <ul style={{ padding: 0, margin: 0, listStyleType: "none" }}>
       {menuItems.map((item, index) => (
-        <li key={index} className="sidebar-menu-item">
+        <li key={index} style={{ margin: "5px 0" }}>
           <Link 
             to={item.path} 
-            className={`sidebar-menu-link ${location.pathname === item.path ? 'active' : ''}`}
+            style={{
+              textDecoration: "none",
+              display: "flex",
+              alignItems: "center",
+              padding: "10px",
+              cursor: "pointer",
+              transition: "0.3s",
+              justifyContent: isOpen ? "flex-start" : "center",
+              color: "black"
+            }}
           >
-            <div className="sidebar-menu-icon">
-              {item.icon}
-            </div>
-            <span className="sidebar-menu-text">{item.label}</span>
-            {!isOpen && (
-              <div className="sidebar-tooltip">
-                {item.label}
-              </div>
-            )}
+            <span style={{ fontSize: "18px" }}>{item.icon}</span>
+            {isOpen && <span style={{ marginLeft: "10px" }}>{item.label}</span>}
           </Link>
         </li>
       ))}

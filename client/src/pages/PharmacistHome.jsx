@@ -3,7 +3,6 @@ import { Outlet } from "react-router-dom";
 import SideBar from "../components/sideBar/SideBar";
 import ProfileDropdown from "../components/profileManagemnt/ProfileDropdown";
 import Navigation from "../components/Navigation";
-import ChatBotBubble from "../components/chatbot/ChatBotBubble";
 
 const PharmacistHome = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -56,9 +55,6 @@ const PharmacistHome = () => {
         {isDropdownOpen && <ProfileDropdown />}
         <Outlet /> {/* Dynamic Page Content */}
       </div>
-
-      {/* ChatBot */}
-      <ChatBotBubble />
     </div>
   );
 };

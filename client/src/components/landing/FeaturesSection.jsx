@@ -3,7 +3,7 @@ import { Row, Col, Card, Nav, Tab } from 'react-bootstrap';
 import { motion } from 'framer-motion';
 import { 
   FaUserAlt, FaStethoscope, FaPrescriptionBottleAlt,
-  FaVideo, FaRobot, FaCalendarAlt, FaClipboardList,
+  FaVideo, FaCalendarAlt, FaClipboardList,
   FaChartLine, FaDatabase, FaNotesMedical, FaBrain, FaHeartbeat,
   FaPills, FaPhoneAlt, FaBell
 } from 'react-icons/fa';
@@ -42,63 +42,51 @@ const FeaturesSection = () => {
       delay: 0.1
     },
     {
-      icon: <FaRobot size={24} />,
-      title: "AI Symptom Checker",
-      description: "Advanced AI analyzes your symptoms to provide preliminary insights before consultation.",
+      icon: <FaCalendarAlt size={24} />,
+      title: "Smart Appointment Scheduling",
+      description: "Convenient scheduling that finds the perfect time slot for patients and doctors.",
       delay: 0.2
     },
     {
-      icon: <FaCalendarAlt size={24} />,
-      title: "Smart Appointment Scheduling",
-      description: "AI-powered scheduling that finds the perfect time slot for patients and doctors.",
-      delay: 0.3
-    },
-    {
       icon: <FaClipboardList size={24} />,
-      title: "Pre-visit Triaging",
+      title: "Pre-visit Questionnaires",
       description: "Complete preliminary assessments prior to appointments to maximize consultation time.",
-      delay: 0.4
+      delay: 0.3
     },
     {
       icon: <FaChartLine size={24} />,
       title: "Health Analytics",
-      description: "Personalized health insights and trends based on your medical history and current condition.",
-      delay: 0.5
+      description: "Track your health insights and trends based on your medical history and current condition.",
+      delay: 0.4
     }
   ];
 
   const doctorFeatures = [
     {
-      icon: <FaBrain size={24} />,
-      title: "AI-Assisted Diagnostics",
-      description: "Leverage AI to enhance diagnostic accuracy with evidence-based suggestions.",
-      delay: 0.1
-    },
-    {
       icon: <FaDatabase size={24} />,
       title: "EHR Integration",
       description: "Seamlessly access and update electronic health records during consultations.",
-      delay: 0.2
+      delay: 0.1
     },
     {
       icon: <FaNotesMedical size={24} />,
       title: "Clinical Decision Support",
       description: "Get real-time clinical insights and treatment recommendations based on patient data.",
-      delay: 0.3
+      delay: 0.2
     },
     {
       icon: <FaHeartbeat size={24} />,
       title: "Chronic Disease Management",
-      description: "AI-powered tools to monitor and manage patients with chronic conditions.",
-      delay: 0.4
+      description: "Tools to monitor and manage patients with chronic conditions.",
+      delay: 0.3
     }
   ];
 
   const pharmacistFeatures = [
     {
       icon: <FaPrescriptionBottleAlt size={24} />,
-      title: "AI-Powered Prescription Management",
-      description: "Intelligent prescription validation and medication interaction checks.",
+      title: "Prescription Management",
+      description: "Prescription validation and medication interaction checks.",
       delay: 0.1
     },
     {

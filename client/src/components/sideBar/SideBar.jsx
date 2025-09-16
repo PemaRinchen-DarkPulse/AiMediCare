@@ -1,69 +1,49 @@
-import React, { useEffect, useState } from 'react';
-import { FaBars, FaTimes, FaHeartbeat } from 'react-icons/fa';
+import React from 'react';
 import SideBarList from './SideBarList';
-import '../../styles/Sidebar.css';
 
 const SideBar = ({ isOpen, toggleSidebar }) => {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  const handleOverlayClick = () => {
-    if (isMobile && isOpen) {
-      toggleSidebar();
-    }
-  };
-
   return (
-    <>
-      {/* Mobile overlay */}
-      {isMobile && (
-        <div 
-          className={`sidebar-overlay ${isOpen ? 'active' : ''}`}
-          onClick={handleOverlayClick}
-        />
-      )}
-      
-      <div className={`sidebar ${isOpen ? 'open' : ''}`}>
-        {/* Header Section */}
-        <div className="sidebar-header">
-          {isOpen && (
-            <div className="sidebar-brand">
-              <FaHeartbeat style={{ marginRight: '10px', color: '#ff6b6b' }} />
-              AiMediCare
-            </div>
-          )}
-          <button 
-            className="sidebar-toggle"
-            onClick={toggleSidebar}
-            aria-label={isOpen ? 'Close sidebar' : 'Open sidebar'}
-          >
-            {isOpen ? <FaTimes /> : <FaBars />}
-          </button>
-        </div>
-
-        {/* Content Section */}
-        <div className="sidebar-content">
-          <SideBarList isOpen={isOpen} />
-        </div>
-        
-        {/* Footer Section */}
-        <div className="sidebar-footer">
-          © 2025 Pema Rinchen & Tshewang Rinzin
-          <br />
-          <small>All rights reserved</small>
-        </div>
+    <div 
+      className={`sidebar ${isOpen ? 'open' : ''} shadow border`} 
+      style={{ 
+        height: '95vh', 
+        width: isOpen ? '250px' : '80px', 
+        transition: 'width 0.1s ease',
+        display: 'flex', 
+        flexDirection: 'column',
+        overflow: 'hidden',
+        justifyContent: 'space-between',
+      }}
+    >
+      <div>
+        <button 
+          onClick={toggleSidebar} 
+          style={{
+            background: 'none', 
+            border: 'none', 
+            padding: '10px', 
+            cursor: 'pointer',
+            alignSelf: 'center'
+          }}
+        >
+        </button>
+        <SideBarList isOpen={isOpen} />
       </div>
-    </>
+      
+      {/* Footer Section */}
+      {isOpen && (
+        <div style={{
+          padding: '10px',
+          textAlign: 'center',
+          borderTop: '1px solid #ddd',
+          fontSize: '14px',
+          color: 'black',
+          marginBottom:'30px'
+        }}>
+          &copy; Peam Rinchen & Tshewang Rinzin
+        </div>
+      )}
+    </div>
   );
 };
 

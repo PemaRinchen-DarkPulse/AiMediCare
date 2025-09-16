@@ -3,7 +3,6 @@ import { Outlet } from "react-router-dom";
 import SideBar from "../components/sideBar/DoctorSideBar";
 import ProfileDropdown from "../components/profileManagemnt/ProfileDropdown";
 import Navigation from "../components/Navigation";
-import ChatBotBubble from "../components/chatbot/ChatBotBubble";
 
 const DoctorHome = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -28,16 +27,34 @@ const DoctorHome = () => {
       </div>
 
       {/* Fixed Sidebar */}
-      <SideBar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+      <div
+        style={{
+          width: isSidebarOpen ? "250px" : "80px",
+          transition: "width 0.2s ease",
+          position: "fixed",
+          top: "60px", // Below navigation
+          left: "0",
+          height: "calc(100vh - 60px)",
+          backgroundColor: "#f4f4f4",
+          flexShrink: 0, 
+          zIndex: 1040, // Keep sidebar above content but below navbar
+        }}
+      >
+        <SideBar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+      </div>
 
       {/* Main Content - Avoid Overlapping */}
-      <div className={`page-content ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+      <div
+        className="p-3"
+        style={{
+          marginLeft: isSidebarOpen ? "250px" : "80px", // Adjust for sidebar
+          marginTop:"65px", // Prevent overlap with navigation
+          transition: "margin-left 0.2s ease",
+        }}
+      >
         {isDropdownOpen && <ProfileDropdown />}
         <Outlet /> {/* Dynamic Page Content */}
       </div>
-
-      {/* ChatBot */}
-      <ChatBotBubble />
     </div>
   );
 };

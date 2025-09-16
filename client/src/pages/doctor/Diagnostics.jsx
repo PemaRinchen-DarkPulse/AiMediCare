@@ -8,7 +8,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faStethoscope, faFlask, faVial, faXRay, faNotesMedical, faSearch,
-  faFilter, faCog, faSortAmountDown, faPlus, faUpload, faEye, faRobot,
+  faFilter, faCog, faSortAmountDown, faPlus, faUpload, faEye,
   faFileMedical, faSync, faCalendarAlt, faExclamationTriangle, faCheck
 } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
@@ -41,7 +41,6 @@ const Diagnostics = () => {
   const [isNewRequestModalOpen, setIsNewRequestModalOpen] = useState(false);
   const [isUploadResultsModalOpen, setIsUploadResultsModalOpen] = useState(false);
   const [isViewDetailsModalOpen, setIsViewDetailsModalOpen] = useState(false);
-  const [isAiSuggestionsOpen, setIsAiSuggestionsOpen] = useState(false);
   
   // Form states
   const [newRequestForm, setNewRequestForm] = useState({
@@ -65,14 +64,6 @@ const Diagnostics = () => {
   // Dropdown states
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
   const toggleFilterDropdown = () => setFilterDropdownOpen(!filterDropdownOpen);
-
-  // AI suggestion state
-  const [aiSuggestions, setAiSuggestions] = useState({
-    possibleDiagnoses: [],
-    confidenceLevels: [],
-    recommendedFollowUp: [],
-    interpretation: ''
-  });
 
   // Load data on component mount
   useEffect(() => {
@@ -399,12 +390,6 @@ const Diagnostics = () => {
           technician: '',
           notes: ''
         });
-        
-        // Automatically trigger AI recommendations
-        setTimeout(() => {
-          generateAiSuggestions();
-        }, 500);
-        
         // Show success message
         setError(
           <Alert color="success">
@@ -443,35 +428,6 @@ const Diagnostics = () => {
       setSelectedResult(results[0]);
     } else {
       setSelectedResult(null);
-    }
-  };
-
-  // Handle AI suggestions
-  const generateAiSuggestions = async () => {
-    try {
-      // This would be replaced with actual AI API call
-      // Mock data for now
-      setTimeout(() => {
-        setAiSuggestions({
-          possibleDiagnoses: [
-            'Type 2 Diabetes Mellitus',
-            'Impaired Glucose Tolerance',
-            'Metabolic Syndrome'
-          ],
-          confidenceLevels: [82, 65, 48],
-          recommendedFollowUp: [
-            'HbA1c Test',
-            'Lipid Panel',
-            'Kidney Function Tests'
-          ],
-          interpretation: 'Elevated blood glucose levels consistent with Type 2 Diabetes. Recent lab results show a fasting glucose of 142 mg/dL and HbA1c of 7.2%, both above normal reference ranges. Consider starting on oral hypoglycemic medication and lifestyle modification recommendations.'
-        });
-        
-        setIsAiSuggestionsOpen(true);
-      }, 1500);
-    } catch (err) {
-      console.error('Error generating AI suggestions:', err);
-      setError('Failed to generate AI diagnostic suggestions');
     }
   };
 
@@ -1097,73 +1053,8 @@ const Diagnostics = () => {
                 rows="2"
               />
             </FormGroup>
-            
-            <FormGroup check className="mb-3">
-              <Input 
-                type="checkbox" 
-                name="useAiRecommendations" 
-                id="useAiRecommendations" 
-                defaultChecked={true}
-              />
-              <Label check for="useAiRecommendations" className="text-primary">
-                <FontAwesomeIcon icon={faRobot} className="me-2" />
-                Generate comprehensive AI diagnostic recommendations after upload
-              </Label>
-              <small className="form-text text-muted d-block">
-                AI will analyze the test results to provide possible diagnoses, confidence levels, and recommended follow-up tests
-              </small>
-            </FormGroup>
           </ModalBody>
           <ModalFooter className="d-flex justify-content-end gap-3">
-            <Button 
-              color="primary" 
-              outline
-              type="button"
-              onClick={() => {
-                if (newResultForm.findings) {
-                  // Mock AI interpretation generation
-                  setTimeout(() => {
-                    const testType = selectedRequest 
-                      ? selectedRequest.testType 
-                      : diagnosticRequests.find(req => req.id === newResultForm.requestId)?.testType || '';
-                      
-                    let aiGeneratedInterpretation = '';
-                    
-                    // Generate different interpretations based on test type
-                    if (testType.includes('Liver')) {
-                      aiGeneratedInterpretation = `Based on the values provided, liver function appears to show mild elevation in liver enzymes. This could indicate potential early stage hepatic stress. Recommend monitoring and possible follow-up testing in 3 months. Consider lifestyle modifications including reduced alcohol consumption and weight management if appropriate.`;
-                    } else if (testType.includes('Glucose')) {
-                      aiGeneratedInterpretation = `Blood glucose levels indicate potential impaired glucose tolerance. Consider HbA1c testing to rule out pre-diabetic condition. Recommend nutritional counseling and increased physical activity.`;
-                    } else if (testType.includes('Lipid')) {
-                      aiGeneratedInterpretation = `Lipid panel shows moderately elevated LDL cholesterol with normal HDL levels. Consider dietary modifications and reassessment in 6 months. If family history present, may consider earlier pharmacological intervention.`;
-                    } else {
-                      aiGeneratedInterpretation = `Analysis of the provided test results indicates values within normal physiological range, though some parameters are in the upper reference range. Recommend routine follow-up at next regular appointment.`;
-                    }
-                    
-                    setNewResultForm({
-                      ...newResultForm,
-                      interpretation: aiGeneratedInterpretation
-                    });
-                  }, 1000);
-                  
-                  // Show a loading message
-                  setNewResultForm({
-                    ...newResultForm,
-                    interpretation: "Generating AI interpretation..."
-                  });
-                } else {
-                  setError(
-                    <Alert color="warning">
-                      <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
-                      Please enter findings first to generate AI interpretation
-                    </Alert>
-                  );
-                }
-              }}
-            >
-              <FontAwesomeIcon icon={faRobot} className="me-2" />
-              Generate AI Interpretation
-            </Button>
             <Button 
               color="primary" 
               type="submit"
@@ -1309,72 +1200,6 @@ const Diagnostics = () => {
           )}
           <Button color="secondary" onClick={() => setIsViewDetailsModalOpen(false)}>
             Close
-          </Button>
-        </ModalFooter>
-      </Modal>
-
-      {/* AI Suggestions Modal */}
-      <Modal isOpen={isAiSuggestionsOpen} toggle={() => setIsAiSuggestionsOpen(!isAiSuggestionsOpen)} size="lg">
-        <ModalHeader toggle={() => setIsAiSuggestionsOpen(!isAiSuggestionsOpen)} className="bg-primary text-white">
-          <FontAwesomeIcon icon={faRobot} className="me-2" />
-          AI Diagnostic Suggestions
-        </ModalHeader>
-        <ModalBody>
-          {selectedResult && selectedRequest && (
-            <div>
-              <Alert color="info" className="mb-4">
-                AI analysis for {selectedRequest.patientName}'s {selectedRequest.testType} results from {new Date(selectedResult.resultDate).toLocaleDateString()}
-              </Alert>
-              
-              <h5>Possible Diagnoses</h5>
-              <div className="mb-4">
-                {aiSuggestions.possibleDiagnoses.map((diagnosis, index) => (
-                  <div key={index} className="mb-3">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                      <span>{diagnosis}</span>
-                      <Badge color={
-                        aiSuggestions.confidenceLevels[index] > 80 ? 'danger' :
-                        aiSuggestions.confidenceLevels[index] > 60 ? 'warning' : 'info'
-                      }>
-                        {aiSuggestions.confidenceLevels[index]}% confidence
-                      </Badge>
-                    </div>
-                    <Progress 
-                      value={aiSuggestions.confidenceLevels[index]} 
-                      color={
-                        aiSuggestions.confidenceLevels[index] > 80 ? 'danger' :
-                        aiSuggestions.confidenceLevels[index] > 60 ? 'warning' : 'info'
-                      } 
-                    />
-                  </div>
-                ))}
-              </div>
-              
-              <h5>Recommended Follow-up</h5>
-              <ul className="mb-4">
-                {aiSuggestions.recommendedFollowUp.map((followUp, index) => (
-                  <li key={index}>{followUp}</li>
-                ))}
-              </ul>
-              
-              <h5>Clinical Interpretation</h5>
-              <Card className="bg-light">
-                <CardBody>
-                  <p className="mb-0">{aiSuggestions.interpretation}</p>
-                </CardBody>
-              </Card>
-              
-              <Alert color="warning" className="mt-4">
-                <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
-                <strong>AI Disclaimer:</strong> These suggestions are generated by an AI system and should be used as a supporting tool only. Always rely on your clinical judgment and expertise for final diagnoses and treatment decisions.
-              </Alert>
-            </div>
-          )}
-        </ModalBody>
-        <ModalFooter>
-          <Button color="primary" onClick={() => setIsAiSuggestionsOpen(false)}>
-            <FontAwesomeIcon icon={faCheck} className="me-2" />
-            Acknowledge
           </Button>
         </ModalFooter>
       </Modal>

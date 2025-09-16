@@ -61,10 +61,11 @@ const Dashboard = () => {
     <Box 
       sx={{ 
         backgroundColor: colors.background, 
-        minHeight: '100vh'
+        minHeight: '100vh',
+        padding: isMobile ? 2 : 4
       }}
     >
-      <Container maxWidth="xl" disableGutters>
+      <Container maxWidth="xl">
         {/* Welcome Area */}
         <Paper 
           elevation={0} 

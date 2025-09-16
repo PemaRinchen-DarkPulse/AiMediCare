@@ -52,11 +52,7 @@ const appointmentSchema = new mongoose.Schema({
   prescriptions: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Prescription'
-  }],
-  triageQuestionnaireId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'TriageQuestionnaire'
-  }
+  }]
 }, {
   timestamps: true
 });
