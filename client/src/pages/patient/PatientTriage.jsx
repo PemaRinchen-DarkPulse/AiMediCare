@@ -11,6 +11,7 @@ import {
   FaCalendarAlt, FaClock, FaUserMd, FaCheck, FaRobot
 } from 'react-icons/fa';
 import UserAvatar from '../../components/UserAvatar';
+import AIConfidenceIndicator from '../../components/AIConfidenceIndicator';
 import { AuthContext } from '../../context/AuthContext';
 import { 
   getPatientPendingQuestionnaires, 
@@ -160,8 +161,16 @@ const PatientTriage = () => {
                   <p className="mb-1">
                     <strong>Reason for visit:</strong> {questionnaire.generatedFromReason}
                   </p>
+                  <div className="d-flex align-items-center mb-1">
+                    <small className="me-2">This questionnaire contains {questionnaire.questions.length} questions about your condition.</small>
+                    <AIConfidenceIndicator 
+                      metadata={questionnaire.metadata} 
+                      size="sm" 
+                      showCategory={false}
+                    />
+                  </div>
                   <p className="mb-0">
-                    <small>This questionnaire contains {questionnaire.questions.length} questions about your condition. Your answers will help your provider prepare for your visit.</small>
+                    <small className="text-muted">Your answers will help your provider prepare for your visit.</small>
                   </p>
                 </Col>
                 <Col md={4} className="text-md-end mt-3 mt-md-0">
@@ -249,6 +258,18 @@ const PatientTriage = () => {
               <p className="mb-0 small">
                 These questions were generated based on your reason for visit. Your answers will help your provider prepare for your appointment and may reduce the time needed during your visit.
               </p>
+              {selectedQuestionnaire.metadata && (
+                <div className="mt-2 pt-2 border-top">
+                  <div className="d-flex align-items-center text-muted small">
+                    <span className="me-2">Question Generation:</span>
+                    <AIConfidenceIndicator 
+                      metadata={selectedQuestionnaire.metadata} 
+                      size="sm" 
+                      showCategory={true}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </Alert>

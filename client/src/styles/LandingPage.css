@@ -1,9 +1,13 @@
 :root {
-  --primary-color: #0066cc;
-  --secondary-color: #00aa88;
-  --accent-color: #ff6b6b;
-  --text-color: #333333;
-  --background-color: #ffffff;
+  --primary-color: #2E86C1; /* Healthcare Blue */
+  --secondary-color: #28B463; /* Healing Green */
+  --accent-amber: #F39C12; /* Amber */
+  --accent-coral: #E74C3C; /* Coral Red */
+  --accent-purple: #6A5ACD; /* AI Purple */
+  --text-color: #22223B;
+  --background-color: #F7F9FB; /* Base Background */
+  --surface-color: #FFFFFF; /* Surface/Containers */
+  --shadow-color: rgba(46, 134, 193, 0.08); /* Soft blue shadow */
 }
 
 .landing-page {
@@ -17,7 +21,7 @@
   display: flex;
   align-items: center;
   padding: 2rem;
-  background: linear-gradient(135deg, var(--background-color) 0%, #f8f9fa 100%);
+  background: linear-gradient(135deg, #2E86C1 0%, #6A5ACD 100%); /* MediCare AI gradient */
 }
 
 .hero-content {
@@ -47,8 +51,8 @@
 }
 
 .feature-tab {
-  background-color: var(--background-color);
-  border: 1px solid #ddd;
+  background-color: var(--surface-color);
+  border: 1px solid #2E86C1;
   padding: 1rem 2rem;
   margin: 0 0.5rem;
   cursor: pointer;
@@ -58,7 +62,7 @@
 
 .feature-tab.active {
   background-color: var(--primary-color);
-  color: white;
+  color: #fff;
 }
 
 .feature-content {
@@ -75,7 +79,7 @@
 /* Benefits Section Styles */
 .benefits-section {
   padding: 4rem 2rem;
-  background-color: #f8f9fa;
+  background-color: var(--background-color);
   text-align: center;
 }
 
@@ -187,9 +191,9 @@
   width: 300px;
   padding: 1.5rem;
   margin: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  text-align: center;
+    border: 1px solid #2E86C1;
+    background-color: var(--surface-color);
+    box-shadow: 0 4px 16px var(--shadow-color);
 }
 
 .price {
@@ -228,8 +232,8 @@
   background-color: var(--background-color);
   padding: 1rem;
   cursor: pointer;
-  display: flex;
-  justify-content: space-between;
+    background-color: var(--surface-color);
+    box-shadow: 0 4px 16px var(--shadow-color);
   align-items: center;
 }
 
@@ -278,8 +282,8 @@ h1, h2, h3 {
 }
 
 .cta-button {
-  background-color: var(--accent-color);
-  color: white;
+  background-color: var(--accent-amber);
+  color: #fff;
   padding: 1rem 2rem;
   border: none;
   border-radius: 8px;
@@ -289,6 +293,7 @@ h1, h2, h3 {
 }
 
 .cta-button:hover {
+  background-color: #c87c0a; /* Slightly darker amber */
   transform: translateY(-2px);
 }
 
@@ -303,7 +308,7 @@ h1, h2, h3 {
   top: 0;
   z-index: 100;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+    background-color: var(--surface-color);
 
 .nav-links {
   display: flex;
@@ -311,7 +316,7 @@ h1, h2, h3 {
   margin: 0;
   padding: 0;
 }
-
+    box-shadow: 0 2px 8px var(--shadow-color);
 .nav-links li {
   margin-left: 2rem;
 }
@@ -327,15 +332,16 @@ h1, h2, h3 {
   color: var(--primary-color);
   font-weight: bold;
 }
-
+    color: var(--primary-color);
 /* Login Section Styles */
 .login-section {
   padding: 4rem 2rem;
   text-align: center;
 }
 
-.login-form {
   margin-top: 2rem;
+    color: var(--accent-purple);
+    font-weight: bold;
 }
 
 /* Add responsive design */

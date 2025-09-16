@@ -22,6 +22,17 @@
   justify-content: center;
 }
 
+/* AI indicator styles */
+.ai-badge {
+  font-size: 0.7em;
+  font-weight: 500;
+}
+
+.ai-confidence-info {
+  font-size: 0.7em;
+  opacity: 0.8;
+}
+
 /* Question card styling */
 .question-card {
   border-left: 4px solid #0d6efd;

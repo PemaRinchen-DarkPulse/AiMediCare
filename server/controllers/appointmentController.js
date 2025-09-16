@@ -1,5 +1,6 @@
 const Appointment = require('../models/Appointment');
 const User = require('../models/User');
+const aiServiceClient = require('../utils/aiServiceClient');
 
 // Get all appointments for a patient
 exports.getPatientAppointments = async (req, res) => {
@@ -98,6 +99,30 @@ exports.createAppointment = async (req, res) => {
     });
     
     await newAppointment.save();
+    
+    // Notify AI service about appointment creation for triage generation
+    if (reason && reason.trim().length > 0) {
+      try {
+        console.log('Notifying AI service about new appointment for triage generation...');
+        
+        const aiNotificationResult = await aiServiceClient.notifyAppointmentCreated({
+          appointmentId: newAppointment._id.toString(),
+          reason: reason,
+          notes: additionalNotes || '',
+          patientId: patientId.toString(),
+          doctorId: doctorId.toString()
+        });
+        
+        if (aiNotificationResult.success) {
+          console.log('AI service notified successfully for triage generation');
+        } else {
+          console.warn('AI service notification failed:', aiNotificationResult.error);
+        }
+      } catch (aiError) {
+        console.error('Error notifying AI service:', aiError);
+        // Don't fail the appointment creation if AI service is down
+      }
+    }
     
     res.status(201).json({
       status: 'success',

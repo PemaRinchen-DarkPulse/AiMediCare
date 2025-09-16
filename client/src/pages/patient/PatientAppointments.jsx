@@ -2,11 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Container, Row, Col, Card, CardBody, CardTitle, Badge, 
   Nav, NavItem, NavLink, TabContent, TabPane, Button,
-  Progress, Form, FormGroup, Label, Input, FormFeedback,
+  Form, FormGroup, Label, Input, FormFeedback,
   Spinner, InputGroup, ListGroup, ListGroupItem, Alert
 } from 'reactstrap';
-import DatePicker from 'react-datepicker';
-import "react-datepicker/dist/react-datepicker.css";
 import { Formik, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'react-toastify';
@@ -14,80 +12,15 @@ import {
   FaCalendarAlt, FaClock, FaVideo, FaPhone, FaClinicMedical, 
   FaFilter, FaStar, FaLanguage, FaUserMd, FaHospital,
   FaCreditCard, FaCheck, FaArrowLeft, FaClipboardList,
-  FaHistory, FaSpinner, FaCheckCircle, FaTimes, FaRobot
+  FaHistory, FaSpinner, FaCheckCircle, FaTimes
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import ClockTimePicker from '../../components/forms/ClockTimePicker';
 import UserAvatar from '../../components/UserAvatar';
-import { generateTriageQuestions } from '../../services/aiService';
-import { createTriageQuestionnaire } from '../../services/triageService';
 import './PatientAppointments.css';
-
-const SearchableDropdown = ({ options, value, onChange, placeholder, id, label }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const dropdownRef = useRef(null);
-  
-  const filteredOptions = options.filter(option => 
-    option.label.toLowerCase().includes(search.toLowerCase())
-  );
-  
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-  
-  return (
-    <div className="searchable-dropdown" ref={dropdownRef}>
-      <Label for={id}>{label}</Label>
-      <div className="dropdown-container">
-        <Input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onClick={() => setIsOpen(true)}
-          placeholder={placeholder}
-          id={id}
-        />
-        
-        {isOpen && (
-          <div className="dropdown-menu show w-100">
-            {filteredOptions.length > 0 ? (
-              filteredOptions.map((option, index) => (
-                <div 
-                  key={option.value} 
-                  className={`dropdown-item ${value === option.value ? 'active' : ''}`}
-                  onClick={() => {
-                    onChange(option.value);
-                    setSearch(option.label);
-                    setIsOpen(false);
-                  }}
-                >
-                  {option.label}
-                </div>
-              ))
-            ) : (
-              <div className="dropdown-item disabled">No results found</div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
 
 const PatientAppointments = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('upcoming');
-  const [bookingStep, setBookingStep] = useState(0);
   const [isBooking, setIsBooking] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState(null);
   const [selectedAppointmentType, setSelectedAppointmentType] = useState(null);
@@ -95,12 +28,6 @@ const PatientAppointments = () => {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
   const [reasonForVisit, setReasonForVisit] = useState('');
   const [additionalNotes, setAdditionalNotes] = useState('');
-  const [specialtyFilter, setSpecialtyFilter] = useState('all');
-  const [locationFilter, setLocationFilter] = useState('all');
-  const [availabilityFilter, setAvailabilityFilter] = useState('all');
-  const [consultationTypeFilter, setConsultationTypeFilter] = useState('all');
-  const [specialtySearchQuery, setSpecialtySearchQuery] = useState('');
-  const [locationSearchQuery, setLocationSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [providers, setProviders] = useState([]);
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
@@ -108,15 +35,7 @@ const PatientAppointments = () => {
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
   const [applicationTracking, setApplicationTracking] = useState([]);
   const [selectedApplication, setSelectedApplication] = useState(null);
-  const [specialties, setSpecialties] = useState([]);
-  const [locations, setLocations] = useState([]);
   const [error, setError] = useState(null);
-  
-  // Move the state from renderReasonInput to the top level to fix the Hook order issue
-  const [triageQuestions, setTriageQuestions] = useState([]);
-  const [triageAnswers, setTriageAnswers] = useState({});
-  const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
-  const [generationError, setGenerationError] = useState(null);
 
   useEffect(() => {
     fetchProviders();
@@ -154,12 +73,6 @@ const PatientAppointments = () => {
         
         console.log("Processed doctors:", processedDoctors); // Debug logging
         setProviders(processedDoctors);
-        
-        const uniqueSpecialties = [...new Set(processedDoctors.map(doctor => doctor.specialty))];
-        const uniqueLocations = [...new Set(processedDoctors.map(doctor => doctor.location))];
-        
-        setSpecialties(uniqueSpecialties);
-        setLocations(uniqueLocations);
       } else {
         throw new Error(data.message || 'Failed to fetch providers');
       }
@@ -285,78 +198,6 @@ const PatientAppointments = () => {
     }
   };
 
-  const generateMockAppointments = () => {
-    console.warn('Using mock appointment data');
-    
-    setUpcomingAppointments([
-      {
-        id: 101,
-        providerId: 1,
-        providerName: 'Dr. Sarah Johnson',
-        providerImage: 'https://randomuser.me/api/portraits/women/68.jpg',
-        specialty: 'Primary Care',
-        date: new Date('2025-04-18T10:00:00'),
-        time: '10:00 AM',
-        type: 'Video Call',
-        reason: 'Annual checkup',
-        status: 'Confirmed'
-      },
-      {
-        id: 102,
-        providerId: 3,
-        providerName: 'Dr. Amina Patel',
-        providerImage: '',
-        specialty: 'Dermatology',
-        date: new Date('2025-04-22T14:30:00'),
-        time: '2:30 PM',
-        type: 'Video Call',
-        reason: 'Skin rash consultation',
-        status: 'Pending'
-      },
-      {
-        id: 103,
-        providerId: 5,
-        providerName: 'Dr. Elena Rodriguez',
-        providerImage: null,
-        specialty: 'Neurology',
-        date: new Date('2025-04-25T09:15:00'),
-        time: '9:15 AM',
-        type: 'In-Person Visit',
-        reason: 'Migraine evaluation',
-        status: 'Confirmed'
-      }
-    ]);
-
-    setPastAppointments([
-      {
-        id: 104,
-        providerId: 2,
-        providerName: 'Dr. Michael Chen',
-        providerImage: 'https://randomuser.me/api/portraits/men/32.jpg',
-        specialty: 'Cardiology',
-        date: new Date('2025-03-17T11:15:00'),
-        time: '11:15 AM',
-        type: 'In-Person Visit',
-        reason: 'Heart palpitations',
-        status: 'Completed',
-        notes: 'Follow-up in 3 months. Continue with prescribed medication.'
-      },
-      {
-        id: 105,
-        providerId: 4,
-        providerName: 'Dr. James Wilson',
-        providerImage: '',
-        specialty: 'Psychiatry',
-        date: new Date('2025-03-02T15:00:00'),
-        time: '3:00 PM',
-        type: 'Phone Call',
-        reason: 'Anxiety management',
-        status: 'Completed',
-        notes: 'Recommended mindfulness exercises and adjusted medication dosage.'
-      }
-    ]);
-  };
-
   const fetchTimeSlots = async () => {
     if (selectedDate && selectedProvider) {
       try {
@@ -437,8 +278,10 @@ const PatientAppointments = () => {
       if (!token) {
         toast.error('Please log in to book an appointment');
         navigate('/login');
-        return { success: false };
+        return { success: false, error: 'Authentication required' };
       }
+      
+      console.log('Sending appointment data to server:', appointmentData);
       
       const response = await fetch('http://localhost:5000/api/appointments', {
         method: 'POST',
@@ -450,17 +293,22 @@ const PatientAppointments = () => {
       });
       
       const data = await response.json();
+      console.log('Server response:', data);
       
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to book appointment');
+        throw new Error(data.message || `HTTP error! status: ${response.status}`);
       }
       
-      toast.success('Appointment booked successfully!');
-      return { success: true, data };
+      if (data.status === 'success' || data.success) {
+        console.log('Appointment created successfully:', data);
+        return { success: true, data };
+      } else {
+        throw new Error(data.message || 'Unexpected response format from server');
+      }
     } catch (error) {
       console.error('Error booking appointment:', error);
-      toast.error(error.message || 'Failed to book appointment');
-      return { success: false, error };
+      const errorMessage = error.message || 'Failed to book appointment. Please try again.';
+      return { success: false, error: errorMessage };
     } finally {
       setIsLoading(false);
     }
@@ -519,7 +367,6 @@ const PatientAppointments = () => {
   };
 
   const startBooking = () => {
-    setBookingStep(0);
     setIsBooking(true);
     setSelectedProvider(null);
     setSelectedAppointmentType(null);
@@ -537,842 +384,6 @@ const PatientAppointments = () => {
     setSelectedTimeSlot(newTimeSlot);
   };
 
-  const renderBookingStep = () => {
-    switch (bookingStep) {
-      case 0:
-        return renderProviderSelection();
-      case 1:
-        return renderAppointmentTypeSelection();
-      case 2:
-        return renderDateTimeSelection();
-      case 3:
-        return renderReasonInput();
-      case 4:
-        return renderConfirmation();
-      default:
-        return null;
-    }
-  };
-
-  const renderProviderSelection = () => {
-    return (
-      <div className="provider-selection">
-        <h4 className="mb-4">Select a healthcare provider</h4>
-        
-        <div className="filter-options mb-4">
-          <Row>
-            <Col md={3}>
-              <SearchableDropdown
-                options={[
-                  { value: 'all', label: 'All Specialties' },
-                  ...specialties.map(specialty => ({ value: specialty, label: specialty }))
-                ]}
-                value={specialtyFilter}
-                onChange={setSpecialtyFilter}
-                placeholder="Search Specialty"
-                id="specialtyFilter"
-                label="Filter by Specialty"
-              />
-            </Col>
-            <Col md={3}>
-              <SearchableDropdown
-                options={[
-                  { value: 'all', label: 'All Locations' },
-                  ...locations.map(location => ({ value: location, label: location }))
-                ]}
-                value={locationFilter}
-                onChange={setLocationFilter}
-                placeholder="Search Location"
-                id="locationFilter"
-                label="Filter by Location"
-              />
-            </Col>
-            <Col md={3}>
-              <FormGroup>
-                <Label for="availabilityFilter">Availability</Label>
-                <Input
-                  type="date"
-                  id="availabilityFilter"
-                  value={availabilityFilter}
-                  onChange={(e) => setAvailabilityFilter(e.target.value)}
-                >
-                </Input>
-              </FormGroup>
-            </Col>
-            <Col md={3}>
-              <FormGroup>
-                <Label for="consultationTypeFilter">Consultation Type</Label>
-                <Input
-                  type="select"
-                  id="consultationTypeFilter"
-                  value={consultationTypeFilter}
-                  onChange={(e) => setConsultationTypeFilter(e.target.value)}
-                >
-                  <option value="all">All Types</option>
-                  <option value="In-Person Visit">In-Person Visit</option>
-                  <option value="Video Call">Video Call</option>
-                  <option value="Phone Call">Phone Call</option>
-                </Input>
-              </FormGroup>
-            </Col>
-          </Row>
-        </div>
-        
-        {isLoading ? (
-          <div className="text-center py-4">
-            <Spinner color="primary" />
-            <p className="mt-2">Loading healthcare providers...</p>
-          </div>
-        ) : (
-          <div className="provider-list">
-            <Row>
-              {providers
-                .filter(provider => 
-                  (specialtyFilter === 'all' || provider.specialty === specialtyFilter) &&
-                  (locationFilter === 'all' || provider.location === locationFilter) &&
-                  (availabilityFilter === 'all' || provider.availableDates.some(d => {
-                    const today = new Date();
-                    const tomorrow = new Date(today);
-                    tomorrow.setDate(today.getDate() + 1);
-                    const nextWeek = new Date(today);
-                    nextWeek.setDate(today.getDate() + 7);
-                    return (availabilityFilter === 'Today' && d.toDateString() === today.toDateString()) ||
-                           (availabilityFilter === 'Tomorrow' && d.toDateString() === tomorrow.toDateString()) ||
-                           (availabilityFilter === 'Next Week' && d >= today && d <= nextWeek);
-                  })) &&
-                  (consultationTypeFilter === 'all' || provider.consultationTypes.includes(consultationTypeFilter)) &&
-                  (specialtySearchQuery === '' || provider.specialty.toLowerCase().includes(specialtySearchQuery.toLowerCase())) &&
-                  (locationSearchQuery === '' || provider.location.toLowerCase().includes(locationSearchQuery.toLowerCase()))
-                )
-                .map(provider => (
-                  <Col md={6} lg={4} key={provider.id} className="mb-4">
-                    <Card 
-                      className={`provider-card h-100 ${selectedProvider?.id === provider.id ? 'selected border border-3 border-primary shadow' : ''}`}
-                      onClick={() => setSelectedProvider(provider)}
-                    >
-                      <CardBody>
-                        <div className="d-flex align-items-center mb-3">
-                          <div className="me-3">
-                            <UserAvatar 
-                              name={provider.name} 
-                              image={provider.profileImage || provider.image} 
-                              size="lg" 
-                            />
-                          </div>
-                          <div>
-                            <h4 className="mb-1">{provider.name}</h4>
-                            <div className="d-flex align-items-center mb-2">
-                              <Badge color="info" className="me-2">{provider.specialty}</Badge>
-                              <span className="text-muted">
-                                <small>{provider.yearsExperience || 0} {provider.yearsExperience === 1 ? 'year' : 'years'} exp.</small>
-                              </span>
-                            </div>
-                            <div className="provider-rating">
-                              {[...Array(5)].map((_, i) => (
-                                <FaStar 
-                                  key={i} 
-                                  className={i < Math.floor(provider.rating || 0) ? "text-warning" : "text-secondary"} 
-                                  size={14} 
-                                />
-                              ))}
-                              <span className="ms-2">{provider.rating || 0}/5.0</span>
-                              <span className="text-muted ms-1">({provider.totalRatings || 0})</span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="provider-details mt-3">
-                          <div className="mb-3">
-                            <FaHospital className="me-2 text-primary" size={16} />
-                            <span>{provider.location || 'No location specified'}</span>
-                          </div>
-                          <div className="mb-3">
-                            <FaCalendarAlt className="me-2 text-primary" size={16} />
-                            <span>
-                              {provider.availableDates && provider.availableDates.length > 0 
-                                ? `Next available: ${provider.availableDates[0].toLocaleDateString()}` 
-                                : 'No availability'}
-                            </span>
-                          </div>
-                          {provider.languages && provider.languages.length > 0 && (
-                            <div className="mb-3">
-                              <FaLanguage className="me-2 text-primary" size={16} />
-                              <span>{provider.languages.join(', ')}</span>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <hr className="my-3" />
-                        
-                        <div className="bio-section">
-                          <h6>About</h6>
-                          <p className="provider-bio text-muted small">
-                            {provider.bio || 'No bio available.'}
-                          </p>
-                        </div>
-                        
-                        {provider.education && provider.education.length > 0 && (
-                          <div className="education-section mt-3">
-                            <h6>Education</h6>
-                            <ul className="list-unstyled small">
-                              {provider.education.slice(0, 2).map((edu, idx) => (
-                                <li key={idx} className="text-muted">
-                                  {edu.degree}, {edu.institution} {edu.year ? `(${edu.year})` : ''}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        
-                        <div className="mt-3 text-center">
-                          <Button 
-                            color="primary" 
-                            size="sm" 
-                            outline 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedProvider(provider);
-                              setBookingStep(1);
-                            }}
-                            className="w-100"
-                          >
-                            Book Appointment
-                          </Button>
-                        </div>
-                      </CardBody>
-                    </Card>
-                  </Col>
-                ))}
-            </Row>
-          </div>
-        )}
-        
-        <div className="booking-actions mt-4 d-flex justify-content-between">
-          <Button color="secondary" onClick={() => { setIsBooking(false); setActiveTab('upcoming'); }}>
-            Cancel
-          </Button>
-          <Button 
-            color="primary" 
-            onClick={() => setBookingStep(1)}
-            disabled={!selectedProvider}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
-    );
-  };
-  
-  const renderAppointmentTypeSelection = () => {
-    const appointmentTypes = [
-      {
-        type: 'Video Call',
-        icon: FaVideo,
-        description: 'Virtual appointment via secure video connection',
-        benefits: ['No travel required', 'Access from anywhere', 'Same quality of care']
-      },
-      {
-        type: 'Phone Call',
-        icon: FaPhone,
-        description: 'Talk with your provider over the phone',
-        benefits: ['No video required', 'Good for follow-ups', 'Simple and convenient']
-      },
-      {
-        type: 'In-Person Visit',
-        icon: FaClinicMedical,
-        description: 'Visit the medical facility in person',
-        benefits: ['Physical examination', 'Complex health issues', 'Procedures or tests']
-      }
-    ];
-    
-    return (
-      <div className="appointment-type-selection">
-        <h4 className="mb-4">Choose appointment type</h4>
-        
-        <div className="appointment-types-container">
-          <Row>
-            {appointmentTypes.map((item) => (
-              <Col md={4} key={item.type} className="mb-4">
-                <Card 
-                  className={`appointment-type-card h-100 ${selectedAppointmentType === item.type ? 'selected border border-3 border-primary shadow' : ''}`}
-                  onClick={() => setSelectedAppointmentType(item.type)}
-                >
-                  <CardBody className="text-center">
-                    <div className="appointment-type-icon mb-3">
-                      <item.icon size={40} className="text-primary" />
-                    </div>
-                    <h5>{item.type}</h5>
-                    <p className="text-muted">{item.description}</p>
-                    
-                    <div className="appointment-benefits mt-3">
-                      <small>Benefits:</small>
-                      <ul className="text-start small">
-                        {item.benefits.map((benefit, index) => (
-                          <li key={index}>{benefit}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  </CardBody>
-                </Card>
-              </Col>
-            ))}
-          </Row>
-        </div>
-        
-        <div className="booking-actions mt-4 d-flex justify-content-between">
-          <Button color="secondary" onClick={() => setBookingStep(0)}>
-            Back
-          </Button>
-          <Button 
-            color="primary" 
-            onClick={() => setBookingStep(2)}
-            disabled={!selectedAppointmentType}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
-    );
-  };
-  
-  const renderDateTimeSelection = () => {
-    const isProviderAvailable = (date) => {
-      const dateString = date.toDateString();
-      return selectedProvider.availableDates.some(d => d.toDateString() === dateString);
-    };
-
-    return (
-      <div className="date-time-selection">
-        <h4 className="mb-4">Select date & time</h4>
-        
-        <Row>
-          <Col md={6} className="mb-4">
-            <div className="date-selector">
-              <DatePicker
-                selected={selectedDate}
-                onChange={date => {
-                  setSelectedDate(date);
-                  setSelectedTimeSlot(null);
-                }}
-                minDate={new Date()}
-                inline
-                className="form-control"
-                dayClassName={date => 
-                  isProviderAvailable(date) ? "provider-available-date" : undefined
-                }
-                renderDayContents={(day, date) => {
-                  return (
-                    <div className="day-content">
-                      {day}
-                      {isProviderAvailable(date) && <div className="available-dot"></div>}
-                    </div>
-                  );
-                }}
-              />
-            </div>
-          </Col>
-          
-          <Col md={6}>
-            <div className="time-selector">
-              {selectedDate ? (
-                isLoading ? (
-                  <div className="text-center py-4">
-                    <Spinner size="sm" color="primary" />
-                    <p className="mt-2">Loading available times...</p>
-                  </div>
-                ) : (
-                  <div className="clock-time-container">
-                    <ClockTimePicker 
-                      onChange={handleTimeChange}
-                      initialTime={selectedTimeSlot ? selectedTimeSlot.time : null}
-                      availableSlots={availableTimeSlots}
-                    />
-                  </div>
-                )
-              ) : (
-                <Alert color="info" timeout={0}>
-                  Please select a date first
-                </Alert>
-              )}
-            </div>
-          </Col>
-        </Row>
-        
-        <div className="booking-actions mt-4 d-flex justify-content-between">
-          <Button color="secondary" onClick={() => setBookingStep(1)}>
-            Back
-          </Button>
-          <Button 
-            color="primary" 
-            onClick={() => setBookingStep(3)}
-            disabled={!selectedDate || !selectedTimeSlot}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
-    );
-  };
-  
-  const renderReasonInput = () => {
-    const validationSchema = Yup.object().shape({
-      reasonForVisit: Yup.string()
-        .required('Please provide a reason for your visit')
-        .min(10, 'Please describe your reason in more detail')
-        .max(500, 'Description is too long')
-    });
-    
-    // Handles generating triage questions when input changes
-    const generateQuestionsFromInput = async (reason, notes) => {
-      if (!reason || reason.length < 10) return;
-      
-      try {
-        setIsGeneratingQuestions(true);
-        setGenerationError(null);
-        
-        const generatedQuestions = await generateTriageQuestions(reason, notes);
-        console.log('Generated AI triage questions:', generatedQuestions);
-        setTriageQuestions(generatedQuestions);
-        
-      } catch (error) {
-        console.error('Error generating triage questions:', error);
-        setGenerationError('Failed to generate pre-visit questions. Please continue with your appointment, and we will assess your condition during the visit.');
-      } finally {
-        setIsGeneratingQuestions(false);
-      }
-    };
-
-    // Handle the triage question answers
-    const handleTriageAnswerChange = (questionId, value) => {
-      setTriageAnswers(prev => ({
-        ...prev,
-        [questionId]: value
-      }));
-    };
-
-    return (
-      <div className="reason-input">
-        <h4 className="mb-4">Tell us about your visit</h4>
-        
-        <Formik
-          initialValues={{
-            reasonForVisit: reasonForVisit,
-            additionalNotes: additionalNotes
-          }}
-          validationSchema={validationSchema}
-          onSubmit={(values) => {
-            console.log('Form values:', values);
-            setReasonForVisit(values.reasonForVisit);
-            setAdditionalNotes(values.additionalNotes);
-            
-            // Store the final questions and answers for passing to next step
-            const triageData = {
-              questions: triageQuestions,
-              answers: triageAnswers,
-            };
-            console.log('Triage data for appointment:', triageData);
-            
-            setBookingStep(4);
-          }}
-        >
-          {({ isValid, dirty, handleSubmit, values, setFieldValue }) => {
-            // Use effect to generate questions when input changes substantially
-            useEffect(() => {
-              const delayTimer = setTimeout(() => {
-                if (values.reasonForVisit && values.reasonForVisit.length >= 10) {
-                  generateQuestionsFromInput(values.reasonForVisit, values.additionalNotes);
-                }
-              }, 1000); // 1-second delay to avoid too many API calls
-              
-              return () => clearTimeout(delayTimer);
-            }, [values.reasonForVisit, values.additionalNotes]);
-            
-            return (
-              <Form>
-                <FormGroup>
-                  <Label for="reasonForVisit">Reason for visit</Label>
-                  <Field
-                    as={Input}
-                    type="textarea"
-                    name="reasonForVisit"
-                    id="reasonForVisit"
-                    placeholder="Describe why you're scheduling this appointment"
-                    rows="3"
-                  />
-                  <ErrorMessage name="reasonForVisit" component="div" className="text-danger" />
-                </FormGroup>
-                
-                <FormGroup>
-                  <Label for="additionalNotes">Additional notes (optional)</Label>
-                  <Field
-                    as={Input}
-                    type="textarea"
-                    name="additionalNotes"
-                    id="additionalNotes"
-                    placeholder="Add any other information you'd like your provider to know"
-                    rows="2"
-                  />
-                </FormGroup>
-
-                {isGeneratingQuestions && (
-                  <div className="text-center py-3">
-                    <Spinner size="sm" color="primary" className="me-2" />
-                    <span className="text-muted">Generating personalized pre-visit questions...</span>
-                  </div>
-                )}
-
-                {generationError && (
-                  <Alert color="warning" timeout={0}>
-                    <div className="d-flex align-items-center">
-                      <FaRobot className="me-2 text-warning" size={20} />
-                      <div>{generationError}</div>
-                    </div>
-                  </Alert>
-                )}
-
-                {!isGeneratingQuestions && triageQuestions.length > 0 && (
-                  <div className="triage-questions mt-4">
-                    <Alert color="info" timeout={0}>
-                      <div className="d-flex align-items-center">
-                        <FaRobot className="me-2" size={20} />
-                        <div>
-                          <strong>Pre-visit Questionnaire:</strong> Please answer these questions to help your provider prepare for your visit.
-                        </div>
-                      </div>
-                    </Alert>
-
-                    <div className="questions-container">
-                      {triageQuestions.map((question) => (
-                        <FormGroup key={question.id} className="mb-4 p-3 border rounded">
-                          <Label for={`triage-${question.id}`} className="fw-bold">
-                            {question.question}
-                            {question.required && <span className="text-danger">*</span>}
-                          </Label>
-
-                          {question.type === 'multiple_choice' && (
-                            <div className="radio-options mt-2">
-                              {question.options.map((option, idx) => (
-                                <div key={idx} className="form-check">
-                                  <Input
-                                    type="radio"
-                                    id={`triage-${question.id}-${idx}`}
-                                    name={`triage-${question.id}`}
-                                    value={option}
-                                    checked={triageAnswers[question.id] === option}
-                                    onChange={() => handleTriageAnswerChange(question.id, option)}
-                                    required={question.required}
-                                  />
-                                  <Label for={`triage-${question.id}-${idx}`} className="form-check-label">
-                                    {option}
-                                  </Label>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {question.type === 'severity_scale' && (
-                            <div className="mt-2">
-                              <div className="severity-scale">
-                                {Array.from({length: (question.max - question.min) + 1}, (_, i) => question.min + i).map(num => (
-                                  <Label key={num} className="severity-option">
-                                    <Input
-                                      type="radio"
-                                      name={`triage-${question.id}`}
-                                      value={num.toString()}
-                                      checked={triageAnswers[question.id] === num.toString()}
-                                      onChange={() => handleTriageAnswerChange(question.id, num.toString())}
-                                      required={question.required}
-                                    />
-                                    {num}
-                                  </Label>
-                                ))}
-                              </div>
-                              <div className="severity-labels">
-                                <span>{question.minLabel || 'Min'}</span>
-                                <span>{question.maxLabel || 'Max'}</span>
-                              </div>
-                            </div>
-                          )}
-
-                          {question.type === 'yes_no' && (
-                            <div className="radio-options mt-2">
-                              <div className="form-check form-check-inline">
-                                <Input
-                                  type="radio"
-                                  id={`triage-${question.id}-yes`}
-                                  name={`triage-${question.id}`}
-                                  value="Yes"
-                                  checked={triageAnswers[question.id] === "Yes"}
-                                  onChange={() => handleTriageAnswerChange(question.id, "Yes")}
-                                  required={question.required}
-                                />
-                                <Label for={`triage-${question.id}-yes`} className="form-check-label">Yes</Label>
-                              </div>
-                              <div className="form-check form-check-inline">
-                                <Input
-                                  type="radio"
-                                  id={`triage-${question.id}-no`}
-                                  name={`triage-${question.id}`}
-                                  value="No"
-                                  checked={triageAnswers[question.id] === "No"}
-                                  onChange={() => handleTriageAnswerChange(question.id, "No")}
-                                  required={question.required}
-                                />
-                                <Label for={`triage-${question.id}-no`} className="form-check-label">No</Label>
-                              </div>
-                            </div>
-                          )}
-
-                          {question.type === 'text' && (
-                            <Input
-                              type="textarea"
-                              id={`triage-${question.id}`}
-                              value={triageAnswers[question.id] || ''}
-                              onChange={(e) => handleTriageAnswerChange(question.id, e.target.value)}
-                              placeholder="Your answer"
-                              rows="2"
-                              required={question.required}
-                            />
-                          )}
-                        </FormGroup>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                <div className="booking-actions mt-4 d-flex justify-content-between">
-                  <Button color="secondary" onClick={() => setBookingStep(2)}>
-                    Back
-                  </Button>
-                  <Button 
-                    color="primary"
-                    onClick={() => {
-                      if (isValid) {
-                        handleSubmit();
-                      }
-                    }}
-                    disabled={!isValid}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </Form>
-            );
-          }}
-        </Formik>
-      </div>
-    );
-  };
-  
-  const renderConfirmation = () => {
-    return (
-      <div className="appointment-confirmation">
-        <div className="text-center mb-4">
-          <div className="confirmation-icon">
-            <FaCheck className="text-success" size={40} />
-          </div>
-          <h4 className="mt-3">Confirm your appointment</h4>
-        </div>
-        
-        <Card className="mb-4">
-          <CardBody>
-            <h5>Appointment Details</h5>
-            <ListGroup className="mt-3">
-              <ListGroupItem>
-                <Row>
-                  <Col xs={4} className="text-muted">Provider</Col>
-                  <Col xs={8}>
-                    <div className="d-flex align-items-center">
-                      <UserAvatar 
-                        name={selectedProvider?.name} 
-                        image={selectedProvider?.image} 
-                        size="sm"
-                        className="me-2"
-                      />
-                      <div>
-                        <div>{selectedProvider?.name}</div>
-                        <small className="text-muted">{selectedProvider?.specialty}</small>
-                      </div>
-                    </div>
-                  </Col>
-                </Row>
-              </ListGroupItem>
-              <ListGroupItem>
-                <Row>
-                  <Col xs={4} className="text-muted">Date & Time</Col>
-                  <Col xs={8}>
-                    {selectedDate?.toLocaleDateString()} at {selectedTimeSlot?.formattedTime}
-                  </Col>
-                </Row>
-              </ListGroupItem>
-              <ListGroupItem>
-                <Row>
-                  <Col xs={4} className="text-muted">Appointment Type</Col>
-                  <Col xs={8}>{selectedAppointmentType}</Col>
-                </Row>
-              </ListGroupItem>
-            </ListGroup>
-          </CardBody>
-        </Card>
-        
-        <div className="insurance-section mb-4">
-          <h5>Insurance Information</h5>
-          <Card>
-            <CardBody>
-              <div className="d-flex align-items-center justify-content-between">
-                <div>
-                  <div className="fw-bold">Blue Cross Blue Shield</div>
-                  <div className="text-muted">Policy #: BCBS12345678</div>
-                </div>
-                <Button color="link" size="sm">Change</Button>
-              </div>
-            </CardBody>
-          </Card>
-        </div>
-        
-        <div className="cancellation-policy mb-4">
-          <h5>Cancellation Policy</h5>
-          <Alert color="info" timeout={0}>
-            <small>
-              You may cancel or reschedule your appointment up to 24 hours before your scheduled time without incurring any fees. 
-              Late cancellations or no-shows may result in a fee of $25.
-            </small>
-          </Alert>
-        </div>
-        
-        <div className="booking-actions mt-4 d-flex justify-content-between">
-          <Button color="secondary" onClick={() => setBookingStep(3)}>
-            Back
-          </Button>
-          <Button 
-            color="success" 
-            onClick={async () => {
-              // Create data object to send to the server
-              const appointmentData = {
-                doctorId: selectedProvider.id,
-                date: selectedDate,
-                time: selectedTimeSlot.formattedTime,
-                type: selectedAppointmentType,
-                reason: reasonForVisit || "General consultation",
-                additionalNotes: additionalNotes || ""
-              };
-              
-              try {
-                // Call API to create appointment
-                setIsLoading(true);
-                const result = await createAppointment(appointmentData);
-                
-                if (result.success) {
-                  // Safely get the appointment ID from the result with multiple fallback options
-                  let appointmentId;
-                  
-                  // Check different possible response structures
-                  if (result.data?.appointment?._id) {
-                    appointmentId = result.data.appointment._id;
-                  } else if (result.data?._id) {
-                    appointmentId = result.data._id;
-                  } else if (result.data?.id) {
-                    appointmentId = result.data.id;
-                  } else if (result.data?.appointment?.id) {
-                    appointmentId = result.data.appointment.id;
-                  } else {
-                    // Generate a fallback ID if none is returned from server
-                    appointmentId = `temp_${Math.floor(Math.random() * 1000) + 300}`;
-                    console.warn("No appointment ID returned from server, using temporary ID:", appointmentId);
-                  }
-                  
-                  console.log("Created appointment with ID:", appointmentId);
-                  
-                  // Create tracking record for this appointment
-                  const newApplication = {
-                    id: appointmentId,
-                    providerId: selectedProvider.id,
-                    providerName: selectedProvider.name,
-                    providerImage: selectedProvider.image,
-                    specialty: selectedProvider.specialty,
-                    date: selectedDate,
-                    time: selectedTimeSlot.formattedTime,
-                    type: selectedAppointmentType,
-                    reason: appointmentData.reason,
-                    status: 'pending',
-                    submittedOn: new Date(),
-                    currentStep: 'Doctor Review',
-                    medicalReviewStatus: 'In Progress',
-                    estimatedCompletionTime: '24-48 hours'
-                  };
-                  
-                  // If we have triage questions, save them to the database
-                  if (triageQuestions.length > 0 && appointmentId) {
-                    try {
-                      // Prepare data for creating triage questionnaire
-                      const triageData = {
-                        appointmentId: appointmentId,
-                        questions: triageQuestions,
-                        generatedFromReason: reasonForVisit,
-                        generatedFromNotes: additionalNotes || ""
-                      };
-                      
-                      console.log("Saving triage questionnaire to database:", triageData);
-                      
-                      // Save the questionnaire to the database
-                      const triageResult = await createTriageQuestionnaire(triageData);
-                      console.log("Triage questionnaire saved successfully:", triageResult);
-                      toast.success('Pre-visit questionnaire created. Please complete it before your appointment.');
-                      
-                    } catch (error) {
-                      console.error("Error saving triage questionnaire:", error);
-                      toast.error('Failed to create pre-visit questionnaire. You can still proceed with your appointment.');
-                    }
-                  } else {
-                    console.log("No triage questions to save or missing appointmentId");
-                  }
-                  
-                  // Add the new application to tracking
-                  setApplicationTracking(prev => [...prev, newApplication]);
-                  
-                  // Show success message
-                  toast.success('Appointment request submitted successfully!');
-                  
-                  // Refresh data in the background without awaiting
-                  fetchAppointments();
-                  fetchApplicationTracking();
-                  
-                  // Force redirect to upcoming tab without waiting
-                  setActiveTab('upcoming');
-                  setIsBooking(false);
-                  
-                  // Reset booking state 
-                  setBookingStep(0);
-                  setSelectedProvider(null);
-                  setSelectedAppointmentType(null);
-                  setSelectedDate(null);
-                  setSelectedTimeSlot(null);
-                  setReasonForVisit('');
-                  setAdditionalNotes('');
-                  setTriageQuestions([]);
-                  setTriageAnswers({});
-                } else {
-                  toast.error(result.error || 'Failed to create appointment');
-                }
-              } catch (error) {
-                console.error('Error during appointment booking:', error);
-                toast.error('Something went wrong while booking your appointment. Please try again.');
-              } finally {
-                setIsLoading(false);
-              }
-            }}
-          >
-            {isLoading ? (
-              <><Spinner size="sm" className="me-2" /> Processing...</>
-            ) : (
-              'Submit Appointment Request'
-            )}
-          </Button>
-        </div>
-      </div>
-    );
-  };
-  
   const renderAppointmentList = (appointments) => {
     if (appointments.length === 0) {
       return (
@@ -1756,47 +767,314 @@ const PatientAppointments = () => {
   };
 
   const renderBookingContent = () => {
+    const validationSchema = Yup.object().shape({
+      provider: Yup.string().required('Please select a healthcare provider'),
+      appointmentType: Yup.string().required('Please select an appointment type'),
+      date: Yup.date().required('Please select a date').min(new Date(), 'Date must be in the future'),
+      time: Yup.string().required('Please select a time'),
+      reasonForVisit: Yup.string()
+        .required('Please provide a reason for your visit')
+        .min(10, 'Please describe your reason in more detail')
+        .max(500, 'Description is too long')
+    });
+
+    const appointmentTypes = [
+      { value: 'Video Call', label: 'Video Call', icon: FaVideo },
+      { value: 'Phone Call', label: 'Phone Call', icon: FaPhone },
+      { value: 'In-Person Visit', label: 'In-Person Visit', icon: FaClinicMedical }
+    ];
+
     return (
-      <Card className="mb-4">
-        <CardBody>
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <div className="d-flex align-items-center">
-              <Button color="link" className="p-0 me-3" onClick={() => { setIsBooking(false); setActiveTab('upcoming'); }}>
-                <FaArrowLeft size={16} />
-              </Button>
-              <h3 className="mb-0">Book an Appointment</h3>
-            </div>
-          </div>
-          
-          <div className="booking-progress mb-4">
-            <Progress value={(bookingStep / 5) * 100} className="mb-2" />
-            <div className="booking-steps">
-              <div className={`booking-step ${bookingStep >= 0 ? 'active' : ''}`}>
-                <div className="step-number">1</div>
-                <div className="step-name d-none d-md-block">Provider</div>
+      <Container className="d-flex justify-content-center">
+        <div style={{ width: '100%', maxWidth: '800px' }}>
+          <Card className="mb-4 shadow-sm border-0">
+            <CardBody className="p-4 position-relative">
+              <div className="d-flex justify-content-between align-items-center mb-4">
+                <div className="d-flex align-items-center">
+                  <Button color="link" className="p-0 me-3" onClick={() => { setIsBooking(false); setActiveTab('upcoming'); }}>
+                    <FaArrowLeft size={16} />
+                  </Button>
+                  <h3 className="mb-0">Book an Appointment</h3>
+                </div>
               </div>
-              <div className={`booking-step ${bookingStep >= 1 ? 'active' : ''}`}>
-                <div className="step-number">2</div>
-                <div className="step-name d-none d-md-block">Type</div>
-              </div>
-              <div className={`booking-step ${bookingStep >= 2 ? 'active' : ''}`}>
-                <div className="step-number">3</div>
-                <div className="step-name d-none d-md-block">Date & Time</div>
-              </div>
-              <div className={`booking-step ${bookingStep >= 3 ? 'active' : ''}`}>
-                <div className="step-number">4</div>
-                <div className="step-name d-none d-md-block">Reason</div>
-              </div>
-              <div className={`booking-step ${bookingStep >= 4 ? 'active' : ''}`}>
-                <div className="step-number">5</div>
-                <div className="step-name d-none d-md-block">Confirm</div>
-              </div>
-            </div>
-          </div>
-          
-          {renderBookingStep()}
+
+              <Formik
+                initialValues={{
+                  provider: selectedProvider?.id || '',
+                  appointmentType: selectedAppointmentType || '',
+                  date: selectedDate || '',
+                  time: selectedTimeSlot?.formattedTime || '',
+                  reasonForVisit: reasonForVisit || '',
+                  additionalNotes: additionalNotes || ''
+                }}
+                validationSchema={validationSchema}
+                onSubmit={async (values, { setSubmitting, resetForm }) => {
+                  try {
+                    setSubmitting(true);
+                    setIsLoading(true);
+
+                    // Find the selected provider
+                    const provider = providers.find(p => p.id === values.provider);
+                    
+                    const appointmentData = {
+                      doctorId: values.provider,
+                      date: new Date(values.date),
+                      time: values.time,
+                      type: values.appointmentType,
+                      reason: values.reasonForVisit,
+                      additionalNotes: values.additionalNotes
+                    };
+
+                    console.log('Submitting appointment data:', appointmentData);
+                    const result = await createAppointment(appointmentData);
+
+                    if (result.success) {
+                      let appointmentId = result.data?.appointment?._id || result.data?._id || result.data?.id || `temp_${Math.floor(Math.random() * 1000) + 300}`;
+
+                      const newApplication = {
+                        id: appointmentId,
+                        providerId: provider.id,
+                        providerName: provider.name,
+                        providerImage: provider.image,
+                        specialty: provider.specialty,
+                        date: new Date(values.date),
+                        time: values.time,
+                        type: values.appointmentType,
+                        reason: values.reasonForVisit,
+                        status: 'pending',
+                        submittedOn: new Date(),
+                        currentStep: 'Doctor Review',
+                        medicalReviewStatus: 'In Progress',
+                        estimatedCompletionTime: '24-48 hours'
+                      };
+
+                      setApplicationTracking(prev => [...prev, newApplication]);
+                      
+                      // Show detailed success messages
+                      toast.success(`🎉 Appointment request submitted successfully!
+                      
+📅 Date: ${new Date(values.date).toLocaleDateString()}
+🕐 Time: ${values.time}
+👨‍⚕️ Provider: ${provider.name}
+📋 Type: ${values.appointmentType}`, {
+                        position: "top-right",
+                        autoClose: 6000,
+                        hideProgressBar: false,
+                        closeOnClick: true,
+                        pauseOnHover: true,
+                        draggable: true,
+                      });
+                      
+                      // Additional confirmation messages
+                      setTimeout(() => {
+                        toast.info('📧 You will receive an email confirmation shortly', {
+                          position: "top-right",
+                          autoClose: 4000,
+                        });
+                      }, 1000);
+                      
+                      setTimeout(() => {
+                        toast.info('📋 Track your appointment status in the "Track Applications" tab', {
+                          position: "top-right",
+                          autoClose: 5000,
+                        });
+                      }, 2000);
+
+                      // Reset form and navigate back
+                      resetForm();
+                      setActiveTab('upcoming');
+                      setIsBooking(false);
+                      setSelectedProvider(null);
+                      setSelectedAppointmentType(null);
+                      setSelectedDate(null);
+                      setSelectedTimeSlot(null);
+                      setReasonForVisit('');
+                      setAdditionalNotes('');
+
+                      // Refresh data
+                      fetchAppointments();
+                      fetchApplicationTracking();
+                    } else {
+                      toast.error(result.error || 'Failed to create appointment');
+                    }
+                  } catch (error) {
+                    console.error('Error booking appointment:', error);
+                    toast.error('Something went wrong while booking your appointment. Please try again.');
+                  } finally {
+                    setSubmitting(false);
+                    setIsLoading(false);
+                  }
+                }}
+              >
+            {({ values, setFieldValue, isSubmitting, isValid, dirty }) => (
+              <Form>
+                {isSubmitting && (
+                  <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75" style={{ zIndex: 1000 }}>
+                    <div className="text-center">
+                      <Spinner color="primary" size="lg" />
+                      <p className="mt-2 mb-0">Submitting your appointment request...</p>
+                    </div>
+                  </div>
+                )}
+                
+                <Row>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label for="provider">Select Healthcare Provider *</Label>
+                      <Field
+                        as={Input}
+                        type="select"
+                        name="provider"
+                        id="provider"
+                        onChange={(e) => {
+                          const providerId = e.target.value;
+                          const provider = providers.find(p => p.id === providerId);
+                          setFieldValue('provider', providerId);
+                          setSelectedProvider(provider);
+                        }}
+                      >
+                        <option value="">Choose a provider...</option>
+                        {providers.map(provider => (
+                          <option key={provider.id} value={provider.id}>
+                            {provider.name} - {provider.specialty}
+                          </option>
+                        ))}
+                      </Field>
+                      <ErrorMessage name="provider" component="div" className="text-danger" />
+                    </FormGroup>
+                  </Col>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label for="appointmentType">Appointment Type *</Label>
+                      <Field
+                        as={Input}
+                        type="select"
+                        name="appointmentType"
+                        id="appointmentType"
+                        onChange={(e) => {
+                          setFieldValue('appointmentType', e.target.value);
+                          setSelectedAppointmentType(e.target.value);
+                        }}
+                      >
+                        <option value="">Choose appointment type...</option>
+                        {appointmentTypes.map(type => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </Field>
+                      <ErrorMessage name="appointmentType" component="div" className="text-danger" />
+                    </FormGroup>
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label for="date">Preferred Date *</Label>
+                      <Field
+                        as={Input}
+                        type="date"
+                        name="date"
+                        id="date"
+                        min={new Date().toISOString().split('T')[0]}
+                        onChange={(e) => {
+                          setFieldValue('date', e.target.value);
+                          setSelectedDate(new Date(e.target.value));
+                        }}
+                      />
+                      <ErrorMessage name="date" component="div" className="text-danger" />
+                    </FormGroup>
+                  </Col>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label for="time">Preferred Time *</Label>
+                      <Field
+                        as={Input}
+                        type="time"
+                        name="time"
+                        id="time"
+                        onChange={(e) => {
+                          setFieldValue('time', e.target.value);
+                          setSelectedTimeSlot({ formattedTime: e.target.value });
+                        }}
+                      />
+                      <ErrorMessage name="time" component="div" className="text-danger" />
+                    </FormGroup>
+                  </Col>
+                </Row>
+
+                <FormGroup>
+                  <Label for="reasonForVisit">Reason for Visit *</Label>
+                  <Field
+                    as={Input}
+                    type="textarea"
+                    name="reasonForVisit"
+                    id="reasonForVisit"
+                    placeholder="Describe why you're scheduling this appointment"
+                    rows="3"
+                    onChange={(e) => {
+                      setFieldValue('reasonForVisit', e.target.value);
+                      setReasonForVisit(e.target.value);
+                    }}
+                  />
+                  <ErrorMessage name="reasonForVisit" component="div" className="text-danger" />
+                </FormGroup>
+
+                <FormGroup>
+                  <Label for="additionalNotes">Additional Notes (Optional)</Label>
+                  <Field
+                    as={Input}
+                    type="textarea"
+                    name="additionalNotes"
+                    id="additionalNotes"
+                    placeholder="Add any other information you'd like your provider to know"
+                    rows="2"
+                    onChange={(e) => {
+                      setFieldValue('additionalNotes', e.target.value);
+                      setAdditionalNotes(e.target.value);
+                    }}
+                  />
+                </FormGroup>
+
+                {/* Confirmation Info */}
+                <Alert color="info" className="mb-4" fade={false}>
+                  <small>
+                    <FaCheck className="me-2" />
+                    <strong>What happens next:</strong> Your appointment request will be reviewed by the selected provider. 
+                    You'll receive an email confirmation once it's approved (usually within 24-48 hours).
+                  </small>
+                </Alert>
+
+                <div className="d-flex justify-content-between mt-4">
+                  <Button 
+                    color="secondary" 
+                    onClick={() => { 
+                      setIsBooking(false); 
+                      setActiveTab('upcoming'); 
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    color="primary" 
+                    type="submit"
+                    disabled={!isValid || isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <><Spinner size="sm" className="me-2" /> Submitting...</>
+                    ) : (
+                      'Submit Appointment Request'
+                    )}
+                  </Button>
+                </div>
+              </Form>
+            )}
+          </Formik>
         </CardBody>
       </Card>
+        </div>
+      </Container>
     );
   };
 
@@ -1899,5 +1177,4 @@ const PatientAppointments = () => {
     </div>
   );
 };
-
 export default PatientAppointments;

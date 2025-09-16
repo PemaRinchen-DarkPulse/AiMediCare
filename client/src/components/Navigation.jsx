@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaSearch, FaBell, FaBars, FaCog, FaSignOutAlt } from "react-icons/fa";
+import { FaSearch, FaBell, FaBars, FaCog, FaSignOutAlt, FaUser } from "react-icons/fa";
 import { Dropdown } from "react-bootstrap";
 import { useAuth } from "../context/AuthContext";
 import { toast } from 'react-toastify';
+import "../styles/Navigation.css";
 
 const Navigation = ({ toggleSidebar }) => {
   const navigate = useNavigate();
@@ -56,53 +57,62 @@ const Navigation = ({ toggleSidebar }) => {
   };
 
   return (
-    <div className="d-flex justify-content-between align-items-center me-4 mt-2">
+    <div className="navigation-container d-flex justify-content-between align-items-center">
       {/* Left Section - Logo and Sidebar Toggle */}
-      <div className="d-flex align-items-center">
+      <div className="navigation-left">
         <button 
-          className="btn me-3"
+          className="sidebar-toggle-btn"
           onClick={toggleSidebar}
-          style={{ background: "none", border: "none" }}
+          aria-label="Toggle sidebar"
         >
-          <FaBars size={20} />
+          <FaBars size={18} />
         </button>
-        <h4 className="text-primary mb-0">AiMedicare</h4>
+        <h4 className="brand-logo">
+          AiMediCare
+        </h4>
       </div>
 
-      <div className="input-group mx-auto rounded-5" style={{ maxWidth: "450px", width: "100%" }}>
-        <input
-          type="text"
-          className="form-control px-3"
-          placeholder="Search..."
-          style={{
-            height: "100%",
-            fontSize: "21px",
-          }}
-        />
-        <button className="btn btn-primary" style={{ width: "75px", fontSize: "18px" }}>
-          <FaSearch />
-        </button>
+      {/* Center Section - Search Bar */}
+      <div className="navigation-search">
+        <div className="search-container">
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search patients, appointments, medications..."
+            aria-label="Search"
+          />
+          <button className="search-btn" aria-label="Search">
+            <FaSearch size={16} />
+          </button>
+        </div>
       </div>
 
-      
-      <div className="d-flex align-items-center gap-4">
+      {/* Right Section - Actions */}
+      <div className="navigation-actions">
         {/* Settings Icon */}
-        <FaCog 
-          size={22} 
-          className="cursor-pointer text-muted" 
-          onClick={navigateToSettings} 
-          style={{ cursor: 'pointer' }}
-        />
+        <div 
+          className="action-icon" 
+          onClick={navigateToSettings}
+          role="button"
+          tabIndex={0}
+          aria-label="Settings"
+          title="Settings"
+        >
+          <FaCog size={18} />
+        </div>
 
         {/* Notification Bell */}
-        <div className="position-relative cursor-pointer text-muted" style={{ cursor: 'pointer' }}>
-          <FaBell size={22} />
-          <span
-            className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-            style={{ fontSize: "12px" }}
+        <div className="notification-container">
+          <div 
+            className="action-icon" 
+            role="button"
+            tabIndex={0}
+            aria-label="Notifications"
+            title="Notifications"
           >
-            3
-          </span>
+            <FaBell size={18} />
+            <span className="notification-badge">3</span>
+          </div>
         </div>
 
         {/* Profile Circle with Dropdown */}
@@ -112,32 +122,21 @@ const Navigation = ({ toggleSidebar }) => {
           onToggle={(isOpen) => setShowDropdown(isOpen)}
         >
           <Dropdown.Toggle as="div" id="profile-dropdown" className="p-0">
-            <div
-              style={{
-                width: "50px",
-                height: "50px",
-                backgroundColor: "#4CAF50",
-                color: "#fff",
-                borderRadius: "50%",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                fontSize: "20px",
-                fontWeight: "bold",
-                cursor: "pointer",
-                boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
-              }}
-            >
+            <div className="profile-avatar" title={`${user?.name || 'User'} - ${user?.role || 'User'}`}>
               {getUserInitials()}
             </div>
           </Dropdown.Toggle>
 
-          <Dropdown.Menu>
-            <Dropdown.Item onClick={navigateToProfile}>My Profile</Dropdown.Item>
-            <Dropdown.Item onClick={navigateToSettings}>Settings</Dropdown.Item>
-            <Dropdown.Divider />
-            <Dropdown.Item onClick={handleLogout} className="text-danger">
-              <FaSignOutAlt className="me-2" /> Logout
+          <Dropdown.Menu className="dropdown-menu">
+            <Dropdown.Item onClick={navigateToProfile} className="dropdown-item">
+              <FaUser /> My Profile
+            </Dropdown.Item>
+            <Dropdown.Item onClick={navigateToSettings} className="dropdown-item">
+              <FaCog /> Settings
+            </Dropdown.Item>
+            <Dropdown.Divider className="dropdown-divider" />
+            <Dropdown.Item onClick={handleLogout} className="dropdown-item text-danger">
+              <FaSignOutAlt /> Logout
             </Dropdown.Item>
           </Dropdown.Menu>
         </Dropdown>

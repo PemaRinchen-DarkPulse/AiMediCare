@@ -89,6 +89,44 @@ const triageQuestionnaireSchema = new mongoose.Schema({
     required: true
   },
   generatedFromNotes: String,
+  aiMetadata: {
+    generation_method: {
+      type: String,
+      enum: ['ai', 'fallback', 'emergency_fallback', 'manual'],
+      default: 'manual'
+    },
+    confidence_score: {
+      type: Number,
+      min: 0,
+      max: 1,
+      default: 1
+    },
+    processing_time: {
+      type: Number,
+      default: 0
+    },
+    ai_generated: {
+      type: Boolean,
+      default: false
+    },
+    model_used: String,
+    analysis: {
+      medical_category: String,
+      urgency_level: {
+        type: Number,
+        min: 1,
+        max: 5
+      },
+      key_symptoms: [String],
+      suggested_specialty: String,
+      requires_immediate_attention: Boolean
+    },
+    fallback_reason: String,
+    language: {
+      type: String,
+      default: 'en'
+    }
+  },
   createdAt: {
     type: Date,
     default: Date.now

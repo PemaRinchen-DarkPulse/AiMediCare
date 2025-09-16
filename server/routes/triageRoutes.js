@@ -19,4 +19,10 @@ router.get('/patient/pending', protect, triageController.getCurrentPatientPendin
 // Get patient's pending questionnaires by ID
 router.get('/patient/:patientId/pending', protect, triageController.getPatientPendingQuestionnaires);
 
+// AI-powered endpoints
+router.post('/generate-questions', protect, triageController.generateTriageQuestions);
+router.post('/analyze-reason', protect, triageController.analyzeAppointmentReason);
+router.get('/ai/health', protect, triageController.getAIServiceHealth);
+router.get('/ai/languages', protect, triageController.getSupportedLanguages);
+
 module.exports = router;

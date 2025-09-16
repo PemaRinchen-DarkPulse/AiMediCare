@@ -83,12 +83,28 @@
   margin-top: 10px;
   font-size: 14px;
   color: #718096;
+  flex-wrap: wrap;
 }
 
 .appointment-details span {
   display: flex;
   align-items: center;
   gap: 5px;
+}
+
+.ai-indicator {
+  background-color: #ebf8ff;
+  color: #3182ce;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #bee3f8;
+  white-space: nowrap;
+}
+
+.ai-indicator:hover {
+  background-color: #bee3f8;
 }
 
 .toggle-icon {

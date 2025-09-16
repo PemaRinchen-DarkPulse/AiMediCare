@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './PrevisitTriage.css';
-import { FaUser, FaCalendarAlt, FaUserMd, FaExclamationTriangle, FaCamera, FaCheck, FaSpinner } from 'react-icons/fa';
+import { FaUser, FaCalendarAlt, FaUserMd, FaExclamationTriangle, FaCamera, FaCheck, FaSpinner, FaRobot } from 'react-icons/fa';
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from 'react-icons/md';
 import { getPatientPendingQuestionnaires, updateTriageAnswers } from '../../services/triageService';
 import { toast } from 'react-toastify';
@@ -271,6 +271,11 @@ const PrevisitTriage = () => {
                   <div className="appointment-details">
                     <span><FaCalendarAlt /> {appointment.date}, {appointment.time}</span>
                     <span><FaUserMd /> {appointment.provider}, {appointment.department}</span>
+                    {appointment.metadata && appointment.metadata.generation_method === 'ai' && (
+                      <span className="ai-indicator" title={`AI-generated questions with ${Math.round(appointment.metadata.confidence_score * 100)}% confidence`}>
+                        <FaRobot /> AI-Enhanced
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="toggle-icon">

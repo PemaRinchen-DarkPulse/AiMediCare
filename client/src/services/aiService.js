@@ -1,9 +1,148 @@
 /**
- * AI Service for OpenAI API integrations
+ * AI Service for OpenAI API integrations and AI-powered triage
  */
 
-// Function to generate pre-visit triage questions based on appointment reason
-export const generateTriageQuestions = async (reason, additionalNotes) => {
+// Function to generate pre-visit triage questions using the new AI backend
+export const generateTriageQuestions = async (reason, additionalNotes, useAI = true, language = 'en') => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await fetch('http://localhost:5000/api/triage/generate-questions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        appointmentReason: reason,
+        additionalNotes: additionalNotes,
+        language: language,
+        useAI: useAI,
+        maxQuestions: 5
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('Backend API error:', error);
+      throw new Error(error.message || 'Failed to generate questions');
+    }
+
+    const data = await response.json();
+    return {
+      questions: data.data.questions || [],
+      metadata: data.data.metadata || {}
+    };
+  } catch (error) {
+    console.error('Error generating triage questions:', error);
+    throw error;
+  }
+};
+
+// Function to analyze appointment reason using AI
+export const analyzeAppointmentReason = async (reason, notes = '') => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await fetch('http://localhost:5000/api/triage/analyze-reason', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        reason: reason,
+        notes: notes
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('Analysis API error:', error);
+      throw new Error(error.message || 'Failed to analyze appointment reason');
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Error analyzing appointment reason:', error);
+    throw error;
+  }
+};
+
+// Function to check AI service health
+export const checkAIServiceHealth = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await fetch('http://localhost:5000/api/triage/ai/health', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to check AI service health');
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Error checking AI service health:', error);
+    throw error;
+  }
+};
+
+// Function to get supported languages
+export const getSupportedLanguages = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await fetch('http://localhost:5000/api/triage/ai/languages', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to get supported languages');
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Error getting supported languages:', error);
+    // Return fallback languages
+    return {
+      supported_languages: [
+        { code: 'en', name: 'English' },
+        { code: 'dz', name: 'Dzongkha' }
+      ],
+      default_language: 'en'
+    };
+  }
+};
+
+// Legacy function - kept for backward compatibility with direct OpenAI API
+export const generateTriageQuestionsLegacy = async (reason, additionalNotes) => {
   try {
     const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
     const baseUrl = import.meta.env.VITE_OPENAI_BASE_URL;

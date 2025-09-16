@@ -28,31 +28,10 @@ const PatientHome = () => {
       </div>
 
       {/* Fixed Sidebar */}
-      <div
-        style={{
-          width: isSidebarOpen ? "250px" : "80px",
-          transition: "width 0.2s ease",
-          position: "fixed",
-          top: "60px", // Below navigation
-          left: "0",
-          height: "calc(100vh - 60px)",
-          backgroundColor: "#f4f4f4",
-          flexShrink: 0, 
-          zIndex: 1040, // Keep sidebar above content but below navbar
-        }}
-      >
-        <SideBar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-      </div>
+      <SideBar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
       {/* Main Content - Avoid Overlapping */}
-      <div
-        className="p-3"
-        style={{
-          marginLeft: isSidebarOpen ? "250px" : "80px", // Adjust for sidebar
-          marginTop:"65px", // Prevent overlap with navigation
-          transition: "margin-left 0.2s ease",
-        }}
-      >
+      <div className={`page-content ${isSidebarOpen ? 'sidebar-open' : ''}`}>
         {isDropdownOpen && <ProfileDropdown />}
         <Outlet /> {/* Dynamic Page Content */}
       </div>

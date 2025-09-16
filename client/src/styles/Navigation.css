@@ -1,0 +1,284 @@
+/* Navigation Bar Styles - Medical Professional */
+
+.navigation-container {
+  background: linear-gradient(135deg, #222121 0%, #504e4c 100%);
+  padding: 0.75rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(34, 33, 33, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  color: white;
+}
+
+/* Left Section - Logo and Sidebar Toggle */
+.navigation-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sidebar-toggle-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  padding: 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: background 0.2s ease;
+}
+
+.sidebar-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.brand-logo {
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Center Section - Search Bar */
+.navigation-search {
+  flex: 1;
+  max-width: 500px;
+  margin: 0 2rem;
+  position: relative;
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+  transition: border-color 0.2s ease;
+}
+
+.search-container:focus-within {
+  border-color: #4CAF50;
+}
+
+.search-input {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: white;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  flex: 1;
+  outline: none !important;
+}
+
+.search-input:focus {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Override Bootstrap form-control styles */
+.search-input.form-control {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.search-input.form-control:focus {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.search-btn {
+  background: #4CAF50;
+  border: none;
+  color: white;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  min-width: 50px;
+  transition: background 0.2s ease;
+}
+
+.search-btn:hover {
+  background: #45a049;
+}
+
+/* Right Section - Actions */
+.navigation-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.action-icon {
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.action-icon:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Notification Bell */
+.notification-container {
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #dc3545;
+  color: white;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.4rem;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Remove fancy animations */
+
+/* Profile Avatar */
+.profile-avatar {
+  width: 50px;
+  height: 50px;
+  background: #4CAF50;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: background 0.2s ease;
+}
+
+.profile-avatar:hover {
+  background: #45a049;
+}
+
+/* Hide Bootstrap dropdown toggle arrow/triangle */
+.dropdown-toggle::after {
+  display: none !important;
+}
+
+.dropdown-toggle {
+  border: none !important;
+  background: none !important;
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+  background: linear-gradient(135deg, #222121 0%, #504e4c 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  padding: 0.5rem 0;
+  margin-top: 0.5rem;
+  min-width: 180px;
+}
+
+.dropdown-item {
+  color: rgba(255, 255, 255, 0.9);
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.dropdown-item.text-danger {
+  color: #dc3545 !important;
+}
+
+.dropdown-item.text-danger:hover {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545 !important;
+}
+
+.dropdown-divider {
+  border-color: rgba(255, 255, 255, 0.1);
+  margin: 0.5rem 0;
+}
+
+/* Clean professional styling - no fancy effects */
+.navigation-container *:focus {
+  outline: 2px solid #4CAF50;
+  outline-offset: 2px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navigation-container {
+    padding: 0.5rem 1rem;
+  }
+  
+  .navigation-search {
+    margin: 0 1rem;
+    max-width: 300px;
+  }
+  
+  .navigation-actions {
+    gap: 1rem;
+  }
+  
+  .brand-logo {
+    font-size: 1.25rem;
+  }
+  
+  .profile-avatar {
+    width: 45px;
+    height: 45px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 576px) {
+  .navigation-container {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  
+  .navigation-search {
+    order: 3;
+    width: 100%;
+    margin: 0;
+    max-width: none;
+  }
+  
+  .navigation-left {
+    flex: 1;
+  }
+  
+  .navigation-actions {
+    gap: 0.75rem;
+  }
+}

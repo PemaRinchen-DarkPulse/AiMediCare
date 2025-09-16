@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { FaBars, FaTimes, FaHeartbeat } from 'react-icons/fa';
-import SideBarList from './SideBarList';
+import { FaBars, FaTimes, FaStethoscope } from 'react-icons/fa';
+import DoctorSideBar from './DoctorSideBar';
 import '../../styles/Sidebar.css';
 
-const SideBar = ({ isOpen, toggleSidebar }) => {
+const DoctorSideBarWrapper = ({ isOpen, toggleSidebar }) => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -38,8 +38,8 @@ const SideBar = ({ isOpen, toggleSidebar }) => {
         <div className="sidebar-header">
           {isOpen && (
             <div className="sidebar-brand">
-              <FaHeartbeat style={{ marginRight: '10px', color: '#ff6b6b' }} />
-              AiMediCare
+              <FaStethoscope style={{ marginRight: '10px', color: '#4ecdc4' }} />
+              Doctor Portal
             </div>
           )}
           <button 
@@ -53,7 +53,7 @@ const SideBar = ({ isOpen, toggleSidebar }) => {
 
         {/* Content Section */}
         <div className="sidebar-content">
-          <SideBarList isOpen={isOpen} />
+          <DoctorSideBar isOpen={isOpen} />
         </div>
         
         {/* Footer Section */}
@@ -67,4 +67,4 @@ const SideBar = ({ isOpen, toggleSidebar }) => {
   );
 };
 
-export default SideBar;
+export default DoctorSideBarWrapper;

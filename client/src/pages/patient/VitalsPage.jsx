@@ -175,17 +175,17 @@ const VitalsPage = () => {
   // Loading spinner while fetching data
   if (loading) {
     return (
-      <Container className="mt-5 text-center">
+      <div className="text-center mt-5">
         <Spinner animation="border" role="status" variant="primary">
           <span className="visually-hidden">Loading...</span>
         </Spinner>
         <p className="mt-2">Loading your vital signs data...</p>
-      </Container>
+      </div>
     );
   }
 
   return (
-    <Container className="my-4 health-records-container">
+    <div className="health-records-container">
       <Row className="mb-4">
         <Col>
           <h2>My Vital Signs</h2>
@@ -510,7 +510,7 @@ const VitalsPage = () => {
           </Form>
         </Modal.Body>
       </Modal>
-    </Container>
+    </div>
   );
 };
 
