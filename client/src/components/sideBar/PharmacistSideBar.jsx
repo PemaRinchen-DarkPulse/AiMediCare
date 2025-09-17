@@ -1,63 +1,82 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
-  FaTachometerAlt, FaCalendarCheck, FaUsers, FaStethoscope, 
-  FaCog, FaUserMd, FaPills, FaClipboardList, FaFileInvoiceDollar,
-  FaMicroscope, FaSyringe
+  FaTachometerAlt, FaPills, FaUsers, FaFileInvoiceDollar, 
+  FaCog, FaUserCheck, FaClipboardCheck, FaChartLine,
+  FaPrescriptionBottleAlt, FaSearch,
+  FaHistory, FaShieldAlt, FaExclamationTriangle
 } from "react-icons/fa";
 import './ModernSidebar.css';
 
-const DoctorSideBar = ({ isOpen, toggleSidebar }) => {
+const PharmacistSideBar = ({ isOpen, toggleSidebar }) => {
   const location = useLocation();
   
   const menuItems = [
     { 
       icon: <FaTachometerAlt />, 
       label: "Dashboard", 
-      path: "/doctor/dashboard",
-      description: "Overview and statistics"
-    },
-    { 
-      icon: <FaCalendarCheck />, 
-      label: "Appointments", 
-      path: "/doctor/appointments",
-      description: "Manage patient appointments"
-    },
-    { 
-      icon: <FaUsers />, 
-      label: "Patients", 
-      path: "/doctor/patients",
-      description: "Patient management"
-    },
-    { 
-      icon: <FaMicroscope />, 
-      label: "Diagnostics", 
-      path: "/doctor/diagnostics",
-      description: "Lab tests and results"
+      path: "/pharmacist/dashboard",
+      description: "Overview and analytics"
     },
     { 
       icon: <FaPills />, 
       label: "Prescriptions", 
-      path: "/doctor/prescriptions",
-      description: "Medication management"
+      path: "/pharmacist/prescriptions",
+      description: "Manage prescriptions"
     },
     { 
-      icon: <FaClipboardList />, 
-      label: "Medical Records", 
-      path: "/doctor/records",
-      description: "Patient health records"
+      icon: <FaClipboardCheck />, 
+      label: "Dispensing", 
+      path: "/pharmacist/dispensing",
+      description: "Medication dispensing"
+    },
+    { 
+      icon: <FaSearch />, 
+      label: "Drug Information", 
+      path: "/pharmacist/drug-info",
+      description: "Drug database and interactions"
+    },
+    { 
+      icon: <FaUsers />, 
+      label: "Patients", 
+      path: "/pharmacist/patients",
+      description: "Patient consultation"
+    },
+    { 
+      icon: <FaExclamationTriangle />, 
+      label: "Drug Interactions", 
+      path: "/pharmacist/interactions",
+      description: "Safety alerts and warnings"
+    },
+    { 
+      icon: <FaHistory />, 
+      label: "Medication History", 
+      path: "/pharmacist/history",
+      description: "Patient medication records"
+    },
+    { 
+      icon: <FaChartLine />, 
+      label: "Inventory", 
+      path: "/pharmacist/inventory",
+      description: "Stock management"
+    },
+    { 
+      icon: <FaFileInvoiceDollar />, 
+      label: "Billing", 
+      path: "/pharmacist/billing",
+      description: "Insurance and payments"
     },
     { 
       icon: <FaCog />, 
       label: "Settings", 
-      path: "/doctor/settings",
+      path: "/pharmacist/settings",
       description: "Account preferences"
     },
   ];
 
   return (
     <div 
-      className={`healthcare-sidebar sidebar-doctor ${isOpen ? 'open' : ''}`}
+      className={`healthcare-sidebar sidebar-pharmacist ${isOpen ? 'open' : ''}`}
       style={{ 
         height: '95vh', 
         width: isOpen ? '250px' : '80px', 
@@ -103,4 +122,4 @@ const DoctorSideBar = ({ isOpen, toggleSidebar }) => {
   );
 };
 
-export default DoctorSideBar;
+export default PharmacistSideBar;

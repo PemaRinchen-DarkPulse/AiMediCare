@@ -3,12 +3,16 @@ import { Container, Row, Col, Alert, Card, CardBody, Button, Badge, Nav, NavItem
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faFileMedical, faPills, faHeartbeat, faSyringe, 
-  faUserMd, faExclamationTriangle, faDownload, faShare 
+  faUserMd, faExclamationTriangle, faDownload, faShare,
+  faRobot
 } from '@fortawesome/free-solid-svg-icons';
 import HealthRecordsNavigation from '../../components/patient/HealthRecordsNavigation';
 import MedicalInfoCard from '../../components/patient/MedicalInfoCard';
 import MedicalHistoryItem from '../../components/patient/MedicalHistoryItem';
 import VitalsChart from '../../components/patient/VitalsChart';
+import EnhancedVitalsChart from '../../components/patient/EnhancedVitalsChart';
+import AIHealthInsightsPanel from '../../components/patient/AIHealthInsightsPanel';
+import aiHealthInsightsService from '../../services/aiHealthInsightsService';
 import './HealthRecords.css';
 
 const HealthRecords = () => {
@@ -21,19 +25,14 @@ const HealthRecords = () => {
   const [allergies, setAllergies] = useState([]);
   const [chronicConditions, setChronicConditions] = useState([]);
   const [medications, setMedications] = useState([]);
-  const [labResults, setLabResults] = useState([]);
-  const [imagingReports, setImagingReports] = useState([]);
   const [vitalsHistory, setVitalsHistory] = useState({});
   const [immunizations, setImmunizations] = useState([]);
   const [emergencyContacts, setEmergencyContacts] = useState([]);
-
-  // Load mock data function as fallback only (will be used if API fails)
-  const loadMockData = () => {
-    console.warn("API calls failed - Using mock data as fallback");
-    
-    // Mock data implementation remains for fallback purposes only
-    // ...existing code...
-  };
+  
+  // AI Insights state
+  const [aiInsights, setAiInsights] = useState(null);
+  const [aiInsightsLoading, setAiInsightsLoading] = useState(false);
+  const [aiInsightsError, setAiInsightsError] = useState(null);
 
   // Fetch patient data from API endpoints
   useEffect(() => {
@@ -110,10 +109,6 @@ const HealthRecords = () => {
             setMedications(medicationsData.data);
           }
 
-          // Use mock data for lab results and imaging reports since APIs don't exist
-          setLabResults([]);
-          setImagingReports([]);
-
           if (vitalsResponse.ok) {
             const vitalsData = await vitalsResponse.json();
             setVitalsHistory(vitalsData.data);
@@ -125,6 +120,9 @@ const HealthRecords = () => {
           }
 
           setLoading(false);
+          
+          // Fetch AI insights after basic data is loaded
+          fetchAIInsights();
           
         } catch (err) {
           console.error('Error fetching health records:', err);
@@ -140,6 +138,29 @@ const HealthRecords = () => {
 
     fetchPatientData();
   }, []);
+
+  // Fetch AI insights
+  const fetchAIInsights = async (forceRegenerate = false) => {
+    try {
+      setAiInsightsLoading(true);
+      setAiInsightsError(null);
+
+      const result = forceRegenerate 
+        ? await aiHealthInsightsService.regenerateHealthInsights()
+        : await aiHealthInsightsService.getHealthInsights();
+
+      if (result.success) {
+        setAiInsights(result.data);
+      } else {
+        setAiInsightsError(result.error || 'Failed to fetch AI insights');
+      }
+    } catch (error) {
+      console.error('Error fetching AI insights:', error);
+      setAiInsightsError('Unable to load AI insights at this time');
+    } finally {
+      setAiInsightsLoading(false);
+    }
+  };
 
   // Profile information card
   const PatientProfileCard = () => (
@@ -339,7 +360,7 @@ const HealthRecords = () => {
     </MedicalInfoCard>
   );
 
-  // Vitals history with charts
+  // Vitals history with charts and AI analysis
   const VitalsSection = () => (
     <div className="vitals-section">
       <h4 className="mb-3">Vitals History</h4>
@@ -390,51 +411,61 @@ const HealthRecords = () => {
       <TabContent activeTab={activeTab}>
         <TabPane tabId="bloodPressure">
           {vitalsHistory.bloodPressure && (
-            <VitalsChart
+            <EnhancedVitalsChart
               vitalType="blood-pressure"
               data={vitalsHistory.bloodPressure}
               unit="mmHg"
               timeRange="6 Month"
+              aiTrendAnalysis={aiInsights?.trendAnalysis?.bloodPressure}
+              showAiInsights={true}
             />
           )}
         </TabPane>
         <TabPane tabId="bloodSugar">
           {vitalsHistory.bloodSugar && (
-            <VitalsChart
+            <EnhancedVitalsChart
               vitalType="blood-sugar"
               data={vitalsHistory.bloodSugar}
               unit="mg/dL"
               timeRange="6 Month"
+              aiTrendAnalysis={aiInsights?.trendAnalysis?.bloodSugar}
+              showAiInsights={true}
             />
           )}
         </TabPane>
         <TabPane tabId="heartRate">
           {vitalsHistory.heartRate && (
-            <VitalsChart
+            <EnhancedVitalsChart
               vitalType="heart-rate"
               data={vitalsHistory.heartRate}
               unit="bpm"
               timeRange="6 Month"
+              aiTrendAnalysis={aiInsights?.trendAnalysis?.heartRate}
+              showAiInsights={true}
             />
           )}
         </TabPane>
         <TabPane tabId="weight">
           {vitalsHistory.weight && (
-            <VitalsChart
+            <EnhancedVitalsChart
               vitalType="weight"
               data={vitalsHistory.weight}
               unit="lbs"
               timeRange="6 Month"
+              aiTrendAnalysis={aiInsights?.trendAnalysis?.weight}
+              showAiInsights={true}
             />
           )}
         </TabPane>
         <TabPane tabId="cholesterol">
           {vitalsHistory.cholesterol && (
-            <VitalsChart
-              vitalType="other"
+            <EnhancedVitalsChart
+              vitalType="cholesterol"
               data={vitalsHistory.cholesterol}
               unit="mg/dL"
               timeRange="2 Year"
+              aiTrendAnalysis={aiInsights?.trendAnalysis?.cholesterol}
+              showAiInsights={true}
             />
           )}
         </TabPane>
@@ -489,39 +520,14 @@ const HealthRecords = () => {
     </MedicalInfoCard>
   );
 
-  // Health insights section
+  // Enhanced Health insights section with AI
   const HealthInsightsSection = () => (
-    <MedicalInfoCard
-      title="AI Health Insights"
-      icon={<span className="fa-layers fa-fw">
-        <i className="fas fa-brain"></i>
-      </span>}
-      className="ai-insights-card"
-    >
-      <div className="ai-insight p-3 mb-3">
-        <div className="d-flex align-items-center mb-2">
-          <i className="fas fa-chart-line text-primary me-2"></i>
-          <h6 className="mb-0">Diabetes Management</h6>
-        </div>
-        <p className="mb-0">Your HbA1c has improved from 7.8% to 7.2% over the past 3 months. Continue with your current medication and exercise regimen to reach your target of &lt;7.0%.</p>
-      </div>
-      
-      <div className="ai-insight p-3 mb-3">
-        <div className="d-flex align-items-center mb-2">
-          <i className="fas fa-heartbeat text-primary me-2"></i>
-          <h6 className="mb-0">Blood Pressure Trend</h6>
-        </div>
-        <p className="mb-0">Your blood pressure readings show consistent improvement over the past 6 months, likely due to medication adherence and reduced sodium intake. Continue monitoring regularly.</p>
-      </div>
-      
-      <div className="ai-insight p-3">
-        <div className="d-flex align-items-center mb-2">
-          <i className="fas fa-weight text-primary me-2"></i>
-          <h6 className="mb-0">Weight Management</h6>
-        </div>
-        <p className="mb-0">You've achieved your short-term weight loss goal of 10 pounds. This likely contributed to your improved blood sugar levels. Setting a new target of 5 additional pounds may further improve your diabetes management.</p>
-      </div>
-    </MedicalInfoCard>
+    <AIHealthInsightsPanel
+      insights={aiInsights}
+      loading={aiInsightsLoading}
+      error={aiInsightsError}
+      onRefresh={() => fetchAIInsights(true)}
+    />
   );
 
   // Access & sharing control panel
@@ -637,6 +643,9 @@ const HealthRecords = () => {
       case 'immunizations':
         return <ImmunizationSection />;
         
+      case 'aiInsights':
+        return <HealthInsightsSection />;
+        
       default:
         return <div>Select a tab to view your health records</div>;
     }
@@ -678,9 +687,17 @@ const HealthRecords = () => {
             <FontAwesomeIcon icon={faDownload} className="me-2" />
             Export
           </Button>
-          <Button color="outline-primary">
+          <Button color="outline-primary" className="me-2">
             <FontAwesomeIcon icon={faShare} className="me-2" />
             Share
+          </Button>
+          <Button 
+            color="outline-info" 
+            onClick={() => fetchAIInsights(true)}
+            disabled={aiInsightsLoading}
+          >
+            <FontAwesomeIcon icon={faRobot} className="me-2" />
+            {aiInsightsLoading ? 'Analyzing...' : 'AI Insights'}
           </Button>
         </div>
       </div>

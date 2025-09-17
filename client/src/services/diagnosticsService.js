@@ -1,13 +1,19 @@
 import axios from 'axios';
 
-const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/diagnostics`;
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/diagnostics`;
+
+// Debug: log the API URL
+console.log('Diagnostics API URL:', API_URL);
 
 // Helper function to get auth header
 const getAuthHeader = () => {
   const token = localStorage.getItem('token');
-  return {
+  const header = {
     Authorization: token ? `Bearer ${token}` : ''
   };
+  // Debug: log if token exists
+  console.log('Auth token exists:', !!token);
+  return header;
 };
 
 // Get all diagnostic requests
@@ -103,26 +109,50 @@ export const updateRequestStatus = async (requestId, status) => {
 // Get patient diagnostic requests
 export const getPatientDiagnosticRequests = async () => {
   try {
+    console.log('Fetching patient diagnostic requests from:', `${API_URL}/patient/requests`);
     const response = await axios.get(`${API_URL}/patient/requests`, {
       headers: getAuthHeader()
     });
-    return response.data;
+    console.log('Patient diagnostic requests response:', response.data);
+    return {
+      success: true,
+      data: response.data.data || response.data,
+      message: response.data.message || 'Diagnostic requests fetched successfully'
+    };
   } catch (error) {
     console.error('Error fetching patient diagnostic requests:', error);
-    throw error;
+    console.error('Error response:', error.response?.data);
+    console.error('Error status:', error.response?.status);
+    return {
+      success: false,
+      data: [],
+      message: error.response?.data?.message || error.message || 'Failed to fetch diagnostic requests'
+    };
   }
 };
 
 // Get patient test results
 export const getPatientTestResults = async () => {
   try {
+    console.log('Fetching patient test results from:', `${API_URL}/patient/results`);
     const response = await axios.get(`${API_URL}/patient/results`, {
       headers: getAuthHeader()
     });
-    return response.data;
+    console.log('Patient test results response:', response.data);
+    return {
+      success: true,
+      data: response.data.data || response.data,
+      message: response.data.message || 'Test results fetched successfully'
+    };
   } catch (error) {
     console.error('Error fetching patient test results:', error);
-    throw error;
+    console.error('Error response:', error.response?.data);
+    console.error('Error status:', error.response?.status);
+    return {
+      success: false,
+      data: [],
+      message: error.response?.data?.message || error.message || 'Failed to fetch test results'
+    };
   }
 };
 
@@ -136,10 +166,18 @@ export const acceptDiagnosticRequest = async (requestId) => {
         headers: getAuthHeader()
       }
     );
-    return response.data;
+    return {
+      success: true,
+      data: response.data.data || response.data,
+      message: response.data.message || 'Diagnostic request accepted successfully'
+    };
   } catch (error) {
     console.error('Error accepting diagnostic request:', error);
-    throw error;
+    return {
+      success: false,
+      data: null,
+      message: error.response?.data?.message || error.message || 'Failed to accept diagnostic request'
+    };
   }
 };
 
@@ -153,9 +191,17 @@ export const declineDiagnosticRequest = async (requestId) => {
         headers: getAuthHeader()
       }
     );
-    return response.data;
+    return {
+      success: true,
+      data: response.data.data || response.data,
+      message: response.data.message || 'Diagnostic request declined successfully'
+    };
   } catch (error) {
     console.error('Error declining diagnostic request:', error);
-    throw error;
+    return {
+      success: false,
+      data: null,
+      message: error.response?.data?.message || error.message || 'Failed to decline diagnostic request'
+    };
   }
 };

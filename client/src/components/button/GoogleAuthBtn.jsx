@@ -1,5 +1,6 @@
 import React from "react";
 import { GoogleLogin } from "@react-oauth/google";
+
 const GoogleAuthBtn = ({ setIsGoogleSignup }) => {
   const handleSuccess = async (response) => {
     try {
@@ -29,6 +30,19 @@ const GoogleAuthBtn = ({ setIsGoogleSignup }) => {
   const handleFailure = (error) => {
     console.error("Google Login Failed:", error);
   };
+
+  // Check if Google Client ID is available
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  
+  if (!clientId || clientId === "your-google-client-id-here") {
+    return (
+      <div className="p-1">
+        <div className="alert alert-warning text-center">
+          <small>Google OAuth is not configured. Please add your Google Client ID to the .env file.</small>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-1">

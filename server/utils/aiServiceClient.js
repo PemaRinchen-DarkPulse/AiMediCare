@@ -279,6 +279,115 @@ class AIServiceClient {
   }
   
   /**
+   * Generate health insights from patient data
+   * @param {Object} patientData - Patient's medical data including vitals, medications, conditions
+   * @returns {Promise<Object>} AI-generated health insights
+   */
+  async generateHealthInsights(patientData) {
+    try {
+      console.log('Requesting health insights from AI service...');
+      
+      const response = await this.client.post('/api/health-insights', {
+        patient_data: patientData,
+        analysis_type: 'comprehensive',
+        include_trends: true,
+        include_recommendations: true
+      });
+
+      if (response.data.success) {
+        return response.data.insights;
+      } else {
+        throw new Error('AI service returned unsuccessful response');
+      }
+
+    } catch (error) {
+      console.error('Health insights generation failed:', error.message);
+      
+      // Return fallback insights if AI service is unavailable
+      return this.generateFallbackHealthInsights(patientData);
+    }
+  }
+
+  /**
+   * Generate fallback health insights when AI service is unavailable
+   * @param {Object} patientData - Patient's medical data
+   * @returns {Object} Fallback health insights
+   */
+  generateFallbackHealthInsights(patientData) {
+    console.log('Generating fallback health insights...');
+    
+    const vitalsCount = Object.values(patientData.vitals || {}).reduce((sum, arr) => sum + arr.length, 0);
+    const hasConditions = patientData.conditions && patientData.conditions.length > 0;
+    const hasMedications = patientData.medications && patientData.medications.length > 0;
+    
+    // Generate basic trend analysis
+    const trendAnalysis = {};
+    Object.keys(patientData.vitals || {}).forEach(vitalType => {
+      const data = patientData.vitals[vitalType];
+      if (data && data.length > 1) {
+        trendAnalysis[vitalType] = {
+          trend: 'stable',
+          confidence: 0.6,
+          summary: `Based on ${data.length} readings, your ${vitalType} appears stable.`,
+          recommendations: ['Continue monitoring regularly', 'Discuss any concerns with your healthcare provider']
+        };
+      }
+    });
+
+    // Generate basic health tips
+    const personalizedTips = [
+      {
+        category: 'monitoring',
+        priority: 'medium',
+        title: 'Regular Health Monitoring',
+        description: 'Continue tracking your vital signs regularly to maintain good health awareness.',
+        actionable: true
+      }
+    ];
+
+    if (hasMedications) {
+      personalizedTips.push({
+        category: 'medication',
+        priority: 'high',
+        title: 'Medication Adherence',
+        description: 'Take medications as prescribed and discuss any side effects with your doctor.',
+        actionable: true
+      });
+    }
+
+    if (hasConditions) {
+      personalizedTips.push({
+        category: 'lifestyle',
+        priority: 'medium',
+        title: 'Chronic Condition Management',
+        description: 'Follow your treatment plan and maintain regular check-ups for optimal condition management.',
+        actionable: true
+      });
+    }
+
+    // Generate basic health score
+    let healthScore = 70; // Base score
+    if (vitalsCount > 10) healthScore += 10;
+    if (hasMedications && patientData.medications.every(med => med.adherence > 80)) healthScore += 10;
+    if (!hasConditions || patientData.conditions.every(cond => cond.status === 'Controlled')) healthScore += 10;
+
+    return {
+      trendAnalysis,
+      personalizedTips,
+      healthScore: {
+        overall: Math.min(healthScore, 100),
+        breakdown: {
+          vitals: vitalsCount > 10 ? 85 : 70,
+          medications: hasMedications ? 80 : 90,
+          lifestyle: 75
+        }
+      },
+      riskFactors: [],
+      modelUsed: 'fallback'
+    };
+  }
+
+  /**
    * Test connection to AI service
    * @returns {Promise<boolean>} Connection status
    */

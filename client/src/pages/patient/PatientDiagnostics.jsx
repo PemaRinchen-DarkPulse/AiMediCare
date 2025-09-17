@@ -44,25 +44,58 @@ const PatientDiagnostics = () => {
       setLoading(true);
       setError(null);
       
-      const [requestsResponse, resultsResponse] = await Promise.all([
-        getPatientDiagnosticRequests(),
-        getPatientTestResults()
-      ]);
+      // Fetch requests and results separately for better error tracking
+      let requestsData = [];
+      let resultsData = [];
+      let requestsError = null;
+      let resultsError = null;
       
-      if (requestsResponse.success) {
-        setDiagnosticRequests(requestsResponse.data);
-      } else {
-        throw new Error('Failed to fetch diagnostic requests');
+      try {
+        const requestsResponse = await getPatientDiagnosticRequests();
+        if (requestsResponse && requestsResponse.success && requestsResponse.data) {
+          requestsData = requestsResponse.data;
+          setDiagnosticRequests(requestsData);
+        } else {
+          requestsError = requestsResponse?.message || 'Failed to fetch diagnostic requests';
+          console.warn('Failed to fetch diagnostic requests:', requestsResponse);
+          setDiagnosticRequests([]);
+        }
+      } catch (err) {
+        requestsError = err.message || 'Network error while fetching diagnostic requests';
+        console.error('Error fetching diagnostic requests:', err);
+        setDiagnosticRequests([]);
       }
       
-      if (resultsResponse.success) {
-        setTestResults(resultsResponse.data);
-      } else {
-        throw new Error('Failed to fetch test results');
+      try {
+        const resultsResponse = await getPatientTestResults();
+        if (resultsResponse && resultsResponse.success && resultsResponse.data) {
+          resultsData = resultsResponse.data;
+          setTestResults(resultsData);
+        } else {
+          resultsError = resultsResponse?.message || 'Failed to fetch test results';
+          console.warn('Failed to fetch test results:', resultsResponse);
+          setTestResults([]);
+        }
+      } catch (err) {
+        resultsError = err.message || 'Network error while fetching test results';
+        console.error('Error fetching test results:', err);
+        setTestResults([]);
       }
+      
+      // Set error message if both requests failed
+      if (requestsError && resultsError) {
+        setError(`Failed to load diagnostic data: ${requestsError}. Also failed to load test results: ${resultsError}`);
+      } else if (requestsError) {
+        setError(`Warning: Could not load diagnostic requests (${requestsError}), but test results loaded successfully.`);
+      } else if (resultsError) {
+        setError(`Warning: Could not load test results (${resultsError}), but diagnostic requests loaded successfully.`);
+      }
+      
     } catch (err) {
-      console.error('Error fetching diagnostic data:', err);
-      setError('Failed to load diagnostic information. Please try again later.');
+      console.error('Unexpected error in fetchDiagnosticData:', err);
+      setError('An unexpected error occurred while loading diagnostic information. Please try again later.');
+      setDiagnosticRequests([]);
+      setTestResults([]);
     } finally {
       setLoading(false);
     }

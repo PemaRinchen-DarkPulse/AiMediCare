@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
-import SideBar from "../components/sideBar/DoctorSideBar";
+import DoctorSideBar from "../components/sideBar/DoctorSideBar";
 import ProfileDropdown from "../components/profileManagemnt/ProfileDropdown";
 import Navigation from "../components/Navigation";
 
@@ -40,7 +40,7 @@ const DoctorHome = () => {
           zIndex: 1040, // Keep sidebar above content but below navbar
         }}
       >
-        <SideBar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+        <DoctorSideBar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       </div>
 
       {/* Main Content - Avoid Overlapping */}

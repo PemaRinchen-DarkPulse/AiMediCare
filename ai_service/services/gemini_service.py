@@ -197,3 +197,19 @@ class GeminiAIService:
             'model_used': 'fallback',
             'fallback_reason': 'AI service unavailable'
         }
+
+    def generate_content_sync(self, prompt):
+        """
+        Generate content using Gemini AI synchronously for health insights
+        """
+        try:
+            response = self._make_api_request(prompt)
+            
+            if response and 'choices' in response:
+                return response['choices'][0]['message']['content']
+            else:
+                raise Exception("No valid response from AI service")
+                
+        except Exception as e:
+            logging.error(f"Error generating content: {str(e)}")
+            raise

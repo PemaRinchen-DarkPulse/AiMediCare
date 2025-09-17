@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { ToastContainer } from "react-toastify";
 import "./App.css";
 import "react-toastify/dist/ReactToastify.css";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -73,78 +73,78 @@ const EmailVerificationHandler = () => {
 
 function App() {
   return (
-    <GoogleOAuthProvider clientId="296371817530-c47k7552mctmfmrn1m3vtssu4tu7e5vh.apps.googleusercontent.com">
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || "your-google-client-id-here"}>
       <AuthProvider>
         <Router>
           <ToastContainer 
             position="top-right"
-            autoClose={3000}
-            hideProgressBar={false}
-            newestOnTop={true}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-          />
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            
-            {/* Add route for email verification */}
-            <Route path="/api/auth/verify/:token" element={<EmailVerificationHandler />} />
-            
-            {/* Patient Routes */}
-            <Route path="/patient/*" element={
-              <ProtectedRoute>
-                <PatientHome />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Dashboard />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="appointments" element={<Appointments />} />
-              <Route path="health-records" element={<HealthRecords/>} />
-              <Route path="medications" element={<Medications/>} />
-              <Route path="triage" element={<PrevisitTriage/>} />
-              <Route path="messages" element={<Messages/>} />
-              <Route path="diagnostics" element={<PatientDiagnostics/>} />
-              <Route path="settings" element={<PatientSettings/>} />
-            </Route>
-            
-            {/* Doctor Routes */}
-            <Route path="/doctor/*" element={
-              <ProtectedRoute>
-                <DoctorHome />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Navigate to="doctor" />} />
-              <Route path="dashboard" element={<DoctorDashboard/>} />
-              <Route path="appointments" element={<DoctorAppointments/>} />
-              <Route path="patients" element={<Patients/>} />
-              <Route path="diagnostics" element={<Diagnostics/>} />
-              <Route path="Prescriptions" element={<DoctorPrescriptions/>} />
-              <Route path="settings" element={<DoctorSettings/>} />
-            </Route>
-            
-            {/* Pharmacist Routes */}
-            <Route path="/pharmacist/*" element={
-              <ProtectedRoute>
-                <PharmacistHome />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Navigate to="dashboard" />} />
-              <Route path="dashboard" element={<div>Pharmacist Dashboard</div>} />
-              <Route path="prescriptions" element={<div>Prescription Management</div>} />
-              <Route path="inventory" element={<div>Medication Inventory</div>} />
-              <Route path="patients" element={<div>Patient Records</div>} />
-              <Route path="messages" element={<div>Pharmacist Messages</div>} />
-              <Route path="settings" element={<Settings/>} />
-            </Route>
-          </Routes>
-        </Router>
-      </AuthProvider>
-    </GoogleOAuthProvider>
+              autoClose={3000}
+              hideProgressBar={false}
+              newestOnTop={true}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+            />
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              
+              {/* Add route for email verification */}
+              <Route path="/api/auth/verify/:token" element={<EmailVerificationHandler />} />
+              
+              {/* Patient Routes */}
+              <Route path="/patient/*" element={
+                <ProtectedRoute>
+                  <PatientHome />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Dashboard />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="appointments" element={<Appointments />} />
+                <Route path="health-records" element={<HealthRecords/>} />
+                <Route path="medications" element={<Medications/>} />
+                <Route path="triage" element={<PrevisitTriage/>} />
+                <Route path="messages" element={<Messages/>} />
+                <Route path="diagnostics" element={<PatientDiagnostics/>} />
+                <Route path="settings" element={<PatientSettings/>} />
+              </Route>
+              
+              {/* Doctor Routes */}
+              <Route path="/doctor/*" element={
+                <ProtectedRoute>
+                  <DoctorHome />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Navigate to="doctor" />} />
+                <Route path="dashboard" element={<DoctorDashboard/>} />
+                <Route path="appointments" element={<DoctorAppointments/>} />
+                <Route path="patients" element={<Patients/>} />
+                <Route path="diagnostics" element={<Diagnostics/>} />
+                <Route path="Prescriptions" element={<DoctorPrescriptions/>} />
+                <Route path="settings" element={<DoctorSettings/>} />
+              </Route>
+              
+              {/* Pharmacist Routes */}
+              <Route path="/pharmacist/*" element={
+                <ProtectedRoute>
+                  <PharmacistHome />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Navigate to="dashboard" />} />
+                <Route path="dashboard" element={<div>Pharmacist Dashboard</div>} />
+                <Route path="prescriptions" element={<div>Prescription Management</div>} />
+                <Route path="inventory" element={<div>Medication Inventory</div>} />
+                <Route path="patients" element={<div>Patient Records</div>} />
+                <Route path="messages" element={<div>Pharmacist Messages</div>} />
+                <Route path="settings" element={<Settings/>} />
+              </Route>
+            </Routes>
+          </Router>
+        </AuthProvider>
+      </GoogleOAuthProvider>
   );
 }
 

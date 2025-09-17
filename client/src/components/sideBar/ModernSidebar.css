@@ -1,0 +1,362 @@
+/* Modern Healthcare Sidebar Styles */
+.healthcare-sidebar {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-right: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.healthcare-sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3b82f6 0%, #06b6d4 50%, #10b981 100%);
+}
+
+.sidebar-header {
+  padding: 1.5rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-align: center;
+  position: relative;
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+}
+
+.healthcare-sidebar.open .sidebar-header h3 {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.sidebar-menu {
+  padding: 1rem 0;
+  list-style: none;
+  margin: 0;
+}
+
+.sidebar-menu-item {
+  margin: 0.25rem 0.75rem;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.sidebar-menu-link {
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 1rem;
+  text-decoration: none;
+  color: #475569;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  position: relative;
+  border-radius: 0.75rem;
+  background: transparent;
+}
+
+.sidebar-menu-link:hover {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  color: #1e293b;
+  text-decoration: none;
+  transform: translateX(4px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-menu-link.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.sidebar-menu-link.active::before {
+  content: '';
+  position: absolute;
+  left: -0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: #10b981;
+  border-radius: 0 2px 2px 0;
+}
+
+.sidebar-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  margin-right: 1rem;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.sidebar-menu-link:hover .sidebar-icon-container {
+  background: rgba(59, 130, 246, 0.2);
+  transform: scale(1.05);
+}
+
+.sidebar-menu-link.active .sidebar-icon-container {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.sidebar-label {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s ease;
+}
+
+.healthcare-sidebar.open .sidebar-label {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.sidebar-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1rem;
+  border-top: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  text-align: center;
+  font-size: 0.75rem;
+  color: #64748b;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+}
+
+.healthcare-sidebar.open .sidebar-footer {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.sidebar-toggle-btn {
+  position: absolute;
+  top: 1rem;
+  right: -0.75rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border: 2px solid white;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.sidebar-toggle-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Collapsed state styles */
+.healthcare-sidebar:not(.open) {
+  width: 5rem !important;
+}
+
+.healthcare-sidebar:not(.open) .sidebar-menu-link {
+  justify-content: center;
+  padding: 0.875rem 0.5rem;
+}
+
+.healthcare-sidebar:not(.open) .sidebar-icon-container {
+  margin-right: 0;
+}
+
+/* Tooltip for collapsed state */
+.sidebar-tooltip {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  margin-left: 0.5rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 1000;
+}
+
+.healthcare-sidebar:not(.open) .sidebar-menu-link:hover .sidebar-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Healthcare-specific color variants */
+.sidebar-patient {
+  --primary-color: #3b82f6;
+  --primary-light: rgba(59, 130, 246, 0.1);
+  --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.sidebar-patient .sidebar-icon-container {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.sidebar-patient .sidebar-menu-link:hover .sidebar-icon-container {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.sidebar-patient .sidebar-menu-link.active .sidebar-icon-container {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.sidebar-doctor {
+  --primary-color: #10b981;
+  --primary-light: rgba(16, 185, 129, 0.1);
+  --gradient: linear-gradient(135deg, #34d399 0%, #059669 100%);
+}
+
+.sidebar-doctor .sidebar-header {
+  background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+}
+
+.sidebar-doctor .sidebar-icon-container {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.sidebar-doctor .sidebar-menu-link:hover .sidebar-icon-container {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.sidebar-doctor .sidebar-menu-link.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.sidebar-doctor .sidebar-menu-link.active .sidebar-icon-container {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.sidebar-doctor .sidebar-menu-link.active::before {
+  background: #3b82f6;
+}
+
+.sidebar-pharmacist {
+  --primary-color: #f59e0b;
+  --primary-light: rgba(245, 158, 11, 0.1);
+  --gradient: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+}
+
+.sidebar-pharmacist .sidebar-header {
+  background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+}
+
+.sidebar-pharmacist .sidebar-icon-container {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.sidebar-pharmacist .sidebar-menu-link:hover .sidebar-icon-container {
+  background: rgba(245, 158, 11, 0.2);
+}
+
+.sidebar-pharmacist .sidebar-menu-link.active {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.sidebar-pharmacist .sidebar-menu-link.active .sidebar-icon-container {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.sidebar-pharmacist .sidebar-menu-link.active::before {
+  background: #10b981;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .healthcare-sidebar {
+    position: fixed !important;
+    left: 0;
+    top: 70px;
+    height: calc(100vh - 70px) !important;
+    z-index: 1040;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .healthcare-sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .sidebar-overlay {
+    position: fixed;
+    top: 70px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1035;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+  }
+  
+  .sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+/* Animation keyframes */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.sidebar-menu-item {
+  animation: slideIn 0.3s ease forwards;
+}
+
+.sidebar-menu-item:nth-child(1) { animation-delay: 0.1s; }
+.sidebar-menu-item:nth-child(2) { animation-delay: 0.15s; }
+.sidebar-menu-item:nth-child(3) { animation-delay: 0.2s; }
+.sidebar-menu-item:nth-child(4) { animation-delay: 0.25s; }
+.sidebar-menu-item:nth-child(5) { animation-delay: 0.3s; }
+.sidebar-menu-item:nth-child(6) { animation-delay: 0.35s; }
+.sidebar-menu-item:nth-child(7) { animation-delay: 0.4s; }
+.sidebar-menu-item:nth-child(8) { animation-delay: 0.45s; }

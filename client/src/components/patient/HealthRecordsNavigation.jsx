@@ -8,7 +8,8 @@ const HealthRecordsNavigation = ({ activeTab, setActiveTab }) => {
     { id: 'medicalHistory', label: 'Medical History', icon: 'fas fa-file-medical' },
     { id: 'medications', label: 'Medications', icon: 'fas fa-pills' },
     { id: 'vitals', label: 'Vitals', icon: 'fas fa-heartbeat' },
-    { id: 'immunizations', label: 'Immunizations', icon: 'fas fa-syringe' }
+    { id: 'immunizations', label: 'Immunizations', icon: 'fas fa-syringe' },
+    { id: 'aiInsights', label: 'AI Insights', icon: 'fas fa-robot' }
   ];
 
   return (
