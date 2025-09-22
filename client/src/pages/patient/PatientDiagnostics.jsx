@@ -3,12 +3,12 @@ import {
   Container, Row, Col, Card, CardHeader, CardBody, 
   Nav, NavItem, NavLink, TabContent, TabPane,
   Table, Badge, Button, Alert, Spinner, Modal, ModalHeader, 
-  ModalBody, ModalFooter
+  ModalBody, ModalFooter, Progress
 } from 'reactstrap';
 import { 
   FaFlask, FaCalendarAlt, FaCheckCircle, FaTimesCircle, 
   FaExclamationTriangle, FaFileMedical, FaFileDownload, 
-  FaInfoCircle, FaUserMd 
+  FaInfoCircle, FaUserMd, FaBrain, FaRobot, FaSync 
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import classnames from 'classnames';
@@ -18,6 +18,16 @@ import {
   acceptDiagnosticRequest, 
   declineDiagnosticRequest 
 } from '../../services/diagnosticsService';
+import {
+  getDiagnosticInsights,
+  triggerNewAnalysis,
+  pollAnalysisCompletion,
+  formatInsightsForDisplay,
+  getRiskLevelColor,
+  getSeverityColor,
+  formatProcessingTime,
+  formatFileSize
+} from '../../services/diagnosticsAIService';
 
 const PatientDiagnostics = () => {
   // State variables
@@ -32,6 +42,12 @@ const PatientDiagnostics = () => {
   const [isViewDetailsModalOpen, setIsViewDetailsModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [actionType, setActionType] = useState('');
+  
+  // AI Insights states
+  const [aiInsights, setAiInsights] = useState(null);
+  const [aiInsightsLoading, setAiInsightsLoading] = useState(false);
+  const [aiInsightsError, setAiInsightsError] = useState(null);
+  const [showAiInsights, setShowAiInsights] = useState(false);
   
   // Fetch data on component mount
   useEffect(() => {
@@ -166,6 +182,94 @@ const PatientDiagnostics = () => {
   const openDetailsModal = (test) => {
     setSelectedTest(test);
     setIsViewDetailsModalOpen(true);
+    
+    // Reset AI insights state
+    setAiInsights(null);
+    setAiInsightsError(null);
+    setShowAiInsights(false);
+    
+    // Load AI insights if test has results and attachments
+    if (test.findings && test.attachmentUrl) {
+      loadAiInsights(test.id);
+    }
+  };
+  
+  // Load AI insights for a test result
+  const loadAiInsights = async (testResultId) => {
+    try {
+      setAiInsightsLoading(true);
+      setAiInsightsError(null);
+      
+      const response = await getDiagnosticInsights(testResultId);
+      
+      if (response.success) {
+        const formattedInsights = formatInsightsForDisplay(response.data);
+        setAiInsights(formattedInsights);
+        setShowAiInsights(true);
+        
+        if (!response.cached) {
+          // New analysis was initiated, start polling
+          try {
+            const completedInsights = await pollAnalysisCompletion(testResultId);
+            if (completedInsights.success) {
+              const updatedInsights = formatInsightsForDisplay(completedInsights.data);
+              setAiInsights(updatedInsights);
+              toast.success('AI analysis completed!');
+            }
+          } catch (error) {
+            console.warn('Analysis polling failed:', error);
+            setAiInsightsError('Analysis is taking longer than expected. Please refresh to check for updates.');
+          }
+        }
+      } else {
+        setAiInsightsError(response.error || 'Failed to load AI insights');
+      }
+    } catch (error) {
+      console.error('Error loading AI insights:', error);
+      setAiInsightsError('An error occurred while loading AI insights');
+    } finally {
+      setAiInsightsLoading(false);
+    }
+  };
+  
+  // Trigger new AI analysis
+  const triggerNewAiAnalysis = async () => {
+    if (!selectedTest) return;
+    
+    try {
+      setAiInsightsLoading(true);
+      setAiInsightsError(null);
+      
+      const response = await triggerNewAnalysis(selectedTest.id, {
+        attachmentUrl: selectedTest.attachmentUrl,
+        testType: selectedTest.testType,
+        findings: selectedTest.findings
+      });
+      
+      if (response.success) {
+        toast.info('New AI analysis started...');
+        
+        // Poll for completion
+        try {
+          const completedInsights = await pollAnalysisCompletion(selectedTest.id);
+          if (completedInsights.success) {
+            const formattedInsights = formatInsightsForDisplay(completedInsights.data);
+            setAiInsights(formattedInsights);
+            setShowAiInsights(true);
+            toast.success('AI analysis completed!');
+          }
+        } catch (error) {
+          setAiInsightsError('Analysis is taking longer than expected. Please refresh to check for updates.');
+        }
+      } else {
+        setAiInsightsError(response.error || 'Failed to trigger new analysis');
+      }
+    } catch (error) {
+      console.error('Error triggering AI analysis:', error);
+      setAiInsightsError('An error occurred while starting AI analysis');
+    } finally {
+      setAiInsightsLoading(false);
+    }
   };
   
   // Helper function to format date
@@ -503,6 +607,180 @@ const PatientDiagnostics = () => {
                       )}
                     </CardBody>
                   </Card>
+                </>
+              )}
+              
+              {/* AI Insights Section */}
+              {selectedTest.findings && selectedTest.attachmentUrl && (
+                <>
+                  <h5 className="mt-4">
+                    <FaBrain className="me-2 text-primary" />
+                    AI Insights
+                    <Button
+                      color="outline-primary"
+                      size="sm"
+                      className="ms-3"
+                      onClick={triggerNewAiAnalysis}
+                      disabled={aiInsightsLoading}
+                    >
+                      <FaSync className={aiInsightsLoading ? 'fa-spin' : ''} />
+                      {aiInsightsLoading ? ' Analyzing...' : ' Refresh Analysis'}
+                    </Button>
+                  </h5>
+                  
+                  {aiInsightsLoading && !aiInsights && (
+                    <Card className="mb-3">
+                      <CardBody className="text-center">
+                        <Spinner color="primary" />
+                        <p className="mt-2 mb-0">Analyzing diagnostic report with AI...</p>
+                        <small className="text-muted">This may take a few moments</small>
+                      </CardBody>
+                    </Card>
+                  )}
+                  
+                  {aiInsightsError && (
+                    <Alert color="warning" className="mb-3">
+                      <FaExclamationTriangle className="me-2" />
+                      {aiInsightsError}
+                    </Alert>
+                  )}
+                  
+                  {aiInsights && showAiInsights && (
+                    <Card className="mb-3">
+                      <CardHeader className="bg-light d-flex justify-content-between align-items-center">
+                        <span>
+                          <FaRobot className="me-2" />
+                          AI Analysis Report
+                        </span>
+                        <div className="d-flex align-items-center">
+                          <Badge color={getRiskLevelColor(aiInsights.riskAssessment.level)} className="me-2">
+                            Risk: {aiInsights.riskAssessment.level.toUpperCase()}
+                          </Badge>
+                          <small className="text-muted">
+                            Confidence: {Math.round(aiInsights.confidence * 100)}%
+                          </small>
+                        </div>
+                      </CardHeader>
+                      <CardBody>
+                        {/* AI Summary */}
+                        {aiInsights.summary && (
+                          <div className="mb-4">
+                            <h6>Summary</h6>
+                            <p className="text-muted">{aiInsights.summary}</p>
+                          </div>
+                        )}
+                        
+                        {/* Risk Assessment */}
+                        {aiInsights.riskAssessment.description && (
+                          <div className="mb-4">
+                            <h6>Risk Assessment</h6>
+                            <Alert color={getRiskLevelColor(aiInsights.riskAssessment.level)} className="mb-0">
+                              {aiInsights.riskAssessment.description}
+                            </Alert>
+                          </div>
+                        )}
+                        
+                        {/* Abnormal Findings */}
+                        {aiInsights.abnormalFindings && aiInsights.abnormalFindings.length > 0 && (
+                          <div className="mb-4">
+                            <h6>Abnormal Findings</h6>
+                            {aiInsights.abnormalFindings.map((finding, index) => (
+                              <Alert 
+                                key={index} 
+                                color={getSeverityColor(finding.severity)}
+                                className="mb-2"
+                              >
+                                <div className="d-flex justify-content-between align-items-start">
+                                  <div>
+                                    <strong>{finding.parameter}: {finding.value}</strong>
+                                    <Badge color={getSeverityColor(finding.severity)} className="ms-2">
+                                      {finding.severity}
+                                    </Badge>
+                                  </div>
+                                </div>
+                                {finding.description && (
+                                  <p className="mb-1 mt-2">{finding.description}</p>
+                                )}
+                                {finding.recommendation && (
+                                  <small className="text-muted">
+                                    <strong>Recommendation:</strong> {finding.recommendation}
+                                  </small>
+                                )}
+                              </Alert>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Test Values Table */}
+                        {aiInsights.testValues && aiInsights.testValues.length > 0 && (
+                          <div className="mb-4">
+                            <h6>Extracted Test Values</h6>
+                            <div className="table-responsive">
+                              <Table size="sm" striped>
+                                <thead>
+                                  <tr>
+                                    <th>Parameter</th>
+                                    <th>Value</th>
+                                    <th>Reference Range</th>
+                                    <th>Status</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {aiInsights.testValues.map((testValue, index) => (
+                                    <tr key={index} className={testValue.isAbnormal ? 'table-warning' : ''}>
+                                      <td>{testValue.parameter}</td>
+                                      <td>
+                                        {testValue.value} {testValue.unit}
+                                      </td>
+                                      <td>{testValue.referenceRange}</td>
+                                      <td>
+                                        <Badge color={testValue.isAbnormal ? 'warning' : 'success'}>
+                                          {testValue.isAbnormal ? 'Abnormal' : 'Normal'}
+                                        </Badge>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </Table>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Processing Info */}
+                        <div className="mt-3 pt-3 border-top">
+                          <Row>
+                            <Col md={6}>
+                              <small className="text-muted">
+                                <strong>Processing Time:</strong> {formatProcessingTime(aiInsights.processingTime)}
+                              </small>
+                            </Col>
+                            <Col md={6}>
+                              <small className="text-muted">
+                                <strong>File:</strong> {aiInsights.fileInfo.name} ({formatFileSize(aiInsights.fileInfo.size)})
+                              </small>
+                            </Col>
+                          </Row>
+                        </div>
+                      </CardBody>
+                    </Card>
+                  )}
+                  
+                  {!aiInsights && !aiInsightsLoading && !aiInsightsError && (
+                    <Card className="mb-3">
+                      <CardBody className="text-center text-muted">
+                        <FaBrain size={24} className="mb-2" />
+                        <p className="mb-0">AI analysis not yet performed</p>
+                        <Button
+                          color="primary"
+                          size="sm"
+                          className="mt-2"
+                          onClick={triggerNewAiAnalysis}
+                        >
+                          Start AI Analysis
+                        </Button>
+                      </CardBody>
+                    </Card>
+                  )}
                 </>
               )}
             </div>

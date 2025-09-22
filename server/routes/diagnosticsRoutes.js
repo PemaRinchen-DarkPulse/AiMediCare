@@ -12,6 +12,10 @@ const {
   acceptDiagnosticRequest,
   declineDiagnosticRequest
 } = require('../controllers/diagnosticsController');
+const {
+  getDiagnosticInsights,
+  triggerNewAnalysis
+} = require('../controllers/diagnosticInsightsController');
 const { protect, restrictTo } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -75,5 +79,10 @@ router.route('/patient/requests/:id/accept')
 
 router.route('/patient/requests/:id/decline')
   .patch(restrictTo('patient'), declineDiagnosticRequest);
+
+// AI Insights routes for test results
+router.route('/:id/insights')
+  .get(restrictTo('doctor', 'admin', 'patient'), getDiagnosticInsights)
+  .post(restrictTo('doctor', 'admin'), triggerNewAnalysis);
 
 module.exports = router;

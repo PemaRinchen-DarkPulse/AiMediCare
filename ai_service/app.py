@@ -19,11 +19,13 @@ CORS(app)
 from routes.triage import triage_bp
 from routes.health import health_bp
 from routes.health_insights import health_insights_bp
+from routes.diagnostic import diagnostic_bp
 
 # Register blueprints
 app.register_blueprint(triage_bp, url_prefix='/api/triage')
 app.register_blueprint(health_bp, url_prefix='/api')
 app.register_blueprint(health_insights_bp, url_prefix='/api')
+app.register_blueprint(diagnostic_bp, url_prefix='/api')
 
 @app.route('/')
 def home():

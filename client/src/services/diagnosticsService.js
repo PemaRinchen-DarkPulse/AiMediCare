@@ -205,3 +205,56 @@ export const declineDiagnosticRequest = async (requestId) => {
     };
   }
 };
+
+// AI Insights Functions
+
+// Get AI insights for a diagnostic test result
+export const getDiagnosticInsights = async (testResultId) => {
+  try {
+    const response = await axios.get(`${API_URL}/${testResultId}/insights`, {
+      headers: getAuthHeader()
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching diagnostic insights:', error);
+    return {
+      success: false,
+      data: null,
+      message: error.response?.data?.message || error.message || 'Failed to fetch AI insights'
+    };
+  }
+};
+
+// Trigger new AI analysis for a diagnostic test result
+export const triggerAIAnalysis = async (testResultId, analysisData = {}) => {
+  try {
+    const response = await axios.post(`${API_URL}/${testResultId}/insights`, analysisData, {
+      headers: getAuthHeader()
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error triggering AI analysis:', error);
+    return {
+      success: false,
+      data: null,
+      message: error.response?.data?.message || error.message || 'Failed to trigger AI analysis'
+    };
+  }
+};
+
+// Poll for insights status (for checking if processing is complete)
+export const checkInsightsStatus = async (testResultId) => {
+  try {
+    const response = await axios.get(`${API_URL}/${testResultId}/insights`, {
+      headers: getAuthHeader()
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error checking insights status:', error);
+    return {
+      success: false,
+      data: null,
+      message: error.response?.data?.message || error.message || 'Failed to check insights status'
+    };
+  }
+};

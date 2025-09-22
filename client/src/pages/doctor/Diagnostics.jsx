@@ -14,6 +14,7 @@ import {
 import axios from 'axios';
 import classnames from 'classnames';
 import { createDiagnosticRequest, getDiagnosticRequests, getTestResults, uploadTestResult, updateRequestStatus } from '../../services/diagnosticsService';
+import { getDiagnosticInsights, triggerNewAnalysis, pollAnalysisCompletion } from '../../services/diagnosticsAIService';
 
 const Diagnostics = () => {
   // State management
@@ -36,6 +37,11 @@ const Diagnostics = () => {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [selectedResult, setSelectedResult] = useState(null);
+  
+  // AI Insights states
+  const [aiInsights, setAiInsights] = useState(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insightsError, setInsightsError] = useState(null);
   
   // Modal states
   const [isNewRequestModalOpen, setIsNewRequestModalOpen] = useState(false);
@@ -422,13 +428,117 @@ const Diagnostics = () => {
     setSelectedRequest(request);
     setIsViewDetailsModalOpen(true);
     
-    // If this request has results, load them
+    // If this request has results, load them and fetch AI insights
     const results = testResults.filter(res => res.requestId === request.id);
     if (results.length > 0) {
       setSelectedResult(results[0]);
+      // Fetch AI insights for this test result
+      fetchAIInsights(results[0]._id || results[0].id);
     } else {
       setSelectedResult(null);
+      setAiInsights(null);
     }
+  };
+
+  // AI Insights Functions
+  const fetchAIInsights = async (testResultId) => {
+    if (!testResultId) return;
+    
+    setInsightsLoading(true);
+    setInsightsError(null);
+    
+    try {
+      const response = await getDiagnosticInsights(testResultId);
+      
+      if (response.success) {
+        if (response.data) {
+          setAiInsights(response.data);
+          
+          // If still processing, start polling using the existing polling function
+          if (response.data.processingStatus === 'processing' || response.data.processingStatus === 'pending') {
+            pollAnalysisCompletion(testResultId)
+              .then((finalInsights) => {
+                if (finalInsights.success) {
+                  setAiInsights(finalInsights.data);
+                } else {
+                  setInsightsError('Analysis completed but failed to retrieve results');
+                }
+              })
+              .catch((error) => {
+                console.error('Polling failed:', error);
+                setInsightsError('Analysis may have failed or timed out');
+              });
+          }
+        } else {
+          // No insights exist yet, trigger generation
+          await triggerInsightsGeneration(testResultId);
+        }
+      } else {
+        // Insights don't exist, trigger generation
+        await triggerInsightsGeneration(testResultId);
+      }
+    } catch (error) {
+      console.error('Error fetching AI insights:', error);
+      setInsightsError('Failed to load AI insights');
+    } finally {
+      setInsightsLoading(false);
+    }
+  };
+
+  const triggerInsightsGeneration = async (testResultId) => {
+    try {
+      setInsightsLoading(true);
+      setInsightsError(null);
+      
+      // Get the selected result for additional data
+      const attachmentUrl = selectedResult?.attachmentUrl;
+      const testType = selectedRequest?.testType;
+      const findings = selectedResult?.findings;
+      
+      const response = await triggerNewAnalysis(testResultId, {
+        attachmentUrl,
+        testType,
+        findings
+      });
+      
+      if (response.success) {
+        setAiInsights(response.data);
+        
+        // Start polling if processing using the existing polling function
+        if (response.data.processingStatus === 'processing' || response.data.processingStatus === 'pending') {
+          // Use the existing polling function
+          pollAnalysisCompletion(testResultId)
+            .then((finalInsights) => {
+              if (finalInsights.success) {
+                setAiInsights(finalInsights.data);
+              } else {
+                setInsightsError('Analysis completed but failed to retrieve results');
+              }
+            })
+            .catch((error) => {
+              console.error('Polling failed:', error);
+              setInsightsError('Analysis may have failed or timed out');
+            });
+        }
+      } else {
+        setInsightsError(response.message || 'Failed to generate AI insights');
+      }
+    } catch (error) {
+      console.error('Error triggering AI analysis:', error);
+      setInsightsError('Failed to generate AI insights');
+    } finally {
+      setInsightsLoading(false);
+    }
+  };
+
+  // Handle modal close with cleanup
+  const handleViewDetailsModalClose = () => {
+    setIsViewDetailsModalOpen(false);
+    setSelectedRequest(null);
+    setSelectedResult(null);
+    setAiInsights(null);
+    setInsightsError(null);
+    setInsightsLoading(false);
   };
 
   // Component for diagnostic request status badge
@@ -1070,8 +1180,8 @@ const Diagnostics = () => {
       </Modal>
 
       {/* View Details Modal */}
-      <Modal isOpen={isViewDetailsModalOpen} toggle={() => setIsViewDetailsModalOpen(!isViewDetailsModalOpen)} size="lg">
-        <ModalHeader toggle={() => setIsViewDetailsModalOpen(!isViewDetailsModalOpen)}>
+      <Modal isOpen={isViewDetailsModalOpen} toggle={handleViewDetailsModalClose} size="lg">
+        <ModalHeader toggle={handleViewDetailsModalClose}>
           Diagnostic Test Details
         </ModalHeader>
         <ModalBody>
@@ -1130,6 +1240,173 @@ const Diagnostics = () => {
                           </div>
                         ) : (
                           <p className="text-muted">No attachments uploaded for this test result.</p>
+                        )}
+                      </div>
+
+                      {/* AI Insights Section */}
+                      <div className="mt-4">
+                        <h6 className="d-flex align-items-center">
+                          <FontAwesomeIcon icon={faNotesMedical} className="me-2 text-primary" />
+                          AI Insights
+                          {insightsLoading && <Spinner size="sm" className="ms-2" />}
+                        </h6>
+                        
+                        {insightsError && (
+                          <Alert color="warning" className="mt-2">
+                            <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
+                            {insightsError}
+                          </Alert>
+                        )}
+                        
+                        {insightsLoading && !aiInsights && (
+                          <div className="text-center py-3">
+                            <Spinner color="primary" />
+                            <p className="mt-2 text-muted">Analyzing diagnostic report with AI...</p>
+                          </div>
+                        )}
+                        
+                        {aiInsights && (
+                          <Card className="mt-2">
+                            <CardBody>
+                              {/* Processing Status */}
+                              {aiInsights.processingStatus === 'processing' && (
+                                <Alert color="info" className="mb-3">
+                                  <FontAwesomeIcon icon={faSync} className="me-2" />
+                                  AI analysis in progress... Results will update automatically.
+                                </Alert>
+                              )}
+                              
+                              {aiInsights.processingStatus === 'failed' && (
+                                <Alert color="danger" className="mb-3">
+                                  <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
+                                  AI analysis failed. Please try again or review manually.
+                                </Alert>
+                              )}
+                              
+                              {aiInsights.processingStatus === 'completed' && (
+                                <>
+                                  {/* AI Summary */}
+                                  {aiInsights.aiSummary && (
+                                    <div className="mb-3">
+                                      <h6 className="text-primary">AI Summary</h6>
+                                      <div className="p-3 bg-light rounded">
+                                        {aiInsights.aiSummary}
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Risk Assessment */}
+                                  {aiInsights.riskAssessment && (
+                                    <div className="mb-3">
+                                      <h6 className="text-primary">Risk Assessment</h6>
+                                      <div className="d-flex align-items-center mb-2">
+                                        <Badge 
+                                          color={
+                                            aiInsights.riskAssessment.level === 'critical' ? 'danger' :
+                                            aiInsights.riskAssessment.level === 'high' ? 'warning' :
+                                            aiInsights.riskAssessment.level === 'moderate' ? 'info' : 'success'
+                                          }
+                                          className="me-2"
+                                        >
+                                          {aiInsights.riskAssessment.level.toUpperCase()}
+                                        </Badge>
+                                        <span>{aiInsights.riskAssessment.description}</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Abnormal Findings */}
+                                  {aiInsights.abnormalFindings && aiInsights.abnormalFindings.length > 0 && (
+                                    <div className="mb-3">
+                                      <h6 className="text-primary">Abnormal Findings</h6>
+                                      {aiInsights.abnormalFindings.map((finding, index) => (
+                                        <div key={index} className="border rounded p-3 mb-2 bg-light">
+                                          <div className="d-flex justify-content-between align-items-start mb-2">
+                                            <strong>{finding.parameter}</strong>
+                                            <Badge 
+                                              color={
+                                                finding.severity === 'critical' ? 'danger' :
+                                                finding.severity === 'high' ? 'warning' :
+                                                finding.severity === 'moderate' ? 'info' : 'secondary'
+                                              }
+                                            >
+                                              {finding.severity}
+                                            </Badge>
+                                          </div>
+                                          <p className="mb-1"><strong>Value:</strong> {finding.value}</p>
+                                          <p className="mb-1"><strong>Description:</strong> {finding.description}</p>
+                                          {finding.recommendation && (
+                                            <p className="mb-0 text-primary"><strong>Recommendation:</strong> {finding.recommendation}</p>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                  
+                                  {/* Structured Data Preview */}
+                                  {aiInsights.structuredData && aiInsights.structuredData.testValues && aiInsights.structuredData.testValues.length > 0 && (
+                                    <div className="mb-3">
+                                      <h6 className="text-primary">Extracted Test Values</h6>
+                                      <div className="table-responsive">
+                                        <table className="table table-sm table-striped">
+                                          <thead>
+                                            <tr>
+                                              <th>Parameter</th>
+                                              <th>Value</th>
+                                              <th>Unit</th>
+                                              <th>Reference Range</th>
+                                              <th>Status</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {aiInsights.structuredData.testValues.map((test, index) => (
+                                              <tr key={index}>
+                                                <td>{test.parameter}</td>
+                                                <td>{test.value}</td>
+                                                <td>{test.unit}</td>
+                                                <td>{test.referenceRange}</td>
+                                                <td>
+                                                  <Badge color={test.isAbnormal ? 'warning' : 'success'}>
+                                                    {test.isAbnormal ? 'Abnormal' : 'Normal'}
+                                                  </Badge>
+                                                </td>
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {/* AI Metadata */}
+                                  <div className="mt-3 pt-3 border-top">
+                                    <small className="text-muted">
+                                      <FontAwesomeIcon icon={faNotesMedical} className="me-1" />
+                                      AI Analysis by {aiInsights.aiModel} • 
+                                      Confidence: {(aiInsights.confidence * 100).toFixed(0)}% •
+                                      Processed: {new Date(aiInsights.createdAt).toLocaleString()}
+                                    </small>
+                                  </div>
+                                </>
+                              )}
+                            </CardBody>
+                          </Card>
+                        )}
+                        
+                        {!aiInsights && !insightsLoading && !insightsError && selectedResult?.attachmentUrl && (
+                          <div className="text-center py-3">
+                            <Button 
+                              color="primary" 
+                              size="sm" 
+                              onClick={() => fetchAIInsights(selectedResult._id || selectedResult.id)}
+                            >
+                              <FontAwesomeIcon icon={faNotesMedical} className="me-2" />
+                              Generate AI Insights
+                            </Button>
+                            <p className="mt-2 text-muted small">
+                              Use AI to analyze this diagnostic report for abnormalities and insights
+                            </p>
+                          </div>
                         )}
                       </div>
                       
@@ -1198,7 +1475,7 @@ const Diagnostics = () => {
               Cancel Test
             </Button>
           )}
-          <Button color="secondary" onClick={() => setIsViewDetailsModalOpen(false)}>
+          <Button color="secondary" onClick={handleViewDetailsModalClose}>
             Close
           </Button>
         </ModalFooter>
