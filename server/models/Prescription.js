@@ -47,12 +47,42 @@ const prescriptionSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['active', 'completed', 'cancelled'],
+    enum: ['active', 'completed', 'cancelled', 'sent-to-pharmacy', 'dispensed'],
     default: 'active'
   },
   issuedDate: {
     type: Date,
     default: Date.now
+  },
+  pharmacyInfo: {
+    assignedPharmacy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    pharmacyName: String,
+    sentToPharmacyDate: Date,
+    dispensedDate: Date,
+    dispensedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  },
+  priority: {
+    type: String,
+    enum: ['routine', 'urgent', 'stat'],
+    default: 'routine'
+  },
+  refills: {
+    authorized: {
+      type: Number,
+      min: 0,
+      default: 0
+    },
+    remaining: {
+      type: Number,
+      min: 0,
+      default: 0
+    }
   }
 }, {
   timestamps: true

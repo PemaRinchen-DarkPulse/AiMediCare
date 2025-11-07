@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Container, Row, Col, Card, CardBody, Button, Alert, Spinner, 
   Form, FormGroup, Label, Input, Modal, ModalHeader, ModalBody, ModalFooter,
@@ -40,6 +40,9 @@ const DoctorPrescriptions = () => {
   const [showRecommendations, setShowRecommendations] = useState(false);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   
+  // Ref to prevent multiple simultaneous API calls
+  const isFetchingRef = useRef(false);
+
   // Get auth header with JWT token
   const getAuthHeader = () => {
     const token = localStorage.getItem('token');
@@ -49,49 +52,51 @@ const DoctorPrescriptions = () => {
     return { Authorization: `Bearer ${token}` };
   };
 
+  // Memoized fetch function to prevent multiple calls
+  const fetchInitialData = useCallback(async () => {
+    if (isFetchingRef.current) return; // Prevent multiple simultaneous calls
+    
+    try {
+      isFetchingRef.current = true;
+      setLoading(true);
+      setError(null);
+      
+      // Fetch all prescriptions created by the doctor
+      const prescriptionsResponse = await axios.get(`${API_URL}/prescriptions/doctor`, {
+        headers: getAuthHeader()
+      });
+      
+      // Fetch all patients - using the correct endpoint path
+      const patientsResponse = await axios.get(`${API_URL}/doctor/patients`, {
+        headers: getAuthHeader()
+      });
+      
+      // Ensure we have arrays for both prescriptions and patients
+      const prescriptionData = prescriptionsResponse.data.data || prescriptionsResponse.data || [];
+      setPrescriptions(Array.isArray(prescriptionData) ? prescriptionData : []);
+      
+      // Safely extract patients data and ensure it's an array
+      let patientsData;
+      if (patientsResponse.data && patientsResponse.data.data) {
+        patientsData = patientsResponse.data.data;
+      } else {
+        patientsData = patientsResponse.data;
+      }
+      
+      setPatients(Array.isArray(patientsData) ? patientsData : []);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError('Failed to load data. Please try again.');
+    } finally {
+      setLoading(false);
+      isFetchingRef.current = false;
+    }
+  }, []);
+
   // Fetch prescriptions and patients on component mount
   useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Fetch all prescriptions created by the doctor
-        const prescriptionsResponse = await axios.get(`${API_URL}/prescriptions/doctor`, {
-          headers: getAuthHeader()
-        });
-        
-        // Fetch all patients - using the correct endpoint path
-        const patientsResponse = await axios.get(`${API_URL}/doctor/patients`, {
-          headers: getAuthHeader()
-        });
-        
-        // Log the complete response for debugging
-        console.log('Patients API response:', patientsResponse);
-        
-        // Ensure we have arrays for both prescriptions and patients
-        const prescriptionData = prescriptionsResponse.data.data || prescriptionsResponse.data || [];
-        setPrescriptions(Array.isArray(prescriptionData) ? prescriptionData : []);
-        
-        // Safely extract patients data and ensure it's an array
-        let patientsData;
-        if (patientsResponse.data && patientsResponse.data.data) {
-          patientsData = patientsResponse.data.data;
-        } else {
-          patientsData = patientsResponse.data;
-        }
-        
-        setPatients(Array.isArray(patientsData) ? patientsData : []);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Failed to load data. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     fetchInitialData();
-  }, []);
+  }, [fetchInitialData]);
   
   // Toggle prescription modal
   const togglePrescriptionModal = () => {

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-const API_URL = `${BASE_URL}/api/doctor/patients`;
+const API_URL = `${BASE_URL}/doctor/patients`;
 
 // Helper to get auth header with JWT token
 const getAuthHeader = () => {
@@ -15,13 +15,20 @@ const getAuthHeader = () => {
 // Get all patients with optional pagination and filters
 export const getPatients = async (page = 1, limit = 10, search = '', sortBy = 'createdAt', sortOrder = 'desc') => {
   try {
+    const token = localStorage.getItem('token');
+    console.log('Token exists:', !!token);
+    console.log('Making request to:', `${API_URL}?page=${page}&limit=${limit}&search=${search}&sortBy=${sortBy}&sortOrder=${sortOrder}`);
+    
     const response = await axios.get(
       `${API_URL}?page=${page}&limit=${limit}&search=${search}&sortBy=${sortBy}&sortOrder=${sortOrder}`,
       { headers: getAuthHeader() }
     );
+    
+    console.log('Service response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error fetching patients:', error);
+    console.error('Error response:', error.response?.data);
     throw error;
   }
 };
@@ -61,19 +68,6 @@ export const updatePatient = async (patientId, patientData) => {
     return response.data;
   } catch (error) {
     console.error(`Error updating patient ${patientId}:`, error);
-    throw error;
-  }
-};
-
-// Delete patient
-export const deletePatient = async (patientId) => {
-  try {
-    const response = await axios.delete(`${API_URL}/${patientId}`, {
-      headers: getAuthHeader()
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error deleting patient ${patientId}:`, error);
     throw error;
   }
 };

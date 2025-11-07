@@ -13,6 +13,10 @@ const Immunization = require('../models/Immunization');
 // @route   GET /api/doctor/patients
 // @access  Private/Doctor
 const getPatients = asyncHandler(async (req, res) => {
+  console.log('GET /api/doctor/patients called');
+  console.log('Query params:', req.query);
+  console.log('User:', req.user?.email);
+  
   const { 
     page = 1, 
     limit = 10, 
@@ -21,8 +25,13 @@ const getPatients = asyncHandler(async (req, res) => {
     sortOrder = 'desc'
   } = req.query;
 
+  // Check total Patient records in DB
+  const totalPatientRecords = await Patient.countDocuments();
+  console.log('Total Patient records in DB:', totalPatientRecords);
+
   // Create search filter
-  const searchFilter = {};
+  let searchFilter = {};
+  
   if (search) {
     // Get user IDs with matching names
     const users = await User.find({
@@ -31,25 +40,40 @@ const getPatients = asyncHandler(async (req, res) => {
     }).select('_id');
     
     const userIds = users.map(user => user._id);
+    console.log('Found matching users:', userIds.length);
     
     // Add to search filter
-    searchFilter.$or = [
-      { user: { $in: userIds } }
-    ];
+    if (userIds.length > 0) {
+      searchFilter.user = { $in: userIds };
+    } else {
+      // If no users match the search, return empty results
+      searchFilter._id = null; // This will return no results
+    }
   }
+
+  console.log('Search filter:', JSON.stringify(searchFilter));
 
   // Calculate pagination
   const skip = (parseInt(page) - 1) * parseInt(limit);
 
-  // Get patients
+  // Get patients with populated user data
   const patients = await Patient.find(searchFilter)
     .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
     .skip(skip)
     .limit(parseInt(limit))
     .populate('user', 'name email phoneNumber profileImage');
 
+  console.log('Found patients after query:', patients.length);
+  console.log('Sample patient:', patients[0] ? {
+    id: patients[0]._id,
+    user: patients[0].user,
+    hasUser: !!patients[0].user
+  } : 'No patients found');
+
   // Get total count for pagination
   const totalPatients = await Patient.countDocuments(searchFilter);
+
+  console.log('Total patients matching filter:', totalPatients);
 
   res.status(200).json({
     success: true,
@@ -160,32 +184,6 @@ const updatePatient = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     data: updatedPatient
-  });
-});
-
-// @desc    Delete patient
-// @route   DELETE /api/doctor/patients/:patientId
-// @access  Private/Doctor
-const deletePatient = asyncHandler(async (req, res) => {
-  const { patientId } = req.params;
-  
-  // Find patient
-  const patient = await Patient.findById(patientId);
-
-  if (!patient) {
-    res.status(404);
-    throw new Error('Patient not found');
-  }
-
-  // Delete patient (consider soft delete in production)
-  await Patient.findByIdAndDelete(patientId);
-  
-  // Note: You might want to delete or anonymize the User as well
-  // but that's left out for this implementation
-
-  res.status(200).json({
-    success: true,
-    message: 'Patient deleted successfully'
   });
 });
 
@@ -517,7 +515,6 @@ module.exports = {
   getPatientById,
   addPatient,
   updatePatient,
-  deletePatient,
   getPatientVitals,
   addPatientVital,
   getPatientAllergies,

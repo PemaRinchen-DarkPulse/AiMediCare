@@ -8,11 +8,10 @@ import {
 } from '@mui/material';
 import { 
   Search as SearchIcon,
-  Delete as DeleteIcon,
   Refresh as RefreshIcon,
   VisibilityOutlined as ViewIcon
 } from '@mui/icons-material';
-import { getPatients, deletePatient } from '../../services/patientManagementService';
+import { getPatients } from '../../services/patientManagementService';
 import PatientDetailsView from '../../components/doctor/PatientDetailsView';
 
 const Patients = () => {
@@ -28,8 +27,6 @@ const Patients = () => {
   // State for modal dialogs
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
-  const [patientToDelete, setPatientToDelete] = useState(null);
 
   // Fetch patients on component mount and when search/pagination changes
   useEffect(() => {
@@ -42,12 +39,24 @@ const Patients = () => {
     setError('');
     
     try {
+      console.log('Fetching patients with params:', { page: page + 1, rowsPerPage, searchTerm });
       const response = await getPatients(page + 1, rowsPerPage, searchTerm);
-      setPatients(response.data);
-      setTotalCount(response.totalResults);
+      console.log('API Response:', response);
+      
+      // Server returns { success, data: patients[], totalResults, ... }
+      const patientsData = response.data || [];
+      const totalResults = response.totalResults || 0;
+      
+      console.log('Extracted patients data:', patientsData);
+      console.log('Total results:', totalResults);
+      
+      setPatients(Array.isArray(patientsData) ? patientsData : []);
+      setTotalCount(totalResults);
     } catch (err) {
       console.error('Failed to fetch patients:', err);
       setError('Failed to load patients. Please try again.');
+      setPatients([]); // Reset to empty array on error
+      setTotalCount(0);
     } finally {
       setLoading(false);
     }
@@ -78,33 +87,6 @@ const Patients = () => {
   const handleCloseDetails = () => {
     setIsDetailsOpen(false);
     setSelectedPatient(null);
-  };
-
-  const handleDeleteConfirm = (patient) => {
-    setPatientToDelete(patient);
-    setIsConfirmDeleteOpen(true);
-  };
-
-  const handleDeleteCancel = () => {
-    setIsConfirmDeleteOpen(false);
-    setPatientToDelete(null);
-  };
-
-  const handleDeletePatient = async () => {
-    if (!patientToDelete) return;
-    
-    setLoading(true);
-    try {
-      await deletePatient(patientToDelete._id);
-      fetchPatients();
-      setIsConfirmDeleteOpen(false);
-      setPatientToDelete(null);
-    } catch (err) {
-      console.error('Error deleting patient:', err);
-      setError('Failed to delete patient. Please try again.');
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (
@@ -174,7 +156,7 @@ const Patients = () => {
                         <CircularProgress size={40} />
                       </TableCell>
                     </TableRow>
-                  ) : patients.length === 0 ? (
+                  ) : (!patients || patients.length === 0) ? (
                     <TableRow>
                       <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
                         <Typography variant="body1">
@@ -183,7 +165,7 @@ const Patients = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    patients.map((patient) => (
+                    (patients || []).map((patient) => (
                       <TableRow hover key={patient._id}>
                         <TableCell>{patient.user?.name}</TableCell>
                         <TableCell>{patient.user?.email}</TableCell>
@@ -198,15 +180,6 @@ const Patients = () => {
                                 color="primary"
                               >
                                 <ViewIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Delete Patient">
-                              <IconButton 
-                                size="small" 
-                                onClick={() => handleDeleteConfirm(patient)}
-                                color="error"
-                              >
-                                <DeleteIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
                           </Box>
@@ -244,25 +217,6 @@ const Patients = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDetails}>Close</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Confirm Delete Dialog */}
-      <Dialog
-        open={isConfirmDeleteOpen}
-        onClose={handleDeleteCancel}
-      >
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Are you sure you want to delete {patientToDelete?.user?.name}'s record? This action cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDeleteCancel}>Cancel</Button>
-          <Button onClick={handleDeletePatient} variant="contained" color="error">
-            Delete
-          </Button>
         </DialogActions>
       </Dialog>
     </Container>

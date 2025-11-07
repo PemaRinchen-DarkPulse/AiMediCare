@@ -15,6 +15,7 @@ import axios from 'axios';
 import classnames from 'classnames';
 import { createDiagnosticRequest, getDiagnosticRequests, getTestResults, uploadTestResult, updateRequestStatus } from '../../services/diagnosticsService';
 import { getDiagnosticInsights, triggerNewAnalysis, pollAnalysisCompletion } from '../../services/diagnosticsAIService';
+import { getPatients } from '../../services/patientManagementService';
 
 const Diagnostics = () => {
   // State management
@@ -86,32 +87,28 @@ const Diagnostics = () => {
   // API calls
   const fetchPatients = async () => {
     try {
-      // Replace with actual API call
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setError('Authentication required. Please log in.');
-        setLoading(false);
-        return;
-      }
-
-      // This should be updated with your actual API endpoint
-      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/doctor/patients`, {
-        headers: { Authorization: `Bearer ${token}` }
+      console.log('Fetching patients for diagnostics dropdown...');
+      const response = await getPatients(1, 1000); // Get all patients for dropdown
+      console.log('Raw patients response:', response);
+      console.log('Patients data:', response.data);
+      console.log('Number of patients:', response.data?.length || 0);
+      
+      // Transform the patient data for dropdown use
+      const formattedPatients = (response.data || []).map(patient => {
+        console.log('Formatting patient:', patient);
+        return {
+          id: patient._id,
+          name: patient.user?.name || patient.user?.email || 'Unknown Patient',
+          email: patient.user?.email
+        };
       });
       
-      if (response.data.success) {
-        // Transform the patient data to only show email, removing gender and age
-        const formattedPatients = response.data.data.map(patient => ({
-          id: patient._id,
-          name: patient.user.email // Only using email as identifier
-        }));
-        setPatients(formattedPatients);
-      } else {
-        throw new Error(response.data.message || 'Failed to fetch patients');
-      }
+      console.log('Formatted patients for dropdown:', formattedPatients);
+      setPatients(formattedPatients);
     } catch (err) {
       console.error('Error fetching patients:', err);
       setError('Failed to load patients. Please try again.');
+      setPatients([]); // Reset to empty array on error
     } finally {
       setLoading(false);
     }
@@ -398,14 +395,14 @@ const Diagnostics = () => {
         });
         // Show success message
         setError(
-          <Alert color="success">
+          <Alert color="success" fade={false}>
             <FontAwesomeIcon icon={faCheck} className="me-2" />
             Test results uploaded successfully. Generating AI recommendations...
           </Alert>
         );
       } else {
         setError(
-          <Alert color="danger">
+          <Alert color="danger" fade={false}>
             <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
             {result.error || 'Failed to upload test results'}
           </Alert>
@@ -413,7 +410,7 @@ const Diagnostics = () => {
       }
     } catch (err) {
       setError(
-        <Alert color="danger">
+        <Alert color="danger" fade={false}>
           <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
           {err.message || 'An error occurred while uploading test results'}
         </Alert>
@@ -678,7 +675,7 @@ const Diagnostics = () => {
                   <p className="mt-2">Loading diagnostic requests...</p>
                 </div>
               ) : error ? (
-                <Alert color="danger">{error}</Alert>
+                <Alert color="danger" fade={false}>{error}</Alert>
               ) : (
                 <div className="table-responsive">
                   <Table hover bordered>
@@ -730,7 +727,7 @@ const Diagnostics = () => {
                     </tbody>
                   </Table>
                   {diagnosticRequests.filter(request => request.status === 'pending').length === 0 && (
-                    <Alert color="info">
+                    <Alert color="info" fade={false}>
                       No pending diagnostic requests found.
                     </Alert>
                   )}
@@ -781,7 +778,7 @@ const Diagnostics = () => {
                   <p className="mt-2">Loading upcoming diagnostics...</p>
                 </div>
               ) : error ? (
-                <Alert color="danger">{error}</Alert>
+                <Alert color="danger" fade={false}>{error}</Alert>
               ) : (
                 <div className="table-responsive">
                   <Table hover bordered>
@@ -843,7 +840,7 @@ const Diagnostics = () => {
                     </tbody>
                   </Table>
                   {diagnosticRequests.filter(request => request.status === 'accepted by patient').length === 0 && (
-                    <Alert color="info">
+                    <Alert color="info" fade={false}>
                       No upcoming diagnostic tests found. Tests will appear here after patients accept the requests.
                     </Alert>
                   )}
@@ -942,7 +939,7 @@ const Diagnostics = () => {
                     const request = diagnosticRequests.find(req => req.id === result.requestId);
                     return request && request.status === 'completed';
                   }).length === 0 && (
-                    <Alert color="info">
+                    <Alert color="info" fade={false}>
                       No completed test results found. Results will appear here after tests are completed.
                     </Alert>
                   )}
@@ -1060,7 +1057,7 @@ const Diagnostics = () => {
           <ModalBody>
             {/* Warning message if the selected test is not accepted by patient */}
             {selectedRequest && selectedRequest.status !== 'accepted by patient' && (
-              <Alert color="warning" className="mb-3">
+              <Alert color="warning" className="mb-3" fade={false}>
                 <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
                 Test results can only be uploaded for tests that have been accepted by the patient.
               </Alert>
@@ -1252,7 +1249,7 @@ const Diagnostics = () => {
                         </h6>
                         
                         {insightsError && (
-                          <Alert color="warning" className="mt-2">
+                          <Alert color="warning" className="mt-2" fade={false}>
                             <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
                             {insightsError}
                           </Alert>
@@ -1270,14 +1267,14 @@ const Diagnostics = () => {
                             <CardBody>
                               {/* Processing Status */}
                               {aiInsights.processingStatus === 'processing' && (
-                                <Alert color="info" className="mb-3">
+                                <Alert color="info" className="mb-3" fade={false}>
                                   <FontAwesomeIcon icon={faSync} className="me-2" />
                                   AI analysis in progress... Results will update automatically.
                                 </Alert>
                               )}
                               
                               {aiInsights.processingStatus === 'failed' && (
-                                <Alert color="danger" className="mb-3">
+                                <Alert color="danger" className="mb-3" fade={false}>
                                   <FontAwesomeIcon icon={faExclamationTriangle} className="me-2" />
                                   AI analysis failed. Please try again or review manually.
                                 </Alert>
@@ -1481,7 +1478,7 @@ const Diagnostics = () => {
         </ModalFooter>
       </Modal>
 
-      <style jsx>{`
+      <style>{`
         .diagnostics-container {
           min-height: calc(100vh - 64px);
         }

@@ -1,162 +1,264 @@
-/**
- * Medicine Recommendation Controller
- * Provides AI-based medicine recommendations for diagnoses
- */
+const asyncHandler = require('express-async-handler');
+const Patient = require('../models/Patient');
+const User = require('../models/User');
+const PrevisitTriage = require('../models/PrevisitTriage');
+const axios = require('axios');
 
-// A simple mapping of diagnoses to recommended medications
-// In a production environment, this would be replaced with a more sophisticated system,
-// possibly using NLP/ML or connecting to an external medical API
-const diagnosisToMedicationMap = {
-  // Respiratory conditions
-  'common cold': [
-    { name: 'Acetaminophen', dosage: '500mg', frequency: 'Every 6 hours as needed', duration: '5 days', instructions: 'Take with food' },
-    { name: 'Pseudoephedrine', dosage: '60mg', frequency: 'Every 6 hours as needed', duration: '5 days', instructions: 'May cause insomnia' }
-  ],
-  'influenza': [
-    { name: 'Oseltamivir', dosage: '75mg', frequency: 'Twice daily', duration: '5 days', instructions: 'Take with food to minimize GI upset' },
-    { name: 'Acetaminophen', dosage: '500mg', frequency: 'Every 6 hours as needed', duration: '5 days', instructions: 'For fever and body aches' }
-  ],
-  'pneumonia': [
-    { name: 'Amoxicillin', dosage: '500mg', frequency: 'Three times daily', duration: '7-10 days', instructions: 'Complete full course' },
-    { name: 'Azithromycin', dosage: '500mg', frequency: 'Once daily', duration: '5 days', instructions: 'Take on empty stomach' }
-  ],
-  'bronchitis': [
-    { name: 'Dextromethorphan', dosage: '20mg', frequency: 'Every 6-8 hours', duration: '7 days', instructions: 'For cough' },
-    { name: 'Guaifenesin', dosage: '400mg', frequency: 'Every 4 hours', duration: '7 days', instructions: 'To loosen mucus' }
-  ],
-  'asthma': [
-    { name: 'Albuterol', dosage: '2 puffs', frequency: 'Every 4-6 hours as needed', duration: 'As needed', instructions: 'For acute symptoms' },
-    { name: 'Fluticasone', dosage: '1 puff', frequency: 'Twice daily', duration: 'Ongoing', instructions: 'Maintenance therapy' }
-  ],
-  
-  // Cardiovascular conditions
-  'hypertension': [
-    { name: 'Lisinopril', dosage: '10mg', frequency: 'Once daily', duration: 'Ongoing', instructions: 'Take at the same time each day' },
-    { name: 'Amlodipine', dosage: '5mg', frequency: 'Once daily', duration: 'Ongoing', instructions: 'May cause swelling in ankles' }
-  ],
-  'hyperlipidemia': [
-    { name: 'Atorvastatin', dosage: '20mg', frequency: 'Once daily at bedtime', duration: 'Ongoing', instructions: 'Avoid grapefruit juice' },
-    { name: 'Simvastatin', dosage: '20mg', frequency: 'Once daily at bedtime', duration: 'Ongoing', instructions: 'Report muscle pain' }
-  ],
-  
-  // Gastrointestinal conditions
-  'gastritis': [
-    { name: 'Omeprazole', dosage: '20mg', frequency: 'Once daily before breakfast', duration: '14 days', instructions: 'Take before eating' },
-    { name: 'Famotidine', dosage: '20mg', frequency: 'Twice daily', duration: '14 days', instructions: 'Take with water' }
-  ],
-  'gerd': [
-    { name: 'Esomeprazole', dosage: '40mg', frequency: 'Once daily', duration: '28 days', instructions: 'Take 30 minutes before eating' },
-    { name: 'Ranitidine', dosage: '150mg', frequency: 'Twice daily', duration: '14 days', instructions: 'Take with or without food' }
-  ],
-  'ibs': [
-    { name: 'Dicyclomine', dosage: '20mg', frequency: 'Four times daily', duration: 'As needed', instructions: 'Take before meals' },
-    { name: 'Loperamide', dosage: '2mg', frequency: 'As needed', duration: 'As needed', instructions: 'For diarrhea' }
-  ],
-  
-  // Pain conditions
-  'headache': [
-    { name: 'Ibuprofen', dosage: '400mg', frequency: 'Every 6-8 hours as needed', duration: '3 days', instructions: 'Take with food' },
-    { name: 'Acetaminophen', dosage: '500mg', frequency: 'Every 6 hours as needed', duration: '3 days', instructions: 'Do not exceed 4g per day' }
-  ],
-  'migraine': [
-    { name: 'Sumatriptan', dosage: '50mg', frequency: 'As needed', duration: 'As needed', instructions: 'Take at first sign of migraine' },
-    { name: 'Rizatriptan', dosage: '10mg', frequency: 'As needed', duration: 'As needed', instructions: 'May repeat after 2 hours if needed' }
-  ],
-  'arthritis': [
-    { name: 'Naproxen', dosage: '500mg', frequency: 'Twice daily', duration: 'As needed', instructions: 'Take with food' },
-    { name: 'Celecoxib', dosage: '200mg', frequency: 'Once daily', duration: 'As needed', instructions: 'May increase cardiovascular risk' }
-  ],
-  
-  // Mental health conditions
-  'depression': [
-    { name: 'Sertraline', dosage: '50mg', frequency: 'Once daily', duration: 'Ongoing', instructions: 'May take 2-4 weeks for full effect' },
-    { name: 'Fluoxetine', dosage: '20mg', frequency: 'Once daily in the morning', duration: 'Ongoing', instructions: 'May cause insomnia if taken later in day' }
-  ],
-  'anxiety': [
-    { name: 'Escitalopram', dosage: '10mg', frequency: 'Once daily', duration: 'Ongoing', instructions: 'Take at the same time each day' },
-    { name: 'Lorazepam', dosage: '0.5mg', frequency: 'As needed', duration: 'Short-term use only', instructions: 'May cause drowsiness' }
-  ],
-  'insomnia': [
-    { name: 'Zolpidem', dosage: '10mg', frequency: 'Once daily at bedtime', duration: '7-10 days', instructions: 'Take only if you have 7-8 hours for sleep' },
-    { name: 'Trazodone', dosage: '50mg', frequency: 'Once at bedtime', duration: 'As needed', instructions: 'May cause morning drowsiness' }
-  ],
-  
-  // Endocrine conditions
-  'type 2 diabetes': [
-    { name: 'Metformin', dosage: '500mg', frequency: 'Twice daily with meals', duration: 'Ongoing', instructions: 'May cause GI upset initially' },
-    { name: 'Glipizide', dosage: '5mg', frequency: 'Once daily before breakfast', duration: 'Ongoing', instructions: 'Take 30 minutes before eating' }
-  ],
-  'hypothyroidism': [
-    { name: 'Levothyroxine', dosage: '50mcg', frequency: 'Once daily on empty stomach', duration: 'Ongoing', instructions: 'Take 30-60 minutes before breakfast' }
-  ]
-};
+// @desc    Generate AI-powered medication recommendations
+// @route   POST /api/medicine-recommendations/generate
+// @access  Private/Doctor
+const generateMedicationRecommendations = asyncHandler(async (req, res) => {
+  const { patientId, appointmentId } = req.body;
 
-// Function to find partial matches in diagnoses
-const findMatchingDiagnoses = (query) => {
-  query = query.toLowerCase().trim();
-  const matches = [];
-
-  // Check for exact matches first
-  if (diagnosisToMedicationMap[query]) {
-    return diagnosisToMedicationMap[query];
+  if (!patientId) {
+    res.status(400);
+    throw new Error('Patient ID is required');
   }
-  
-  // Check for partial matches
-  for (const diagnosis in diagnosisToMedicationMap) {
-    if (diagnosis.includes(query) || query.includes(diagnosis)) {
-      matches.push(...diagnosisToMedicationMap[diagnosis]);
-    }
-  }
-  
-  // Check keywords
-  const keywords = query.split(/\s+/);
-  for (const keyword of keywords) {
-    if (keyword.length < 3) continue; // Skip short words
+
+  console.log('Generating medication recommendations for patient:', patientId);
+
+  try {
+    // Get comprehensive patient data
+    const patientData = await gatherPatientData(patientId, appointmentId);
     
-    for (const diagnosis in diagnosisToMedicationMap) {
-      if (diagnosis.includes(keyword) && !matches.some(m => diagnosisToMedicationMap[diagnosis].includes(m))) {
-        matches.push(...diagnosisToMedicationMap[diagnosis]);
+    if (!patientData.patient_id) {
+      res.status(404);
+      throw new Error('Patient not found');
+    }
+
+    console.log('Patient data gathered, calling AI service...');
+
+    // Call AI service for medication recommendations
+    const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:8001';
+    const aiResponse = await axios.post(
+      `${aiServiceUrl}/api/medication-recommendations`,
+      {
+        patient_data: patientData
+      },
+      {
+        timeout: 30000, // 30 second timeout
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (aiResponse.data.success) {
+      console.log('AI recommendations generated successfully');
+      
+      res.status(200).json({
+        success: true,
+        data: aiResponse.data.data,
+        message: 'Medication recommendations generated successfully'
+      });
+    } else {
+      throw new Error('AI service returned unsuccessful response');
+    }
+
+  } catch (error) {
+    console.error('Error generating medication recommendations:', error);
+    
+    if (error.code === 'ECONNREFUSED') {
+      res.status(503);
+      throw new Error('AI service is currently unavailable');
+    }
+    
+    if (error.response?.status === 400) {
+      res.status(400);
+      throw new Error('Invalid patient data for AI analysis');
+    }
+    
+    res.status(500);
+    throw new Error('Failed to generate medication recommendations');
+  }
+});
+
+// @desc    Validate medication recommendation against patient
+// @route   POST /api/medicine-recommendations/validate
+// @access  Private/Doctor
+const validateMedicationRecommendation = asyncHandler(async (req, res) => {
+  const { patientId, medication } = req.body;
+
+  if (!patientId || !medication) {
+    res.status(400);
+    throw new Error('Patient ID and medication data are required');
+  }
+
+  try {
+    // Get patient data for validation
+    const patientData = await gatherPatientData(patientId);
+    
+    // Call AI service for validation
+    const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:8001';
+    const aiResponse = await axios.post(
+      `${aiServiceUrl}/api/medication-recommendations/validate`,
+      {
+        patient_data: patientData,
+        medication: medication
+      },
+      {
+        timeout: 15000,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      data: aiResponse.data.data,
+      message: 'Medication validation completed'
+    });
+
+  } catch (error) {
+    console.error('Error validating medication:', error);
+    res.status(500);
+    throw new Error('Failed to validate medication recommendation');
+  }
+});
+
+// Helper function to gather comprehensive patient data
+async function gatherPatientData(patientId, appointmentId = null) {
+  try {
+    console.log('Gathering patient data for:', patientId);
+
+    // Get user data first (patientId is actually a User ID)
+    const user = await User.findById(patientId).select('name email dateOfBirth gender phoneNumber');
+    
+    if (!user) {
+      console.log('User not found for ID:', patientId);
+      return { patient_id: null };
+    }
+
+    // Get patient document that references this user
+    const patient = await Patient.findOne({ user: patientId });
+
+    // Calculate age if date of birth is available
+    let age = 'Unknown';
+    if (user.dateOfBirth) {
+      const today = new Date();
+      const birthDate = new Date(user.dateOfBirth);
+      age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
       }
     }
-  }
-  
-  // Remove duplicates (based on medication name)
-  const uniqueMedications = [];
-  const seen = new Set();
-  
-  for (const med of matches) {
-    if (!seen.has(med.name)) {
-      seen.add(med.name);
-      uniqueMedications.push(med);
-    }
-  }
-  
-  return uniqueMedications;
-};
 
-// Controller to get medicine recommendations
-exports.getMedicineRecommendations = (req, res) => {
-  try {
-    const { diagnosis } = req.query;
-    
-    if (!diagnosis) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Diagnosis parameter is required'
-      });
+    // Get pre-visit triage data if available
+    let triageData = null;
+    if (appointmentId) {
+      triageData = await PrevisitTriage.findOne({ 
+        appointmentId: appointmentId 
+      }).select('responses symptoms questionnaire');
     }
-    
-    const recommendations = findMatchingDiagnoses(diagnosis);
-    
-    // Return the recommendations
-    res.status(200).json({
-      status: 'success',
-      recommendations
+
+    // Structure comprehensive patient data
+    const patientData = {
+      patient_id: patientId, // Use the User ID as patient_id
+      name: user.name || 'Unknown',
+      age: age,
+      gender: user.gender || 'Unknown',
+      
+      // Medical information (from Patient document if exists)
+      allergies: patient?.allergies || [],
+      medical_history: patient?.medicalHistory || [],
+      current_medications: patient?.medications || [],
+      blood_type: patient?.bloodType || 'Unknown',
+      
+      // Emergency contact (if relevant for recommendations)
+      emergency_contact: patient?.emergencyContact || {},
+      
+      // Insurance info (for cost considerations)
+      insurance: patient?.insurance || {},
+      
+      // Triage data if available
+      triage_responses: triageData?.responses || {},
+      symptoms: triageData?.symptoms || [],
+      chief_complaint: triageData?.questionnaire?.title || '',
+      
+      // Recent vital signs (you might want to add this to Patient model)
+      vital_signs: {
+        // This would come from a VitalRecords collection if you have it
+        // For now, leaving empty
+      },
+      
+      // Metadata
+      gathered_at: new Date().toISOString(),
+      data_completeness: calculateDataCompleteness(patient, triageData)
+    };
+
+    console.log('Patient data gathered successfully:', {
+      patient_id: patientData.patient_id,
+      has_allergies: patientData.allergies.length > 0,
+      has_medical_history: patientData.medical_history.length > 0,
+      has_current_medications: patientData.current_medications.length > 0,
+      has_triage_data: !!triageData,
+      data_completeness: patientData.data_completeness
     });
+
+    return patientData;
+
   } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: error.message
-    });
+    console.error('Error gathering patient data:', error);
+    throw error;
   }
+}
+
+// Helper function to calculate data completeness score
+function calculateDataCompleteness(patient, triageData) {
+  let score = 0;
+  let totalFields = 8;
+
+  // Check essential fields
+  if (patient.user?.dateOfBirth) score++;
+  if (patient.user?.gender) score++;
+  if (patient.allergies && patient.allergies.length > 0) score++;
+  if (patient.medicalHistory && patient.medicalHistory.length > 0) score++;
+  if (patient.medications && patient.medications.length > 0) score++;
+  if (patient.bloodType && patient.bloodType !== 'Unknown') score++;
+  if (triageData?.responses) score++;
+  if (triageData?.symptoms && triageData.symptoms.length > 0) score++;
+
+  return Math.round((score / totalFields) * 100);
+}
+
+// @desc    Get patient medication history
+// @route   GET /api/medicine-recommendations/history/:patientId
+// @access  Private/Doctor
+const getPatientMedicationHistory = asyncHandler(async (req, res) => {
+  const { patientId } = req.params;
+
+  try {
+    const patient = await Patient.findById(patientId)
+      .select('medications medicalHistory')
+      .populate('user', 'name');
+
+    if (!patient) {
+      res.status(404);
+      throw new Error('Patient not found');
+    }
+
+    // You might want to expand this to include prescription history
+    // from a separate PrescriptionHistory model
+    res.status(200).json({
+      success: true,
+      data: {
+        current_medications: patient.medications || [],
+        medical_history: patient.medicalHistory || [],
+        patient_name: patient.user?.name || 'Unknown'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching medication history:', error);
+    res.status(500);
+    throw new Error('Failed to fetch medication history');
+  }
+});
+
+module.exports = {
+  generateMedicationRecommendations,
+  validateMedicationRecommendation,
+  getPatientMedicationHistory
 };

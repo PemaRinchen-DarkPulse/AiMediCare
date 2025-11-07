@@ -9,7 +9,7 @@ import {
   FaCalendarAlt, FaUserInjured, FaNotesMedical, FaVideo, FaPhoneAlt,
   FaClinicMedical, FaCheck, FaTimes, FaClock, FaFilter, FaSearch,
   FaPrescription, FaFileAlt, FaInfoCircle, FaSyncAlt, FaPen,
-  FaExclamationTriangle, FaMicrophone, FaHistory, FaSave, FaPrescriptionBottleAlt, FaMedkit
+  FaExclamationTriangle, FaMicrophone, FaHistory, FaSave, FaPrescriptionBottleAlt, FaMedkit, FaRobot
 } from 'react-icons/fa';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
@@ -17,6 +17,12 @@ import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
 import UserAvatar from '../../components/UserAvatar';
 import PrescriptionModal from '../../components/doctor/PrescriptionModal';
+import { 
+  generateMedicationRecommendations, 
+  formatMedicationRecommendation, 
+  formatMedicationWarnings,
+  assessRecommendationConfidence 
+} from '../../services/medicationRecommendationsService';
 import './DoctorAppointments.css';
 
 const AppointmentCard = ({ 
@@ -418,7 +424,20 @@ const AppointmentListTable = ({
   );
 };
 
-const AppointmentDetailView = ({ appointment, onClose, onAddNote, onCompleteAppointment, onAcceptAppointment, onDeclineAppointment }) => {
+const AppointmentDetailView = ({ 
+  appointment, 
+  onClose, 
+  onAddNote, 
+  onCompleteAppointment, 
+  onAcceptAppointment, 
+  onDeclineAppointment,
+  // AI Recommendations props
+  aiRecommendations,
+  aiRecommendationsLoading,
+  aiRecommendationsError,
+  generateAIRecommendations,
+  addRecommendationToPrescription
+}) => {
   const [notes, setNotes] = useState(appointment.notes || '');
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState(null);
@@ -504,7 +523,7 @@ const AppointmentDetailView = ({ appointment, onClose, onAddNote, onCompleteAppo
     try {
       // Only fetch prescriptions if we have a valid patient ID
       if (!appointment.patientId) {
-        console.log("No patient ID available");
+        console.log("No patient ID available", appointment);
         setPrescriptionError('Patient ID not available');
         setLoadingPrescriptions(false);
         return;
@@ -521,6 +540,7 @@ const AppointmentDetailView = ({ appointment, onClose, onAddNote, onCompleteAppo
       }
       
       console.log(`Fetching prescriptions for patient ID: ${appointment.patientId}`);
+      console.log('Full appointment object:', appointment);
       
       // Fetch all prescriptions for this patient
       const response = await fetch(`http://localhost:5000/api/prescriptions/patient/${appointment.patientId}`, {
@@ -529,8 +549,12 @@ const AppointmentDetailView = ({ appointment, onClose, onAddNote, onCompleteAppo
         }
       });
       
+      console.log('Prescription API response status:', response.status);
+      
       if (!response.ok) {
         console.error(`Error fetching prescriptions: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Error response body:', errorText);
         throw new Error('Failed to fetch prescriptions');
       }
       
@@ -800,142 +824,8 @@ const AppointmentDetailView = ({ appointment, onClose, onAddNote, onCompleteAppo
               )}
             </CardBody>
           </Card>
-        </Col>
 
-        <Col md={6}>
-          {/* Recommended Medication Card */}
-          <Card className="mb-4 recommended-medication-card border-primary border-left">
-            <CardBody>
-              <h5 className="mb-3 d-flex align-items-center">
-                <FaMedkit className="text-primary me-2" size={20} />
-                Recommended Medications
-              </h5>
-              
-              <div className="recommended-medications-list">
-                {appointment.reason ? (
-                  <>
-                    {appointment.reason.toLowerCase().includes('diabetes') && (
-                      <div className="medication-recommendation p-3 border rounded mb-3 bg-light">
-                        <div className="d-flex justify-content-between align-items-center mb-2">
-                          <h6 className="mb-0 d-flex align-items-center">
-                            <FaPrescriptionBottleAlt className="me-2 text-primary" /> 
-                            <span>Metformin</span>
-                          </h6>
-                          <Badge color="info" pill className="px-3 py-2">First-line</Badge>
-                        </div>
-                        <p className="mb-2 small">
-                          <strong>Suggested dosage:</strong> 500mg twice daily with meals
-                        </p>
-                        <p className="mb-0 small text-muted">
-                          <strong>Note:</strong> Check kidney function before prescribing. Monitor HbA1c every 3 months.
-                        </p>
-                      </div>
-                    )}
-                    
-                    {appointment.reason.toLowerCase().includes('headache') && (
-                      <>
-                        <div className="medication-recommendation p-3 border rounded mb-3 bg-light">
-                          <div className="d-flex justify-content-between align-items-center mb-2">
-                            <h6 className="mb-0 d-flex align-items-center">
-                              <FaPrescriptionBottleAlt className="me-2 text-primary" /> 
-                              <span>Ibuprofen</span>
-                            </h6>
-                            <Badge color="success" pill className="px-3 py-2">First-line</Badge>
-                          </div>
-                          <p className="mb-2 small">
-                            <strong>Suggested dosage:</strong> 400mg every 6-8 hours as needed for pain
-                          </p>
-                          <p className="mb-0 small text-muted">
-                            <strong>Note:</strong> Avoid in patients with kidney disease, heart failure, or GI bleeding risk.
-                          </p>
-                        </div>
-                        <div className="medication-recommendation p-3 border rounded mb-3 bg-light">
-                          <div className="d-flex justify-content-between align-items-center mb-2">
-                            <h6 className="mb-0 d-flex align-items-center">
-                              <FaPrescriptionBottleAlt className="me-2 text-primary" /> 
-                              <span>Sumatriptan</span>
-                            </h6>
-                            <Badge color="info" pill className="px-3 py-2">For migraine</Badge>
-                          </div>
-                          <p className="mb-2 small">
-                            <strong>Suggested dosage:</strong> 50mg at onset of migraine, may repeat after 2 hours
-                          </p>
-                          <p className="mb-0 small text-muted">
-                            <strong>Note:</strong> Contraindicated in patients with cardiovascular disease.
-                          </p>
-                        </div>
-                      </>
-                    )}
-                    
-                    {appointment.reason.toLowerCase().includes('skin') || appointment.reason.toLowerCase().includes('rash') ? (
-                      <>
-                        <div className="medication-recommendation p-3 border rounded mb-3 bg-light">
-                          <div className="d-flex justify-content-between align-items-center mb-2">
-                            <h6 className="mb-0 d-flex align-items-center">
-                              <FaPrescriptionBottleAlt className="me-2 text-primary" /> 
-                              <span>Hydrocortisone cream</span>
-                            </h6>
-                            <Badge color="success" pill className="px-3 py-2">First-line</Badge>
-                          </div>
-                          <p className="mb-2 small">
-                            <strong>Suggested dosage:</strong> Apply thin layer to affected area 2-3 times daily
-                          </p>
-                          <p className="mb-0 small text-muted">
-                            <strong>Note:</strong> For mild to moderate inflammatory skin conditions. Avoid prolonged use on face.
-                          </p>
-                        </div>
-                        <div className="medication-recommendation p-3 border rounded mb-3 bg-light">
-                          <div className="d-flex justify-content-between align-items-center mb-2">
-                            <h6 className="mb-0 d-flex align-items-center">
-                              <FaPrescriptionBottleAlt className="me-2 text-primary" /> 
-                              <span>Cetirizine</span>
-                            </h6>
-                            <Badge color="info" pill className="px-3 py-2">For allergic reactions</Badge>
-                          </div>
-                          <p className="mb-2 small">
-                            <strong>Suggested dosage:</strong> 10mg once daily
-                          </p>
-                          <p className="mb-0 small text-muted">
-                            <strong>Note:</strong> May cause drowsiness. Consider loratadine for patients who need to drive.
-                          </p>
-                        </div>
-                      </>
-                    ) : appointment.reason.toLowerCase().includes('heart') || appointment.reason.toLowerCase().includes('palpitations') ? (
-                      <>
-                        <div className="medication-recommendation p-3 border rounded mb-3 bg-light">
-                          <div className="d-flex justify-content-between align-items-center mb-2">
-                            <h6 className="mb-0 d-flex align-items-center">
-                              <FaPrescriptionBottleAlt className="me-2 text-primary" /> 
-                              <span>Metoprolol</span>
-                            </h6>
-                            <Badge color="success" pill className="px-3 py-2">Beta-blocker</Badge>
-                          </div>
-                          <p className="mb-2 small">
-                            <strong>Suggested dosage:</strong> 25mg twice daily, titrate as needed
-                          </p>
-                          <p className="mb-0 small text-muted">
-                            <strong>Note:</strong> Monitor heart rate and blood pressure. Avoid in patients with asthma.
-                          </p>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-center py-3">
-                        <FaMedkit size={24} className="text-muted mb-2" />
-                        <p className="text-muted mb-0">Select a condition from the clinical notes to see medication recommendations</p>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="text-center py-3">
-                    <FaMedkit size={24} className="text-muted mb-2" />
-                    <p className="text-muted mb-0">No reason specified for this appointment</p>
-                  </div>
-                )}
-              </div>
-            </CardBody>
-          </Card>
-
-          {/* Clinical Notes Card - Moved below Recommended Medications */}
+          {/* Clinical Notes Card */}
           <Card className="mb-4">
             <CardBody>
               <div className="d-flex justify-content-between align-items-center mb-3">
@@ -968,44 +858,28 @@ const AppointmentDetailView = ({ appointment, onClose, onAddNote, onCompleteAppo
                           href="#" 
                           onClick={(e) => {
                             e.preventDefault();
-                            applyFormat('standard');
+                            formatNotes('SOAP');
+                            setFormatDropdownOpen(false);
                           }}
                         >
-                          Standard SOAP
+                          SOAP Format
                         </a>
                         <a 
                           className="dropdown-item" 
                           href="#" 
                           onClick={(e) => {
                             e.preventDefault();
-                            applyFormat('followUp');
+                            formatNotes('Assessment and Plan');
+                            setFormatDropdownOpen(false);
                           }}
                         >
-                          Follow-up Visit
-                        </a>
-                        <a 
-                          className="dropdown-item" 
-                          href="#" 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            applyFormat('consultation');
-                          }}
-                        >
-                          Specialist Consultation
+                          Assessment & Plan
                         </a>
                       </div>
                     </div>
                   )}
                 </div>
               </div>
-              
-              {isRecording && (
-                <Alert color="info" className="d-flex align-items-center" timeout={0}>
-                  <Spinner size="sm" className="me-2" />
-                  <span>Recording... Speak clearly.</span>
-                </Alert>
-              )}
-              
               <Input
                 type="textarea"
                 rows={6}
@@ -1018,7 +892,7 @@ const AppointmentDetailView = ({ appointment, onClose, onAddNote, onCompleteAppo
             </CardBody>
           </Card>
 
-          {/* Only show Appointment Actions for non-completed appointments */}
+          {/* Appointment Actions - Only show for non-completed appointments */}
           {appointment.status !== 'completed' && (
             <Card className="mb-4">
               <CardBody>
@@ -1061,6 +935,217 @@ const AppointmentDetailView = ({ appointment, onClose, onAddNote, onCompleteAppo
               </CardBody>
             </Card>
           )}
+        </Col>
+
+        <Col md={6}>
+          {/* AI-Powered Medication Recommendations Card */}
+          <Card className="mb-4 ai-recommendations-card border-success border-left">
+            <CardBody>
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0 d-flex align-items-center">
+                  <FaRobot className="text-success me-2" size={20} />
+                  AI-Powered Medication Recommendations
+                </h5>
+                <Button
+                  color="success"
+                  size="sm"
+                  outline
+                  onClick={() => generateAIRecommendations(appointment.patientId, appointment._id)}
+                  disabled={aiRecommendationsLoading}
+                >
+                  {aiRecommendationsLoading ? (
+                    <>
+                      <Spinner size="sm" className="me-1" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <FaSyncAlt className="me-1" />
+                      Generate
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {aiRecommendationsError && (
+                <Alert color="danger" className="mb-3" timeout={0}>
+                  <FaExclamationTriangle className="me-2" />
+                  {aiRecommendationsError}
+                </Alert>
+              )}
+
+              {aiRecommendations ? (
+                <div className="ai-recommendations">
+                  {/* Confidence Score */}
+                  {aiRecommendations.confidence_score && (
+                    <div className="mb-3">
+                      <Badge 
+                        color={assessRecommendationConfidence(aiRecommendations).color} 
+                        className="px-3 py-2"
+                      >
+                        Confidence: {Math.round(aiRecommendations.confidence_score * 100)}% - {assessRecommendationConfidence(aiRecommendations).message}
+                      </Badge>
+                    </div>
+                  )}
+
+                  {/* Primary Analysis */}
+                  {aiRecommendations.analysis && (
+                    <div className="analysis-section mb-3 p-3 bg-light rounded">
+                      <h6 className="mb-2">
+                        <FaInfoCircle className="text-info me-2" />
+                        Clinical Analysis
+                      </h6>
+                      <Row className="mb-2">
+                        <Col xs={4} className="text-muted">Primary Diagnosis:</Col>
+                        <Col xs={8}>{aiRecommendations.analysis.primary_diagnosis}</Col>
+                      </Row>
+                      <Row className="mb-2">
+                        <Col xs={4} className="text-muted">Severity:</Col>
+                        <Col xs={8}>
+                          <Badge 
+                            color={
+                              aiRecommendations.analysis.severity === 'severe' ? 'danger' :
+                              aiRecommendations.analysis.severity === 'moderate' ? 'warning' : 'success'
+                            }
+                          >
+                            {aiRecommendations.analysis.severity}
+                          </Badge>
+                        </Col>
+                      </Row>
+                      {aiRecommendations.analysis.risk_factors?.length > 0 && (
+                        <Row>
+                          <Col xs={4} className="text-muted">Risk Factors:</Col>
+                          <Col xs={8}>
+                            {aiRecommendations.analysis.risk_factors.map((factor, idx) => (
+                              <Badge key={idx} color="warning" className="me-1 mb-1">{factor}</Badge>
+                            ))}
+                          </Col>
+                        </Row>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Warnings and Contraindications */}
+                  {aiRecommendations.warnings?.length > 0 && (
+                    <div className="warnings-section mb-3">
+                      <h6 className="mb-2 text-warning">
+                        <FaExclamationTriangle className="me-2" />
+                        Important Warnings
+                      </h6>
+                      {formatMedicationWarnings(aiRecommendations.warnings).map((warning, idx) => (
+                        <Alert key={idx} color={warning.color} className="py-2 mb-2" timeout={0}>
+                          <small>
+                            <strong>{warning.type.toUpperCase()}:</strong> {warning.message}
+                          </small>
+                        </Alert>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Medication Recommendations */}
+                  {aiRecommendations.recommendations?.length > 0 ? (
+                    <div className="recommendations-section">
+                      <h6 className="mb-3">
+                        <FaPrescriptionBottleAlt className="text-success me-2" />
+                        Recommended Medications
+                      </h6>
+                      {aiRecommendations.recommendations.map((rec, idx) => {
+                        const formattedRec = formatMedicationRecommendation(rec);
+                        return (
+                          <div key={idx} className="medication-recommendation-card p-3 border rounded mb-3 bg-white">
+                            <div className="d-flex justify-content-between align-items-center mb-2">
+                              <h6 className="mb-0 d-flex align-items-center">
+                                <FaPrescriptionBottleAlt className="me-2 text-primary" />
+                                {formattedRec.name}
+                              </h6>
+                              <Badge 
+                                color={
+                                  formattedRec.priority === 'primary' ? 'success' :
+                                  formattedRec.priority === 'secondary' ? 'info' : 'secondary'
+                                } 
+                                pill
+                              >
+                                {formattedRec.priority}
+                              </Badge>
+                            </div>
+                            
+                            <Row className="mb-2">
+                              <Col xs={4} className="text-muted small">Dosage:</Col>
+                              <Col xs={9} className="small">{formattedRec.dosage}</Col>
+                            </Row>
+                            <Row className="mb-2">
+                              <Col xs={4} className="text-muted small">Frequency:</Col>
+                              <Col xs={9} className="small">{formattedRec.frequency}</Col>
+                            </Row>
+                            <Row className="mb-2">
+                              <Col xs={4} className="text-muted small">Duration:</Col>
+                              <Col xs={9} className="small">{formattedRec.duration}</Col>
+                            </Row>
+                            
+                            {formattedRec.indication && (
+                              <div className="indication-section mb-2">
+                                <strong className="small text-info">Indication:</strong>
+                                <p className="mb-0 small text-muted">{formattedRec.indication}</p>
+                              </div>
+                            )}
+                            
+                            {formattedRec.rationale && (
+                              <div className="rationale-section mb-2">
+                                <strong className="small text-success">Rationale:</strong>
+                                <p className="mb-0 small">{formattedRec.rationale}</p>
+                              </div>
+                            )}
+                            
+                            {formattedRec.monitoring && (
+                              <div className="monitoring-section mb-2">
+                                <strong className="small text-warning">Monitoring:</strong>
+                                <p className="mb-0 small">{formattedRec.monitoring}</p>
+                              </div>
+                            )}
+                            
+                            {formattedRec.sideEffects?.length > 0 && (
+                              <div className="side-effects-section">
+                                <strong className="small text-danger">Side Effects:</strong>
+                                <div className="mt-1">
+                                  {formattedRec.sideEffects.map((effect, sideIdx) => (
+                                    <Badge key={sideIdx} color="light" className="me-1 mb-1 small">
+                                      {effect}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Add to Prescription Button */}
+                            <div className="mt-3 text-end">
+                              <Button
+                                color="success"
+                                size="sm"
+                                onClick={() => addRecommendationToPrescription(formattedRec)}
+                              >
+                                <FaPrescription className="me-1" />
+                                Add to Prescription
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <FaRobot size={48} className="text-muted mb-3" />
+                      <p className="text-muted">Click "Generate" to get AI-powered medication recommendations based on patient data and symptoms.</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <FaRobot size={48} className="text-muted mb-3" />
+                  <p className="text-muted">Click "Generate" to get AI-powered medication recommendations based on patient data and symptoms.</p>
+                </div>
+              )}
+            </CardBody>
+          </Card>
         </Col>
       </Row>
 
@@ -1115,6 +1200,11 @@ const DoctorAppointments = () => {
 
   const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
   const [currentPrescriptionAppointment, setCurrentPrescriptionAppointment] = useState(null);
+
+  // AI Recommendations state
+  const [aiRecommendations, setAiRecommendations] = useState(null);
+  const [aiRecommendationsLoading, setAiRecommendationsLoading] = useState(false);
+  const [aiRecommendationsError, setAiRecommendationsError] = useState(null);
 
   useEffect(() => {
     fetchAppointments();
@@ -1419,10 +1509,63 @@ const DoctorAppointments = () => {
     }
   };
 
+  // AI Recommendations functions
+  const generateAIRecommendations = async (patientId, appointmentId) => {
+    if (!patientId) {
+      setAiRecommendationsError('Patient ID is required for recommendations');
+      return;
+    }
+
+    setAiRecommendationsLoading(true);
+    setAiRecommendationsError(null);
+
+    try {
+      console.log('Generating AI medication recommendations for patient:', patientId);
+      
+      const response = await generateMedicationRecommendations(patientId, appointmentId);
+      
+      if (response.success) {
+        setAiRecommendations(response.data);
+        toast.success('AI medication recommendations generated successfully');
+      } else {
+        throw new Error(response.message || 'Failed to generate recommendations');
+      }
+    } catch (error) {
+      console.error('Error generating AI recommendations:', error);
+      let errorMessage = 'Failed to generate AI recommendations';
+      
+      if (error.response?.status === 503) {
+        errorMessage = 'AI service is currently unavailable. Please try again later.';
+      } else if (error.response?.status === 400) {
+        errorMessage = 'Insufficient patient data for accurate recommendations';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setAiRecommendationsError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setAiRecommendationsLoading(false);
+    }
+  };
+
+  const addRecommendationToPrescription = (recommendation) => {
+    // This function will add a recommendation to the prescription modal
+    toast.success(`${recommendation.name} added to prescription template`);
+    
+    console.log('Adding recommendation to prescription:', recommendation);
+    
+    // Open prescription modal if not already open
+    if (!isPrescriptionModalOpen) {
+      setCurrentPrescriptionAppointment(selectedAppointment);
+      setIsPrescriptionModalOpen(true);
+    }
+  };
+
   if (error) {
     return (
       <Container className="py-5">
-        <Alert color="danger">
+        <Alert color="danger" timeout={0}>
           {error}
         </Alert>
       </Container>
@@ -1443,6 +1586,12 @@ const DoctorAppointments = () => {
               onCompleteAppointment={markAppointmentCompleted}
               onAcceptAppointment={handleAcceptAppointment}
               onDeclineAppointment={handleDeclineAppointment}
+              // AI Recommendations props
+              aiRecommendations={aiRecommendations}
+              aiRecommendationsLoading={aiRecommendationsLoading}
+              aiRecommendationsError={aiRecommendationsError}
+              generateAIRecommendations={generateAIRecommendations}
+              addRecommendationToPrescription={addRecommendationToPrescription}
             />
           </CardBody>
         </Card>

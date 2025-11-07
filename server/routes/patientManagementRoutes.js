@@ -3,7 +3,6 @@ const {
   getPatients, 
   getPatientById, 
   updatePatient, 
-  deletePatient,
   getPatientVitals,
   addPatientVital,
   getPatientAllergies,
@@ -29,8 +28,7 @@ router.route('/')
 
 router.route('/:patientId')
   .get(getPatientById)
-  .put(updatePatient)
-  .delete(deletePatient);
+  .put(updatePatient);
 
 // Vitals routes
 router.route('/:patientId/vitals')

@@ -114,19 +114,26 @@ exports.getPatientPrescriptions = async (req, res) => {
 exports.getPatientPrescriptionsById = async (req, res) => {
   try {
     const { patientId } = req.params;
+    console.log('Fetching prescriptions for patient ID:', patientId);
     
-    // Verify that patient exists
-    const patientExists = await Patient.exists({ _id: patientId });
-    if (!patientExists) {
+    // Check if this is a User ID (which is used as patientId in appointments)
+    // First check if it's a valid User ID
+    const User = require('../models/User');
+    const userExists = await User.exists({ _id: patientId });
+    
+    if (!userExists) {
       return res.status(404).json({
         status: 'fail',
         message: 'Patient not found'
       });
     }
     
+    // Find prescriptions using the User ID as patientId
     const prescriptions = await Prescription.find({ patientId })
       .populate('doctorId', 'name specialization')
       .sort({ issuedDate: -1 });
+
+    console.log('Found prescriptions:', prescriptions.length);
 
     res.status(200).json({
       status: 'success',

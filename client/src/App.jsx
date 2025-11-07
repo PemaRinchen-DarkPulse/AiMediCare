@@ -25,8 +25,18 @@ import Diagnostics from "./pages/doctor/Diagnostics";
 import DoctorPrescriptions from "./pages/doctor/DoctorPrescriptions";
 import DoctorSettings from "./pages/doctor/DoctorSettings";
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
+import MedicalRecords from "./pages/doctor/MedicalRecords";
 import PatientSettings from "./pages/patient/PatientSettings";
 import PatientDiagnostics from "./pages/patient/PatientDiagnostics";
+// Import Pharmacy Components
+import { 
+  PharmacyDashboard, 
+  PrescriptionManagement, 
+  InventoryManagement, 
+  PatientManagement, 
+  AIPharmacyFeatures, 
+  PharmacyReports 
+} from "./pages/pharmacy";
 // Protected route component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -123,6 +133,7 @@ function App() {
                 <Route path="appointments" element={<DoctorAppointments/>} />
                 <Route path="patients" element={<Patients/>} />
                 <Route path="diagnostics" element={<Diagnostics/>} />
+                <Route path="records" element={<MedicalRecords/>} />
                 <Route path="Prescriptions" element={<DoctorPrescriptions/>} />
                 <Route path="settings" element={<DoctorSettings/>} />
               </Route>
@@ -134,11 +145,15 @@ function App() {
                 </ProtectedRoute>
               }>
                 <Route index element={<Navigate to="dashboard" />} />
-                <Route path="dashboard" element={<div>Pharmacist Dashboard</div>} />
-                <Route path="prescriptions" element={<div>Prescription Management</div>} />
-                <Route path="inventory" element={<div>Medication Inventory</div>} />
-                <Route path="patients" element={<div>Patient Records</div>} />
-                <Route path="messages" element={<div>Pharmacist Messages</div>} />
+                <Route path="dashboard" element={<PharmacyDashboard />} />
+                <Route path="prescriptions" element={<PrescriptionManagement />} />
+                <Route path="dispensing" element={<PrescriptionManagement />} />
+                <Route path="drug-information" element={<AIPharmacyFeatures />} />
+                <Route path="patients" element={<PatientManagement />} />
+                <Route path="drug-interactions" element={<AIPharmacyFeatures />} />
+                <Route path="history" element={<PatientManagement />} />
+                <Route path="inventory" element={<InventoryManagement />} />
+                <Route path="billing" element={<PharmacyReports />} />
                 <Route path="settings" element={<Settings/>} />
               </Route>
             </Routes>
